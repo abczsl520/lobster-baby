@@ -1,0 +1,12 @@
+appId: com.lobsterbaby.app
+productName: Lobster Baby
+directories:
+  output: release
+  buildResources: build
+files:
+  - dist
+  - dist-electron
+mac:
+  target:
+    - dmg
+  category: public.app-category.entertainment
