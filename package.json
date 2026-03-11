@@ -57,7 +57,7 @@
           "arch": ["arm64", "x64"]
         }
       ],
-      "artifactName": "${productName}-${version}-${arch}.${ext}"
+      "artifactName": "LobsterBaby-${version}-${arch}.${ext}"
     },
     "dmg": {
       "title": "Lobster Baby ${version}",
