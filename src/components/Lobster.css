@@ -1,0 +1,195 @@
+.lobster-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Main lobster image */
+.lobster-img {
+  width: 160px;
+  height: auto;
+  transition: transform 0.3s ease, filter 0.3s ease;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+  image-rendering: auto;
+  will-change: transform; /* Hint browser to optimize */
+  backface-visibility: hidden; /* Prevent flickering */
+  -webkit-backface-visibility: hidden;
+}
+
+.lobster-container:hover .lobster-img {
+  transform: scale(1.08);
+}
+
+.lobster-container:active .lobster-img {
+  transform: scale(0.95);
+}
+
+/* ─── Idle: gentle floating ─── */
+.lobster-container.idle .lobster-img {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* ─── Active: excited shaking ─── */
+.lobster-container.active .lobster-img {
+  animation: excited 0.6s ease-in-out infinite;
+}
+
+/* ─── Error: flipped and twitching ─── */
+.lobster-container.error .lobster-img {
+  animation: dead-twitch 2s ease-in-out infinite;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3)) grayscale(0.5);
+}
+
+/* ─── Clicked: bounce ─── */
+.lobster-container.clicked .lobster-img {
+  animation: bounce 0.5s ease-out !important;
+}
+
+/* ─── Glow effect for high levels ─── */
+.lobster-img.glow {
+  filter: drop-shadow(0 0 12px rgba(255, 100, 100, 0.6))
+          drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+}
+
+/* ─── Rainbow hue shift for max level ─── */
+.lobster-img.rainbow {
+  animation: float 3s ease-in-out infinite, rainbow-shift 3s linear infinite !important;
+}
+
+.lobster-container.active .lobster-img.rainbow {
+  animation: excited 0.6s ease-in-out infinite, rainbow-shift 3s linear infinite !important;
+}
+
+/* ─── Level badge ─── */
+.level-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: linear-gradient(135deg, #ff4d4d, #cc0000);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 8px;
+  z-index: 10;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ─── Crown for high levels ─── */
+.crown-emoji {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 24px;
+  z-index: 10;
+  animation: crown-bob 2s ease-in-out infinite;
+}
+
+/* ─── Status dot ─── */
+.status-dot {
+  position: absolute;
+  bottom: 4px;
+  right: 8px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  z-index: 10;
+}
+
+.status-dot.status-active {
+  background: #00e676;
+  box-shadow: 0 0 6px #00e676;
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+.status-dot.status-idle {
+  background: #ffc107;
+}
+
+.status-dot.status-error {
+  background: #ff5252;
+  animation: pulse-dot 1s ease-in-out infinite;
+}
+
+/* ─── Particles ─── */
+.particles {
+  position: absolute;
+  inset: -20px;
+  pointer-events: none;
+}
+
+.particle {
+  position: absolute;
+  font-size: 14px;
+  animation: particle-orbit 3s ease-in-out infinite;
+}
+
+.p1 { top: 0; left: 10%; animation-delay: 0s; }
+.p2 { top: 10%; right: 5%; animation-delay: 0.75s; }
+.p3 { bottom: 15%; left: 5%; animation-delay: 1.5s; }
+.p4 { bottom: 5%; right: 10%; animation-delay: 2.25s; }
+
+/* ─── Keyframes ─── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes excited {
+  0%, 100% { transform: translateX(0) rotate(0deg) scale(1.05); }
+  25% { transform: translateX(-4px) rotate(-3deg) scale(1.05); }
+  75% { transform: translateX(4px) rotate(3deg) scale(1.05); }
+}
+
+@keyframes dead-twitch {
+  0%, 85%, 100% { transform: rotate(180deg) translateY(0); }
+  90% { transform: rotate(183deg) translateY(-2px); }
+  95% { transform: rotate(177deg) translateY(-1px); }
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  40% { transform: translateY(-25px) scale(1.15); }
+  60% { transform: translateY(-10px) scale(1.05); }
+}
+
+@keyframes rainbow-shift {
+  0% { filter: hue-rotate(0deg) drop-shadow(0 0 12px rgba(255, 100, 100, 0.6)); }
+  50% { filter: hue-rotate(180deg) drop-shadow(0 0 12px rgba(100, 100, 255, 0.6)); }
+  100% { filter: hue-rotate(360deg) drop-shadow(0 0 12px rgba(255, 100, 100, 0.6)); }
+}
+
+@keyframes crown-bob {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-4px); }
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes particle-orbit {
+  0%, 100% {
+    transform: translateY(0) translateX(0) scale(1);
+    opacity: 0.8;
+  }
+  25% {
+    transform: translateY(-15px) translateX(8px) scale(0.8);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(-25px) translateX(0) scale(0.6);
+    opacity: 0.3;
+  }
+  75% {
+    transform: translateY(-15px) translateX(-8px) scale(0.8);
+    opacity: 0.5;
+  }
+}
