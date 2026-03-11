@@ -61,10 +61,10 @@
 #### 系统要求
 
 - **macOS 10.12+** (Sierra 或更高版本)
-- **OpenClaw** 已安装并配置（目前仅支持 macOS 版本）
-- **Discord** 作为 OpenClaw 的通信渠道
+- **OpenClaw** 已安装并配置
+- 支持所有 OpenClaw 通信渠道：**Discord / Telegram / Slack / Signal / WhatsApp / IRC** 等
 
-> ⚠️ **重要提示**：当前版本仅支持 **macOS 平台**的 OpenClaw，且需要通过 **Discord** 使用。其他平台（Windows/Linux）和通信渠道（Telegram/Slack 等）的支持正在开发中。
+> ⚠️ **重要提示**：当前版本仅支持 **macOS 平台**。Windows/Linux 支持正在开发中。
 
 #### 下载安装
 
@@ -120,8 +120,7 @@ npm run electron:build
 
 - [ ] Windows 平台支持
 - [ ] Linux 平台支持
-- [ ] Telegram 通信渠道支持
-- [ ] Slack 通信渠道支持
+- [x] ~~所有通信渠道支持（Discord/Telegram/Slack/Signal 等）~~
 - [ ] 更多动画和交互
 - [ ] 自定义主题
 - [ ] 多语言支持
@@ -168,10 +167,10 @@ npm run electron:build
 #### Requirements
 
 - **macOS 10.12+** (Sierra or later)
-- **OpenClaw** installed and configured (macOS version only)
-- **Discord** as OpenClaw communication channel
+- **OpenClaw** installed and configured
+- Supports all OpenClaw channels: **Discord / Telegram / Slack / Signal / WhatsApp / IRC** etc.
 
-> ⚠️ **Important**: Current version only supports **macOS** platform with **Discord**. Support for other platforms (Windows/Linux) and channels (Telegram/Slack) is under development.
+> ⚠️ **Important**: Current version only supports **macOS**. Windows/Linux support is under development.
 
 #### Download & Install
 
@@ -202,8 +201,7 @@ npm run electron:build
 
 - [ ] Windows support
 - [ ] Linux support
-- [ ] Telegram channel support
-- [ ] Slack channel support
+- [x] ~~All communication channels (Discord/Telegram/Slack/Signal etc.)~~
 - [ ] More animations and interactions
 - [ ] Custom themes
 - [ ] Multi-language support
