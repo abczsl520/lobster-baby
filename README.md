@@ -70,8 +70,8 @@
 
 1. 前往 [Releases](https://github.com/abczsl520/lobster-baby/releases) 页面
 2. 下载对应架构的安装包：
-   - **Apple Silicon (M1/M2/M3)**: `Lobster Baby-1.0.0-arm64.dmg`
-   - **Intel**: `Lobster Baby-1.0.0-x64.dmg`
+   - **Apple Silicon (M1/M2/M3)**: `LobsterBaby-1.0.0-arm64.dmg`
+   - **Intel**: `LobsterBaby-1.0.0-x64.dmg`
 3. 打开 DMG 文件，拖动「Lobster Baby.app」到「应用程序」文件夹
 4. 首次打开需要右键点击 → 选择「打开」（绕过 Gatekeeper 安全检查）
 
@@ -176,8 +176,8 @@ npm run electron:build
 
 1. Go to [Releases](https://github.com/abczsl520/lobster-baby/releases)
 2. Download the installer for your architecture:
-   - **Apple Silicon (M1/M2/M3)**: `Lobster Baby-1.0.0-arm64.dmg`
-   - **Intel**: `Lobster Baby-1.0.0-x64.dmg`
+   - **Apple Silicon (M1/M2/M3)**: `LobsterBaby-1.0.0-arm64.dmg`
+   - **Intel**: `LobsterBaby-1.0.0-x64.dmg`
 3. Open DMG file, drag "Lobster Baby.app" to Applications folder
 4. Right-click → Open (bypass Gatekeeper on first launch)
 
