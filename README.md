@@ -70,9 +70,9 @@
 
 1. 前往 [Releases](https://github.com/abczsl520/lobster-baby/releases) 页面
 2. 下载对应架构的安装包：
-   - **Apple Silicon (M1/M2/M3)**: `龙虾宝宝-1.0.0-arm64.dmg`
-   - **Intel**: `龙虾宝宝-1.0.0-x64.dmg`
-3. 打开 DMG 文件，拖动「龙虾宝宝.app」到「应用程序」文件夹
+   - **Apple Silicon (M1/M2/M3)**: `Lobster Baby-1.0.0-arm64.dmg`
+   - **Intel**: `Lobster Baby-1.0.0-x64.dmg`
+3. 打开 DMG 文件，拖动「Lobster Baby.app」到「应用程序」文件夹
 4. 首次打开需要右键点击 → 选择「打开」（绕过 Gatekeeper 安全检查）
 
 #### 从源码构建
@@ -94,7 +94,7 @@ npm run electron:build
 
 ### 🚀 使用
 
-1. **启动应用** - 双击「龙虾宝宝.app」或从启动台打开
+1. **启动应用** - 双击「Lobster Baby.app」或从启动台打开
 2. **拖动位置** - 鼠标拖动龙虾到任意位置，靠近边缘会自动吸附
 3. **查看状态** - 双击龙虾打开状态面板，查看详细信息
 4. **托盘菜单** - 点击菜单栏图标显示/隐藏窗口
@@ -176,14 +176,14 @@ npm run electron:build
 
 1. Go to [Releases](https://github.com/abczsl520/lobster-baby/releases)
 2. Download the installer for your architecture:
-   - **Apple Silicon (M1/M2/M3)**: `龙虾宝宝-1.0.0-arm64.dmg`
-   - **Intel**: `龙虾宝宝-1.0.0-x64.dmg`
-3. Open DMG file, drag "龙虾宝宝.app" to Applications folder
+   - **Apple Silicon (M1/M2/M3)**: `Lobster Baby-1.0.0-arm64.dmg`
+   - **Intel**: `Lobster Baby-1.0.0-x64.dmg`
+3. Open DMG file, drag "Lobster Baby.app" to Applications folder
 4. Right-click → Open (bypass Gatekeeper on first launch)
 
 ### 🚀 Usage
 
-1. **Launch** - Double-click "龙虾宝宝.app" or open from Launchpad
+1. **Launch** - Double-click "Lobster Baby.app" or open from Launchpad
 2. **Drag** - Drag the lobster anywhere, it will snap to screen edges
 3. **View Status** - Double-click to open status panel
 4. **Tray Menu** - Click menu bar icon to show/hide window
