@@ -1,0 +1,33 @@
+.emoji-bubble {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 28px;
+  animation: bubble-float 1.8s ease-out forwards;
+  pointer-events: none;
+  z-index: 1000;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes bubble-float {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px) scale(0.3) rotate(-10deg);
+  }
+  15% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-5px) scale(1.2) rotate(5deg);
+  }
+  30% {
+    transform: translateX(-50%) translateY(-15px) scale(1) rotate(-3deg);
+  }
+  70% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-35px) scale(0.95) rotate(2deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-55px) scale(0.7) rotate(0deg);
+  }
+}
