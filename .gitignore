@@ -1,0 +1,11 @@
+node_modules
+dist
+dist-electron
+release
+.vite
+*.log
+.DS_Store
+lobster-nobg-original.png
+lobster-raw.png
+src/assets/lobster-nobg-original.png
+src/assets/lobster-raw.png
