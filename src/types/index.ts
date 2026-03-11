@@ -33,6 +33,7 @@ declare global {
       hidePanel: () => Promise<void>;
       quitApp: () => Promise<void>;
       moveWindow: (deltaX: number, deltaY: number) => void;
+      openExternal: (url: string) => Promise<void>;
     };
   }
 }

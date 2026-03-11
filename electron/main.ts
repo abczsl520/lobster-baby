@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, screen, Menu, Tray, nativeImage } from 'electron';
+import { app, BrowserWindow, ipcMain, screen, Menu, Tray, nativeImage, shell } from 'electron';
 import path from 'path';
 import { exec } from 'child_process';
 import fs from 'fs';
@@ -382,6 +382,11 @@ ipcMain.handle('hide-panel', () => {
 });
 
 ipcMain.handle('quit-app', () => app.quit());
+
+ipcMain.handle('open-external', async (_event, url: string) => {
+  if (typeof url !== 'string' || !url.startsWith('http')) return;
+  await shell.openExternal(url);
+});
 
 // ─── App Lifecycle ───
 app.whenReady().then(createWindow);
