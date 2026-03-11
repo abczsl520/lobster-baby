@@ -145,6 +145,15 @@
   color: #ff6b6b;
 }
 
+.version-info {
+  text-align: center;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.3);
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
 @keyframes panel-appear {
   0% {
     opacity: 0;

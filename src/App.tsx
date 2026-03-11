@@ -2,17 +2,21 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { Lobster } from './components/Lobster';
 import { StatusPanel } from './components/StatusPanel';
 import { EmojiBubble, getRandomEmoji } from './components/EmojiBubble';
+import { UpdateNotification } from './components/UpdateNotification';
 import { useOpenClawStatus } from './hooks/useOpenClawStatus';
 import { useLevelSystem } from './hooks/useLevelSystem';
+import { useUpdateChecker } from './hooks/useUpdateChecker';
 import { DRAG } from './constants';
 import './App.css';
 
 function App() {
   const { status, tokenInfo } = useOpenClawStatus();
   const levelInfo = useLevelSystem();
+  const { updateInfo } = useUpdateChecker();
   const [showPanel, setShowPanel] = useState(false);
   const [emoji, setEmoji] = useState<string | null>(null);
   const [isDraggingState, setIsDraggingState] = useState(false);
+  const [showUpdateNotification, setShowUpdateNotification] = useState(false);
 
   // Drag state
   const isDragging = useRef(false);
@@ -28,6 +32,13 @@ function App() {
       }
     };
   }, []);
+
+  // Show update notification when available
+  useEffect(() => {
+    if (updateInfo?.hasUpdate) {
+      setShowUpdateNotification(true);
+    }
+  }, [updateInfo]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button !== 0) return;
@@ -120,6 +131,13 @@ function App() {
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
+      {showUpdateNotification && updateInfo && (
+        <UpdateNotification
+          updateInfo={updateInfo}
+          onDismiss={() => setShowUpdateNotification(false)}
+        />
+      )}
+
       {emoji && <EmojiBubble emoji={emoji} onComplete={() => setEmoji(null)} />}
 
       <div className="lobster-area">

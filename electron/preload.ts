@@ -13,4 +13,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   hidePanel: () => ipcRenderer.invoke('hide-panel'),
   quitApp: () => ipcRenderer.invoke('quit-app'),
   moveWindow: (deltaX: number, deltaY: number) => ipcRenderer.send('move-window', deltaX, deltaY),
+  openExternal: (url: string) => ipcRenderer.invoke('open-external', url),
 });

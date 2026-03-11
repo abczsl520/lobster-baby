@@ -3,6 +3,8 @@ import { OpenClawStatus, LevelInfo } from '../types';
 import { formatTokens } from '../utils/levels';
 import './StatusPanel.css';
 
+const APP_VERSION = '1.0.0';
+
 interface StatusPanelProps {
   status: OpenClawStatus;
   levelInfo: LevelInfo;
@@ -68,6 +70,8 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({ status, levelInfo, tok
             ❌ 退出
           </button>
         </div>
+
+        <div className="version-info">v{APP_VERSION}</div>
       </div>
     </div>
   );
