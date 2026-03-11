@@ -1,7 +1,8 @@
-import { app, BrowserWindow, ipcMain, screen, Menu, Tray, nativeImage, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, screen, Menu, Tray, nativeImage, shell, Notification } from 'electron';
 import path from 'path';
 import { exec } from 'child_process';
 import fs from 'fs';
+import https from 'https';
 // ─── Logging ───
 const logFile = path.join(process.env.HOME || '/tmp', 'lobster-baby-debug.log');
 function log(msg) {
@@ -417,8 +418,89 @@ ipcMain.handle('open-external', async (_event, url) => {
         return;
     await shell.openExternal(url);
 });
+// ─── Auto Update Check (System Notification) ───
+const APP_VERSION = '1.0.0';
+let updateCheckInterval = null;
+function fetchJSON(url) {
+    return new Promise((resolve, reject) => {
+        https.get(url, { headers: { 'User-Agent': 'LobsterBaby' } }, (res) => {
+            // Follow redirects
+            if (res.statusCode === 301 || res.statusCode === 302) {
+                return fetchJSON(res.headers.location).then(resolve).catch(reject);
+            }
+            let data = '';
+            res.on('data', (chunk) => data += chunk);
+            res.on('end', () => {
+                try {
+                    resolve(JSON.parse(data));
+                }
+                catch {
+                    reject(new Error('Invalid JSON'));
+                }
+            });
+        }).on('error', reject);
+    });
+}
+function compareVersions(v1, v2) {
+    const p1 = v1.split('.').map(Number);
+    const p2 = v2.split('.').map(Number);
+    for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
+        const a = p1[i] || 0, b = p2[i] || 0;
+        if (a > b)
+            return 1;
+        if (a < b)
+            return -1;
+    }
+    return 0;
+}
+async function checkForUpdatesMain() {
+    try {
+        const data = await fetchJSON('https://api.github.com/repos/abczsl520/lobster-baby/releases/latest');
+        const latest = (data.tag_name || '').replace(/^v/, '');
+        if (!latest || compareVersions(latest, APP_VERSION) <= 0)
+            return;
+        log(`New version available: ${latest} (current: ${APP_VERSION})`);
+        // Send to renderer (in-app notification)
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('update-available', {
+                version: latest,
+                url: data.html_url,
+            });
+        }
+        // System notification
+        if (Notification.isSupported()) {
+            const notification = new Notification({
+                title: '🦞 Lobster Baby 有新版本！',
+                body: `v${latest} 已发布，点击查看更新`,
+                silent: false,
+            });
+            notification.on('click', () => {
+                shell.openExternal(data.html_url);
+            });
+            notification.show();
+        }
+    }
+    catch (err) {
+        log(`Update check failed: ${err}`);
+    }
+}
+function startUpdateCheck() {
+    // Check after 10 seconds (let app settle first)
+    setTimeout(checkForUpdatesMain, 10000);
+    // Then every 6 hours
+    updateCheckInterval = setInterval(checkForUpdatesMain, 6 * 60 * 60 * 1000);
+}
+function stopUpdateCheck() {
+    if (updateCheckInterval) {
+        clearInterval(updateCheckInterval);
+        updateCheckInterval = null;
+    }
+}
 // ─── App Lifecycle ───
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+    createWindow();
+    startUpdateCheck();
+});
 if (app.isPackaged) {
     app.setLoginItemSettings({ openAtLogin: true, openAsHidden: false });
 }
@@ -433,6 +515,7 @@ app.on('activate', () => {
 });
 app.on('before-quit', () => {
     stopStatusCheck();
+    stopUpdateCheck();
     if (savePositionTimeout)
         clearTimeout(savePositionTimeout);
 });
