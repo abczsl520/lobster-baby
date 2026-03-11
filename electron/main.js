@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, screen, Menu, Tray, nativeImage } from 'electron';
+import { app, BrowserWindow, ipcMain, screen, Menu, Tray, nativeImage, shell } from 'electron';
 import path from 'path';
 import { exec } from 'child_process';
 import fs from 'fs';
@@ -9,6 +9,31 @@ function log(msg) {
     fs.appendFileSync(logFile, line);
 }
 log('=== Lobster Baby starting ===');
+// ─── Find OpenClaw ───
+function findOpenClaw() {
+    const possiblePaths = [
+        '/opt/homebrew/bin/openclaw',
+        '/usr/local/bin/openclaw',
+        path.join(process.env.HOME || '', '.local/bin/openclaw'),
+        'openclaw', // Try PATH
+    ];
+    for (const p of possiblePaths) {
+        try {
+            if (p === 'openclaw') {
+                // Will use PATH
+                return 'openclaw';
+            }
+            if (fs.existsSync(p)) {
+                log(`Found openclaw at: ${p}`);
+                return p;
+            }
+        }
+        catch { /* ignore */ }
+    }
+    log('OpenClaw not found in any known location');
+    return null;
+}
+const openclawPath = findOpenClaw();
 // ─── Store ───
 const storePath = path.join(app.getPath('userData'), 'lobster-data.json');
 let storeCache = null;
@@ -199,12 +224,34 @@ let lastStatusPayload = ''; // FIX #5: Only write when data changes
 function checkOpenClawStatus() {
     if (!mainWindow || mainWindow.isDestroyed() || isCheckingStatus)
         return;
+    // If openclaw not found, report error immediately
+    if (!openclawPath) {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            try {
+                mainWindow.webContents.send('openclaw-status', {
+                    status: 'error',
+                    activeSessions: 0,
+                    tokenInfo: { daily: 0, total: 0 },
+                });
+            }
+            catch { /* ignore */ }
+        }
+        return;
+    }
     isCheckingStatus = true;
+    // Set PATH to include Homebrew bin directories
+    const env = {
+        ...process.env,
+        PATH: `/opt/homebrew/bin:/usr/local/bin:${process.env.PATH || '/usr/bin:/bin:/usr/sbin:/sbin'}`,
+    };
     Promise.all([
         new Promise((resolve) => {
-            exec('openclaw sessions --json --active 1 2>/dev/null', { timeout: 8000 }, (error, stdout) => {
+            exec(`${openclawPath} sessions --json --active 1 2>/dev/null`, { timeout: 8000, env }, (error, stdout) => {
                 let status = 'error';
                 let activeSessions = 0;
+                if (error) {
+                    log(`OpenClaw command error: ${error.message}`);
+                }
                 if (!error && stdout) {
                     try {
                         const data = JSON.parse(stdout);
@@ -212,8 +259,10 @@ function checkOpenClawStatus() {
                         activeSessions = sessions.length;
                         const hasRecentActivity = sessions.some((s) => s.ageMs < 30000 && (s.inputTokens > 0 || s.outputTokens > 0));
                         status = hasRecentActivity ? 'active' : 'idle';
+                        log(`OpenClaw status: ${status}, sessions: ${activeSessions}`);
                     }
-                    catch {
+                    catch (e) {
+                        log(`Failed to parse OpenClaw output: ${e}`);
                         status = 'error';
                     }
                 }
@@ -221,7 +270,7 @@ function checkOpenClawStatus() {
             });
         }),
         new Promise((resolve) => {
-            exec('openclaw sessions --json 2>/dev/null', { timeout: 8000 }, (err, stdout) => {
+            exec(`${openclawPath} sessions --json 2>/dev/null`, { timeout: 8000, env }, (err, stdout) => {
                 let allTokens = 0;
                 if (!err && stdout) {
                     try {
@@ -363,6 +412,11 @@ ipcMain.handle('hide-panel', () => {
     mainWindow.setBounds(clampToScreen(newX, newY, NORMAL_SIZE.width, NORMAL_SIZE.height));
 });
 ipcMain.handle('quit-app', () => app.quit());
+ipcMain.handle('open-external', async (_event, url) => {
+    if (typeof url !== 'string' || !url.startsWith('http'))
+        return;
+    await shell.openExternal(url);
+});
 // ─── App Lifecycle ───
 app.whenReady().then(createWindow);
 if (app.isPackaged) {
