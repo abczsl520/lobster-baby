@@ -182,6 +182,11 @@ function App() {
       accumulatedDelta.current = { x: 0, y: 0 };
     }
 
+    // Notify main process drag ended
+    if (isDragging.current) {
+      window.electronAPI.dragEnd();
+    }
+
     dragStart.current = null;
     
     setTimeout(() => {
@@ -216,11 +221,17 @@ function App() {
       onMouseUp={handleMouseUp}
       onMouseLeave={() => {
         handleMouseUp();
-        window.electronAPI.redock();
+        // Only redock if not dragging
+        if (!isDragging.current) {
+          window.electronAPI.redock();
+        }
       }}
       onMouseEnter={() => {
         resetAutoFade();
-        window.electronAPI.undock();
+        // Only undock if not dragging
+        if (!isDragging.current) {
+          window.electronAPI.undock();
+        }
       }}
     >
       {showUpdateNotification && updateInfo && (
