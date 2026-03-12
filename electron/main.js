@@ -198,12 +198,13 @@ let statusCheckInterval = null;
 let savePositionTimeout = null;
 const SNAP_DISTANCE = 15;
 const NORMAL_SIZE = { width: 200, height: 250 };
-const PANEL_SIZE = { width: 320, height: 450 };
+const PANEL_SIZE = { width: 320, height: 600 };
 // ─── Edge Docking (QQ Pet style) ───
 let isDockedLeft = false;
 let isDockedRight = false;
 let dockTimeout = null;
 let undockedX = 0; // Remember position before docking
+let isDraggingWindow = false; // True while user is actively dragging
 function dockToEdge() {
     if (!mainWindow || mainWindow.isDestroyed())
         return;
@@ -327,13 +328,15 @@ function createWindow() {
         if (snapped) {
             mainWindow.setBounds({ x: newX, y: newY, width: bounds.width, height: bounds.height });
         }
-        // Schedule edge docking after 1.5 seconds at edge
+        // Schedule edge docking after 1.5 seconds at edge (only if not actively dragging)
         if (dockTimeout)
             clearTimeout(dockTimeout);
-        const finalX = snapped ? newX : bounds.x;
-        const atEdge = (finalX <= display.x + 5) || (finalX + bounds.width >= display.x + display.width - 5);
-        if (atEdge) {
-            dockTimeout = setTimeout(() => dockToEdge(), 1500);
+        if (!isDraggingWindow) {
+            const finalX = snapped ? newX : bounds.x;
+            const atEdge = (finalX <= display.x + 5) || (finalX + bounds.width >= display.x + display.width - 5);
+            if (atEdge) {
+                dockTimeout = setTimeout(() => dockToEdge(), 1500);
+            }
         }
         // Debounce position saving
         if (savePositionTimeout)
@@ -568,6 +571,16 @@ ipcMain.on('move-window', (event, deltaX, deltaY) => {
     // Clamp to reasonable range (max 500px per frame)
     const dx = Math.max(-500, Math.min(500, Math.round(deltaX)));
     const dy = Math.max(-500, Math.min(500, Math.round(deltaY)));
+    // Cancel any pending dock when user is actively dragging
+    if (dockTimeout) {
+        clearTimeout(dockTimeout);
+        dockTimeout = null;
+    }
+    if (isDockedLeft || isDockedRight) {
+        isDockedLeft = false;
+        isDockedRight = false;
+    }
+    isDraggingWindow = true;
     const win = BrowserWindow.fromWebContents(event.sender);
     if (!win || win.isDestroyed())
         return;
@@ -600,6 +613,21 @@ ipcMain.on('move-window', (event, deltaX, deltaY) => {
         newY = Math.round(newY + (bottomDist * pull * SNAP_STRENGTH));
     }
     win.setPosition(newX, newY);
+});
+ipcMain.on('drag-end', () => {
+    isDraggingWindow = false;
+    // After drag ends, check if at edge and schedule docking
+    if (!mainWindow || mainWindow.isDestroyed())
+        return;
+    const bounds = mainWindow.getBounds();
+    const display = screen.getDisplayNearestPoint({ x: bounds.x, y: bounds.y }).workArea;
+    const atLeftEdge = bounds.x <= display.x + 5;
+    const atRightEdge = bounds.x + bounds.width >= display.x + display.width - 5;
+    if (atLeftEdge || atRightEdge) {
+        if (dockTimeout)
+            clearTimeout(dockTimeout);
+        dockTimeout = setTimeout(() => dockToEdge(), 1500);
+    }
 });
 ipcMain.handle('toggle-always-on-top', () => {
     if (!mainWindow || mainWindow.isDestroyed())
@@ -693,7 +721,7 @@ ipcMain.handle('notify-level-up', (_event, level) => {
     }
 });
 // ─── Auto Update Check (System Notification) ───
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.4.1';
 let updateCheckInterval = null;
 function fetchJSON(url) {
     return new Promise((resolve, reject) => {

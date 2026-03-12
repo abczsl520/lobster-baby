@@ -4,7 +4,7 @@ import { formatTokens } from '../utils/levels';
 import { TokenChart } from './TokenChart';
 import './StatusPanel.css';
 
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.4.1';
 
 interface StatusPanelProps {
   status: OpenClawStatus;

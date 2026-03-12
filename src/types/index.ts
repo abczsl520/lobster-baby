@@ -39,6 +39,7 @@ declare global {
       hidePanel: () => Promise<void>;
       quitApp: () => Promise<void>;
       moveWindow: (deltaX: number, deltaY: number) => void;
+      dragEnd: () => void;
       openExternal: (url: string) => Promise<void>;
       notifyLevelUp: (level: number) => Promise<void>;
       undock: () => Promise<void>;

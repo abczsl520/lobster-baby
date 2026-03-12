@@ -30,6 +30,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     hidePanel: () => ipcRenderer.invoke('hide-panel'),
     quitApp: () => ipcRenderer.invoke('quit-app'),
     moveWindow: (deltaX, deltaY) => ipcRenderer.send('move-window', deltaX, deltaY),
+    dragEnd: () => ipcRenderer.send('drag-end'),
     openExternal: (url) => ipcRenderer.invoke('open-external', url),
     notifyLevelUp: (level) => ipcRenderer.invoke('notify-level-up', level),
     undock: () => ipcRenderer.invoke('undock'),
