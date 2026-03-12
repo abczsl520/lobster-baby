@@ -27,6 +27,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('show-achievements', handler);
     return () => ipcRenderer.removeListener('show-achievements', handler);
   },
+  onDockStateChanged: (callback: (state: string | null) => void) => {
+    const handler = (_event: any, state: string | null) => callback(state);
+    ipcRenderer.on('dock-state-changed', handler);
+    return () => ipcRenderer.removeListener('dock-state-changed', handler);
+  },
   toggleAlwaysOnTop: () => ipcRenderer.invoke('toggle-always-on-top'),
   getLevelData: () => ipcRenderer.invoke('get-level-data'),
   getDailyTokens: () => ipcRenderer.invoke('get-daily-tokens'),
