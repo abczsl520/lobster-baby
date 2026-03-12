@@ -13,11 +13,27 @@ import level7 from '../assets/levels/level7.png';
 import level8 from '../assets/levels/level8.png';
 import level9 from '../assets/levels/level9.png';
 import level10 from '../assets/levels/level10.png';
+// Dock skin imports (peeking from edge)
+import dock1 from '../assets/dock/dock1.png';
+import dock2 from '../assets/dock/dock2.png';
+import dock3 from '../assets/dock/dock3.png';
+import dock4 from '../assets/dock/dock4.png';
+import dock5 from '../assets/dock/dock5.png';
+import dock6 from '../assets/dock/dock6.png';
+import dock7 from '../assets/dock/dock7.png';
+import dock8 from '../assets/dock/dock8.png';
+import dock9 from '../assets/dock/dock9.png';
+import dock10 from '../assets/dock/dock10.png';
 import './Lobster.css';
 
 const LEVEL_SKINS: Record<number, string> = {
   1: level1, 2: level2, 3: level3, 4: level4, 5: level5,
   6: level6, 7: level7, 8: level8, 9: level9, 10: level10,
+};
+
+const DOCK_SKINS: Record<number, string> = {
+  1: dock1, 2: dock2, 3: dock3, 4: dock4, 5: dock5,
+  6: dock6, 7: dock7, 8: dock8, 9: dock9, 10: dock10,
 };
 
 interface LobsterProps {
@@ -83,7 +99,9 @@ export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, on
     onClick();
   };
 
-  const skinSrc = LEVEL_SKINS[levelInfo.level] || level1;
+  const skinSrc = dockState
+    ? (DOCK_SKINS[levelInfo.level] || dock1)
+    : (LEVEL_SKINS[levelInfo.level] || level1);
 
   return (
     <div

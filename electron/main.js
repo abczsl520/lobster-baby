@@ -855,7 +855,7 @@ ipcMain.handle('notify-level-up', (_event, level) => {
     }
 });
 // ─── Auto Update Check (System Notification) ───
-const APP_VERSION = '1.4.6';
+const APP_VERSION = '1.5.0';
 let updateCheckInterval = null;
 function fetchJSON(url) {
     return new Promise((resolve, reject) => {
