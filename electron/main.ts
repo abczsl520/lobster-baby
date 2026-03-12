@@ -272,7 +272,7 @@ function dockToEdge() {
     undockedX = bounds.x;
     isDockedLeft = true;
     isDockedRight = false;
-    const targetX = display.x - Math.floor(bounds.width * 0.6);
+    const targetX = display.x - Math.floor(bounds.width * 0.3);
     animateWindowX(bounds.x, targetX, 300, easeOutCubic, () => {
       startHoverCheck();
       notifyDockState('left');
@@ -282,7 +282,7 @@ function dockToEdge() {
     undockedX = bounds.x;
     isDockedRight = true;
     isDockedLeft = false;
-    const targetX = display.x + display.width - Math.floor(bounds.width * 0.4);
+    const targetX = display.x + display.width - Math.floor(bounds.width * 0.7);
     animateWindowX(bounds.x, targetX, 300, easeOutCubic, () => {
       startHoverCheck();
       notifyDockState('right');
@@ -346,7 +346,7 @@ function startHoverCheck() {
         const mouseAwayFromWindow = mousePos.x > display.x + bounds.width + 30 || !inVerticalRange;
         if (mouseAwayFromWindow) {
           hoverUndocked = false;
-          const targetX = display.x - Math.floor(bounds.width * 0.6);
+          const targetX = display.x - Math.floor(bounds.width * 0.3);
           animateWindowX(bounds.x, targetX, 300, easeInCubic);
         }
       }
@@ -360,7 +360,7 @@ function startHoverCheck() {
         const mouseAwayFromWindow = mousePos.x < display.x + display.width - bounds.width - 30 || !inVerticalRange;
         if (mouseAwayFromWindow) {
           hoverUndocked = false;
-          const targetX = display.x + display.width - Math.floor(bounds.width * 0.4);
+          const targetX = display.x + display.width - Math.floor(bounds.width * 0.7);
           animateWindowX(bounds.x, targetX, 300, easeInCubic);
         }
       }
@@ -886,7 +886,7 @@ ipcMain.handle('notify-level-up', (_event, level: number) => {
 });
 
 // ─── Auto Update Check (System Notification) ───
-const APP_VERSION = '1.4.5';
+const APP_VERSION = '1.4.6';
 let updateCheckInterval: NodeJS.Timeout | null = null;
 
 function fetchJSON(url: string): Promise<any> {
