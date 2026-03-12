@@ -25,9 +25,10 @@ interface LobsterProps {
   levelInfo: LevelInfo;
   onClick: () => void;
   onDoubleClick: () => void;
+  dockState: string | null;
 }
 
-export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, onDoubleClick }) => {
+export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, onDoubleClick, dockState }) => {
   const [isClicked, setIsClicked] = useState(false);
   const [tokenDelta, setTokenDelta] = useState<number | null>(null);
   const [showLevelUp, setShowLevelUp] = useState(false);
@@ -86,7 +87,7 @@ export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, on
 
   return (
     <div
-      className={`lobster-container ${status} ${isClicked ? 'clicked' : ''}`}
+      className={`lobster-container ${status} ${isClicked ? 'clicked' : ''} ${dockState ? `docked-${dockState}` : ''}`}
       onClick={handleClick}
       onDoubleClick={onDoubleClick}
     >

@@ -184,6 +184,73 @@
   50% { opacity: 0.4; transform: scale(0.8); }
 }
 
+/* ─── Edge Docking Animations (QQ Pet style) ─── */
+
+/* Docked left: lobster rotates and "hangs" on left edge */
+.lobster-container.docked-left .lobster-img {
+  animation: dock-left-hang 3s ease-in-out infinite !important;
+  transform-origin: left center;
+}
+
+/* Docked right: lobster rotates and "hangs" on right edge */
+.lobster-container.docked-right .lobster-img {
+  animation: dock-right-hang 3s ease-in-out infinite !important;
+  transform-origin: right center;
+}
+
+/* Docked left: initial grab animation */
+.lobster-container.docked-left .lobster-img {
+  animation: dock-left-grab 0.6s ease-out forwards, dock-left-hang 3s ease-in-out 0.6s infinite !important;
+}
+
+/* Docked right: initial grab animation */
+.lobster-container.docked-right .lobster-img {
+  animation: dock-right-grab 0.6s ease-out forwards, dock-right-hang 3s ease-in-out 0.6s infinite !important;
+}
+
+/* Hide level badge and status dot when docked */
+.lobster-container.docked-left .level-badge,
+.lobster-container.docked-right .level-badge,
+.lobster-container.docked-left .status-dot,
+.lobster-container.docked-right .status-dot {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* Grab left edge: swing in and settle */
+@keyframes dock-left-grab {
+  0% { transform: rotate(0deg) translateX(0); }
+  30% { transform: rotate(40deg) translateX(-10px); }
+  50% { transform: rotate(25deg) translateX(-5px); }
+  70% { transform: rotate(35deg) translateX(-8px); }
+  100% { transform: rotate(30deg) translateX(-6px); }
+}
+
+/* Hang on left edge: gentle sway */
+@keyframes dock-left-hang {
+  0%, 100% { transform: rotate(30deg) translateX(-6px); }
+  25% { transform: rotate(33deg) translateX(-8px) translateY(-2px); }
+  50% { transform: rotate(27deg) translateX(-4px) translateY(2px); }
+  75% { transform: rotate(32deg) translateX(-7px) translateY(-1px); }
+}
+
+/* Grab right edge: swing in and settle */
+@keyframes dock-right-grab {
+  0% { transform: rotate(0deg) translateX(0); }
+  30% { transform: rotate(-40deg) translateX(10px); }
+  50% { transform: rotate(-25deg) translateX(5px); }
+  70% { transform: rotate(-35deg) translateX(8px); }
+  100% { transform: rotate(-30deg) translateX(6px); }
+}
+
+/* Hang on right edge: gentle sway */
+@keyframes dock-right-hang {
+  0%, 100% { transform: rotate(-30deg) translateX(6px); }
+  25% { transform: rotate(-33deg) translateX(8px) translateY(-2px); }
+  50% { transform: rotate(-27deg) translateX(4px) translateY(2px); }
+  75% { transform: rotate(-32deg) translateX(7px) translateY(-1px); }
+}
+
 /* ─── Token Fly Effect ─── */
 .token-fly {
   position: absolute;

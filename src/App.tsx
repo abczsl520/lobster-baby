@@ -19,6 +19,7 @@ function App() {
   const [showAchievements, setShowAchievements] = useState(false);
   const [emoji, setEmoji] = useState<string | null>(null);
   const [isDraggingState, setIsDraggingState] = useState(false);
+  const [dockState, setDockState] = useState<string | null>(null);
   const [showUpdateNotification, setShowUpdateNotification] = useState(false);
   const [isAutoFaded, setIsAutoFaded] = useState(false);
   const [autoFadeEnabled, setAutoFadeEnabled] = useState(false);
@@ -127,7 +128,10 @@ function App() {
       window.electronAPI.showPanel();
       setShowAchievements(true);
     });
-    return () => { cleanupPanel(); cleanupChart(); cleanupAchievements(); };
+    const cleanupDockState = window.electronAPI.onDockStateChanged((state) => {
+      setDockState(state);
+    });
+    return () => { cleanupPanel(); cleanupChart(); cleanupAchievements(); cleanupDockState(); };
   }, []);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -264,6 +268,7 @@ function App() {
           levelInfo={levelInfo}
           onClick={handleClick}
           onDoubleClick={handleDoubleClick}
+          dockState={dockState}
         />
       </div>
 
