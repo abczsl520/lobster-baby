@@ -186,26 +186,18 @@
 
 /* ─── Edge Docking Animations (QQ Pet style) ─── */
 
-/* Docked left: lobster rotates and "hangs" on left edge */
+/* Docked left: lobster tilts slightly and bobs gently */
 .lobster-container.docked-left .lobster-img {
-  animation: dock-left-hang 3s ease-in-out infinite !important;
-  transform-origin: left center;
+  animation: dock-left-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+             dock-left-idle 4s ease-in-out 0.5s infinite !important;
+  transform-origin: center center;
 }
 
-/* Docked right: lobster rotates and "hangs" on right edge */
+/* Docked right: mirror of left */
 .lobster-container.docked-right .lobster-img {
-  animation: dock-right-hang 3s ease-in-out infinite !important;
-  transform-origin: right center;
-}
-
-/* Docked left: initial grab animation */
-.lobster-container.docked-left .lobster-img {
-  animation: dock-left-grab 0.6s ease-out forwards, dock-left-hang 3s ease-in-out 0.6s infinite !important;
-}
-
-/* Docked right: initial grab animation */
-.lobster-container.docked-right .lobster-img {
-  animation: dock-right-grab 0.6s ease-out forwards, dock-right-hang 3s ease-in-out 0.6s infinite !important;
+  animation: dock-right-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+             dock-right-idle 4s ease-in-out 0.5s infinite !important;
+  transform-origin: center center;
 }
 
 /* Hide level badge and status dot when docked */
@@ -217,38 +209,38 @@
   transition: opacity 0.3s ease;
 }
 
-/* Grab left edge: swing in and settle */
-@keyframes dock-left-grab {
-  0% { transform: rotate(0deg) translateX(0); }
-  30% { transform: rotate(40deg) translateX(-10px); }
-  50% { transform: rotate(25deg) translateX(-5px); }
-  70% { transform: rotate(35deg) translateX(-8px); }
-  100% { transform: rotate(30deg) translateX(-6px); }
+/* Enter left: quick tilt + bounce settle */
+@keyframes dock-left-enter {
+  0% { transform: rotate(0deg) scale(1); }
+  40% { transform: rotate(18deg) scale(0.92); }
+  70% { transform: rotate(8deg) scale(0.88); }
+  85% { transform: rotate(14deg) scale(0.9); }
+  100% { transform: rotate(12deg) scale(0.9); }
 }
 
-/* Hang on left edge: gentle sway */
-@keyframes dock-left-hang {
-  0%, 100% { transform: rotate(30deg) translateX(-6px); }
-  25% { transform: rotate(33deg) translateX(-8px) translateY(-2px); }
-  50% { transform: rotate(27deg) translateX(-4px) translateY(2px); }
-  75% { transform: rotate(32deg) translateX(-7px) translateY(-1px); }
+/* Idle left: gentle sway + float, like hanging from a thread */
+@keyframes dock-left-idle {
+  0%, 100% { transform: rotate(12deg) scale(0.9) translateY(0); }
+  30% { transform: rotate(14deg) scale(0.9) translateY(-3px); }
+  60% { transform: rotate(10deg) scale(0.9) translateY(2px); }
+  80% { transform: rotate(13deg) scale(0.9) translateY(-1px); }
 }
 
-/* Grab right edge: swing in and settle */
-@keyframes dock-right-grab {
-  0% { transform: rotate(0deg) translateX(0); }
-  30% { transform: rotate(-40deg) translateX(10px); }
-  50% { transform: rotate(-25deg) translateX(5px); }
-  70% { transform: rotate(-35deg) translateX(8px); }
-  100% { transform: rotate(-30deg) translateX(6px); }
+/* Enter right: mirror */
+@keyframes dock-right-enter {
+  0% { transform: rotate(0deg) scale(1); }
+  40% { transform: rotate(-18deg) scale(0.92); }
+  70% { transform: rotate(-8deg) scale(0.88); }
+  85% { transform: rotate(-14deg) scale(0.9); }
+  100% { transform: rotate(-12deg) scale(0.9); }
 }
 
-/* Hang on right edge: gentle sway */
-@keyframes dock-right-hang {
-  0%, 100% { transform: rotate(-30deg) translateX(6px); }
-  25% { transform: rotate(-33deg) translateX(8px) translateY(-2px); }
-  50% { transform: rotate(-27deg) translateX(4px) translateY(2px); }
-  75% { transform: rotate(-32deg) translateX(7px) translateY(-1px); }
+/* Idle right: mirror */
+@keyframes dock-right-idle {
+  0%, 100% { transform: rotate(-12deg) scale(0.9) translateY(0); }
+  30% { transform: rotate(-14deg) scale(0.9) translateY(-3px); }
+  60% { transform: rotate(-10deg) scale(0.9) translateY(2px); }
+  80% { transform: rotate(-13deg) scale(0.9) translateY(-1px); }
 }
 
 /* ─── Token Fly Effect ─── */

@@ -5,7 +5,7 @@ import { TokenChart } from './TokenChart';
 import { AchievementList } from './AchievementList';
 import './StatusPanel.css';
 
-const APP_VERSION = '1.4.4';
+const APP_VERSION = '1.4.5';
 
 interface StatusPanelProps {
   status: OpenClawStatus;
