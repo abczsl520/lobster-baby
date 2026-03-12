@@ -1,12 +1,26 @@
-import { app, BrowserWindow, ipcMain, screen, Menu, Tray, nativeImage, shell, Notification } from 'electron';
+import { app, BrowserWindow, ipcMain, screen, Menu, Tray, nativeImage, shell, Notification, globalShortcut } from 'electron';
 import path from 'path';
 import { exec } from 'child_process';
 import fs from 'fs';
 import https from 'https';
 // ─── Logging ───
 const logFile = path.join(process.env.HOME || '/tmp', 'lobster-baby-debug.log');
+const MAX_LOG_SIZE = 512 * 1024; // 512KB max
 function log(msg) {
     const line = `[${new Date().toISOString()}] ${msg}\n`;
+    try {
+        // Rotate if too large
+        const stat = fs.statSync(logFile);
+        if (stat.size > MAX_LOG_SIZE) {
+            const oldLog = logFile + '.old';
+            try {
+                fs.unlinkSync(oldLog);
+            }
+            catch { /* ok */ }
+            fs.renameSync(logFile, oldLog);
+        }
+    }
+    catch { /* file doesn't exist yet, ok */ }
     fs.appendFileSync(logFile, line);
 }
 log('=== Lobster Baby starting ===');
@@ -209,24 +223,24 @@ function createWindow() {
         if (!mainWindow)
             return;
         const bounds = mainWindow.getBounds();
-        const display = screen.getPrimaryDisplay().workAreaSize;
+        const display = screen.getDisplayNearestPoint({ x: bounds.x, y: bounds.y }).workArea;
         let newX = bounds.x;
         let newY = bounds.y;
         let snapped = false;
-        if (bounds.x < SNAP_DISTANCE) {
-            newX = 0;
+        if (bounds.x - display.x < SNAP_DISTANCE) {
+            newX = display.x;
             snapped = true;
         }
-        if (bounds.y < SNAP_DISTANCE) {
-            newY = 0;
+        if (bounds.y - display.y < SNAP_DISTANCE) {
+            newY = display.y;
             snapped = true;
         }
-        if (bounds.x + bounds.width > display.width - SNAP_DISTANCE) {
-            newX = display.width - bounds.width;
+        if (bounds.x + bounds.width > display.x + display.width - SNAP_DISTANCE) {
+            newX = display.x + display.width - bounds.width;
             snapped = true;
         }
-        if (bounds.y + bounds.height > display.height - SNAP_DISTANCE) {
-            newY = display.height - bounds.height;
+        if (bounds.y + bounds.height > display.y + display.height - SNAP_DISTANCE) {
+            newY = display.y + display.height - bounds.height;
             snapped = true;
         }
         if (snapped) {
@@ -443,26 +457,28 @@ ipcMain.on('move-window', (event, deltaX, deltaY) => {
         return;
     const [x, y] = win.getPosition();
     const bounds = win.getBounds();
-    const display = screen.getPrimaryDisplay().workAreaSize;
+    const display = screen.getDisplayNearestPoint({ x, y }).workArea;
     let newX = x + dx;
     let newY = y + dy;
     // Real-time magnetic snapping (within 30px of edge)
     const MAGNETIC_DISTANCE = 30;
     const SNAP_STRENGTH = 0.3;
-    if (newX < MAGNETIC_DISTANCE && newX > -bounds.width / 2) {
-        const pull = (MAGNETIC_DISTANCE - newX) / MAGNETIC_DISTANCE;
-        newX = Math.round(newX - (newX * pull * SNAP_STRENGTH));
+    const leftDist = newX - display.x;
+    if (leftDist < MAGNETIC_DISTANCE && leftDist > -bounds.width / 2) {
+        const pull = (MAGNETIC_DISTANCE - leftDist) / MAGNETIC_DISTANCE;
+        newX = Math.round(newX - (leftDist * pull * SNAP_STRENGTH));
     }
-    if (newY < MAGNETIC_DISTANCE && newY > -bounds.height / 2) {
-        const pull = (MAGNETIC_DISTANCE - newY) / MAGNETIC_DISTANCE;
-        newY = Math.round(newY - (newY * pull * SNAP_STRENGTH));
+    const topDist = newY - display.y;
+    if (topDist < MAGNETIC_DISTANCE && topDist > -bounds.height / 2) {
+        const pull = (MAGNETIC_DISTANCE - topDist) / MAGNETIC_DISTANCE;
+        newY = Math.round(newY - (topDist * pull * SNAP_STRENGTH));
     }
-    const rightDist = display.width - (newX + bounds.width);
+    const rightDist = (display.x + display.width) - (newX + bounds.width);
     if (rightDist < MAGNETIC_DISTANCE && rightDist > -bounds.width / 2) {
         const pull = (MAGNETIC_DISTANCE - rightDist) / MAGNETIC_DISTANCE;
         newX = Math.round(newX + (rightDist * pull * SNAP_STRENGTH));
     }
-    const bottomDist = display.height - (newY + bounds.height);
+    const bottomDist = (display.y + display.height) - (newY + bounds.height);
     if (bottomDist < MAGNETIC_DISTANCE && bottomDist > -bounds.height / 2) {
         const pull = (MAGNETIC_DISTANCE - bottomDist) / MAGNETIC_DISTANCE;
         newY = Math.round(newY + (bottomDist * pull * SNAP_STRENGTH));
@@ -485,12 +501,12 @@ ipcMain.handle('get-level-data', () => {
     const store = readStore();
     return { totalTokens: store.totalTokens || 0 };
 });
-// FIX #7: Clamp panel position to screen bounds
+// FIX #7: Clamp panel position to screen bounds (multi-monitor aware)
 function clampToScreen(x, y, w, h) {
-    const display = screen.getPrimaryDisplay().workAreaSize;
+    const display = screen.getDisplayNearestPoint({ x, y }).workArea;
     return {
-        x: Math.max(0, Math.min(x, display.width - w)),
-        y: Math.max(0, Math.min(y, display.height - h)),
+        x: Math.max(display.x, Math.min(x, display.x + display.width - w)),
+        y: Math.max(display.y, Math.min(y, display.y + display.height - h)),
         width: w,
         height: h,
     };
@@ -517,8 +533,28 @@ ipcMain.handle('open-external', async (_event, url) => {
         return;
     await shell.openExternal(url);
 });
+// ─── Level Up Notification ───
+const LEVEL_NAMES = {
+    1: '粉色宝宝', 2: '活泼小虾', 3: '皇冠龙虾', 4: '肌肉猛男',
+    5: '金冠金链', 6: '银甲骑士', 7: '紫色魔法师', 8: '金甲将军',
+    9: '彩虹龙虾', 10: '龙虾之王',
+};
+ipcMain.handle('notify-level-up', (_event, level) => {
+    if (typeof level !== 'number' || level < 1 || level > 10)
+        return;
+    const name = LEVEL_NAMES[level] || `Lv.${level}`;
+    log(`Level up! Now Lv.${level} (${name})`);
+    if (Notification.isSupported()) {
+        const notification = new Notification({
+            title: `🦞 龙虾宝宝升级了！`,
+            body: `恭喜！你的龙虾宝宝升到了 Lv.${level}「${name}」🎉`,
+            silent: false,
+        });
+        notification.show();
+    }
+});
 // ─── Auto Update Check (System Notification) ───
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.2.0';
 let updateCheckInterval = null;
 function fetchJSON(url) {
     return new Promise((resolve, reject) => {
@@ -599,6 +635,34 @@ function stopUpdateCheck() {
 app.whenReady().then(() => {
     createWindow();
     startUpdateCheck();
+    // Global shortcuts
+    globalShortcut.register('CommandOrControl+Shift+L', () => {
+        if (!mainWindow)
+            return;
+        if (mainWindow.isVisible()) {
+            mainWindow.hide();
+        }
+        else {
+            mainWindow.show();
+            mainWindow.focus();
+        }
+    });
+    // Multi-monitor: reposition if display config changes
+    screen.on('display-removed', () => {
+        if (!mainWindow || mainWindow.isDestroyed())
+            return;
+        const bounds = mainWindow.getBounds();
+        const clamped = clampToScreen(bounds.x, bounds.y, bounds.width, bounds.height);
+        mainWindow.setBounds(clamped);
+        log('Display removed, repositioned window');
+    });
+    screen.on('display-metrics-changed', () => {
+        if (!mainWindow || mainWindow.isDestroyed())
+            return;
+        const bounds = mainWindow.getBounds();
+        const clamped = clampToScreen(bounds.x, bounds.y, bounds.width, bounds.height);
+        mainWindow.setBounds(clamped);
+    });
 });
 if (app.isPackaged) {
     app.setLoginItemSettings({ openAtLogin: true, openAsHidden: false });
@@ -615,6 +679,7 @@ app.on('activate', () => {
 app.on('before-quit', () => {
     stopStatusCheck();
     stopUpdateCheck();
+    globalShortcut.unregisterAll();
     if (savePositionTimeout)
         clearTimeout(savePositionTimeout);
 });

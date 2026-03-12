@@ -7,6 +7,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Return cleanup function
     return () => ipcRenderer.removeListener('openclaw-status', handler);
   },
+  onUpdateAvailable: (callback: (data: any) => void) => {
+    const handler = (_event: any, data: any) => callback(data);
+    ipcRenderer.on('update-available', handler);
+    return () => ipcRenderer.removeListener('update-available', handler);
+  },
   toggleAlwaysOnTop: () => ipcRenderer.invoke('toggle-always-on-top'),
   getLevelData: () => ipcRenderer.invoke('get-level-data'),
   showPanel: () => ipcRenderer.invoke('show-panel'),
@@ -14,4 +19,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   quitApp: () => ipcRenderer.invoke('quit-app'),
   moveWindow: (deltaX: number, deltaY: number) => ipcRenderer.send('move-window', deltaX, deltaY),
   openExternal: (url: string) => ipcRenderer.invoke('open-external', url),
+  notifyLevelUp: (level: number) => ipcRenderer.invoke('notify-level-up', level),
 });

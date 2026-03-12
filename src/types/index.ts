@@ -27,6 +27,7 @@ declare global {
   interface Window {
     electronAPI: {
       onOpenClawStatus: (callback: (data: StatusData) => void) => () => void;
+      onUpdateAvailable: (callback: (data: any) => void) => () => void;
       toggleAlwaysOnTop: () => Promise<boolean>;
       getLevelData: () => Promise<{ totalTokens: number }>;
       showPanel: () => Promise<void>;
@@ -34,6 +35,7 @@ declare global {
       quitApp: () => Promise<void>;
       moveWindow: (deltaX: number, deltaY: number) => void;
       openExternal: (url: string) => Promise<void>;
+      notifyLevelUp: (level: number) => Promise<void>;
     };
   }
 }

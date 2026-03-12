@@ -1,0 +1,126 @@
+.levelup-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Expanding ring flash */
+.levelup-ring {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid #ffd700;
+  box-shadow: 0 0 20px #ffd700, inset 0 0 20px #ffd700;
+  animation: ring-expand 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+.levelup-ring.flash {
+  animation: ring-expand 0.6s ease-out forwards;
+}
+
+@keyframes ring-expand {
+  0% {
+    transform: scale(0.5);
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+/* Sparkle particles */
+.levelup-sparkle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: radial-gradient(circle, #fff 0%, #ffd700 50%, transparent 100%);
+  border-radius: 50%;
+  animation: sparkle-fly 1s ease-out forwards;
+  opacity: 0;
+  --angle: 0deg;
+  --delay: 0s;
+  animation-delay: var(--delay);
+}
+
+@keyframes sparkle-fly {
+  0% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(
+      calc(cos(var(--angle)) * 60px),
+      calc(sin(var(--angle)) * 60px)
+    ) scale(0.3);
+    opacity: 0;
+  }
+}
+
+/* Level up text */
+.levelup-text {
+  position: relative;
+  text-align: center;
+  animation: text-appear 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes text-appear {
+  0% {
+    transform: scale(0.5) translateY(20px);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) translateY(-5px);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+.levelup-label {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  color: #ffd700;
+  text-shadow: 
+    0 0 10px rgba(255, 215, 0, 0.8),
+    0 2px 4px rgba(0, 0, 0, 0.5);
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+
+.levelup-number {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  font-size: 32px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 
+    0 0 15px rgba(255, 215, 0, 1),
+    0 0 30px rgba(255, 215, 0, 0.5),
+    0 3px 6px rgba(0, 0, 0, 0.7);
+  animation: number-pulse 0.8s ease-in-out infinite;
+}
+
+@keyframes number-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}

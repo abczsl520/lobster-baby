@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { OpenClawStatus, LevelInfo } from '../types';
 import { TokenFly } from './TokenFly';
+import { LevelUpEffect } from './LevelUpEffect';
 // Level skin imports
 import level1 from '../assets/levels/level1.png';
 import level2 from '../assets/levels/level2.png';
@@ -29,8 +30,11 @@ interface LobsterProps {
 export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, onDoubleClick }) => {
   const [isClicked, setIsClicked] = useState(false);
   const [tokenDelta, setTokenDelta] = useState<number | null>(null);
+  const [showLevelUp, setShowLevelUp] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastTokensRef = useRef<number>(levelInfo.currentTokens);
+  const lastLevelRef = useRef<number>(0); // 0 = not initialized yet
+  const initializedRef = useRef(false);
 
   useEffect(() => {
     return () => {
@@ -50,6 +54,21 @@ export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, on
     }
     lastTokensRef.current = levelInfo.currentTokens;
   }, [levelInfo.currentTokens, status]);
+
+  // Detect level up (skip on first load)
+  useEffect(() => {
+    if (!initializedRef.current) {
+      initializedRef.current = true;
+      lastLevelRef.current = levelInfo.level;
+      return;
+    }
+    if (levelInfo.level > lastLevelRef.current && lastLevelRef.current > 0) {
+      setShowLevelUp(true);
+      // Send system notification
+      window.electronAPI.notifyLevelUp(levelInfo.level);
+    }
+    lastLevelRef.current = levelInfo.level;
+  }, [levelInfo.level]);
 
   const handleClick = () => {
     setIsClicked(true);
@@ -77,6 +96,11 @@ export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, on
       {/* Token fly effect */}
       {tokenDelta !== null && (
         <TokenFly tokens={tokenDelta} onComplete={() => setTokenDelta(null)} />
+      )}
+
+      {/* Level up effect */}
+      {showLevelUp && (
+        <LevelUpEffect level={levelInfo.level} onComplete={() => setShowLevelUp(false)} />
       )}
 
       {/* Main lobster image - uses level-specific skin */}
