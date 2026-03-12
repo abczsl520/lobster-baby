@@ -30,16 +30,18 @@ export const ANIMATION = {
   EMOJI_DURATION: 1800, // ms
 } as const;
 
-// Level thresholds (tokens)
+// Level thresholds (real API tokens including cache)
+// Based on typical OpenClaw user ~100M/day
+// Casual ~30M/day | Regular ~100M/day | Power ~500M/day
 export const LEVEL_THRESHOLDS = [
-  0,           // Level 1
-  10_000_000,  // Level 2: 10M
-  50_000_000,  // Level 3: 50M
-  150_000_000, // Level 4: 150M
-  350_000_000, // Level 5: 350M
-  700_000_000, // Level 6: 700M
-  1_300_000_000, // Level 7: 1.3B
-  2_200_000_000, // Level 8: 2.2B
-  3_500_000_000, // Level 9: 3.5B
-  5_000_000_000, // Level 10: 5B
+  0,                 // Level 1: newborn
+  50_000_000,        // Level 2: 50M  (regular: ~12h)
+  200_000_000,       // Level 3: 200M (regular: ~2d)
+  500_000_000,       // Level 4: 500M (regular: ~5d)
+  1_000_000_000,     // Level 5: 1B   (regular: ~1.5w)
+  2_500_000_000,     // Level 6: 2.5B (regular: ~3.5w)
+  5_000_000_000,     // Level 7: 5B   (regular: ~1.7mo)
+  10_000_000_000,    // Level 8: 10B  (regular: ~3.3mo)
+  25_000_000_000,    // Level 9: 25B  (regular: ~8mo)
+  50_000_000_000,    // Level 10: 50B (regular: ~1.4yr, legendary!)
 ] as const;

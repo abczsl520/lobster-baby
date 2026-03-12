@@ -1,7 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { OpenClawStatus, LevelInfo } from '../types';
-import lobsterImg from '../assets/lobster-nobg.png';
+import { TokenFly } from './TokenFly';
+// Level skin imports
+import level1 from '../assets/levels/level1.png';
+import level2 from '../assets/levels/level2.png';
+import level3 from '../assets/levels/level3.png';
+import level4 from '../assets/levels/level4.png';
+import level5 from '../assets/levels/level5.png';
+import level6 from '../assets/levels/level6.png';
+import level7 from '../assets/levels/level7.png';
+import level8 from '../assets/levels/level8.png';
+import level9 from '../assets/levels/level9.png';
+import level10 from '../assets/levels/level10.png';
 import './Lobster.css';
+
+const LEVEL_SKINS: Record<number, string> = {
+  1: level1, 2: level2, 3: level3, 4: level4, 5: level5,
+  6: level6, 7: level7, 8: level8, 9: level9, 10: level10,
+};
 
 interface LobsterProps {
   status: OpenClawStatus;
@@ -12,10 +28,11 @@ interface LobsterProps {
 
 export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, onDoubleClick }) => {
   const [isClicked, setIsClicked] = useState(false);
+  const [tokenDelta, setTokenDelta] = useState<number | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTokensRef = useRef<number>(levelInfo.currentTokens);
 
   useEffect(() => {
-    // Cleanup timeout on unmount
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
@@ -23,21 +40,30 @@ export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, on
     };
   }, []);
 
+  // Track token changes and show fly effect when active
+  useEffect(() => {
+    if (status === 'active') {
+      const delta = levelInfo.currentTokens - lastTokensRef.current;
+      if (delta > 0 && delta < 100_000_000) { // Reasonable delta (< 100M)
+        setTokenDelta(delta);
+      }
+    }
+    lastTokensRef.current = levelInfo.currentTokens;
+  }, [levelInfo.currentTokens, status]);
+
   const handleClick = () => {
     setIsClicked(true);
-    
-    // Clear previous timeout if exists
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    
     timeoutRef.current = setTimeout(() => {
       setIsClicked(false);
       timeoutRef.current = null;
     }, 500);
-    
     onClick();
   };
+
+  const skinSrc = LEVEL_SKINS[levelInfo.level] || level1;
 
   return (
     <div
@@ -48,26 +74,18 @@ export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, on
       {/* Level indicator */}
       <div className="level-badge">Lv.{levelInfo.level}</div>
 
-      {/* Crown for high levels */}
-      {levelInfo.hasCrown && <div className="crown-emoji">👑</div>}
+      {/* Token fly effect */}
+      {tokenDelta !== null && (
+        <TokenFly tokens={tokenDelta} onComplete={() => setTokenDelta(null)} />
+      )}
 
-      {/* Main lobster image */}
+      {/* Main lobster image - uses level-specific skin */}
       <img
-        src={lobsterImg}
+        src={skinSrc}
         alt="龙虾宝宝"
         className={`lobster-img ${levelInfo.hasGlow ? 'glow' : ''} ${levelInfo.isRainbow ? 'rainbow' : ''}`}
         draggable={false}
       />
-
-      {/* Particles for high levels */}
-      {levelInfo.hasParticles && (
-        <div className="particles">
-          <span className="particle p1">✨</span>
-          <span className="particle p2">⭐</span>
-          <span className="particle p3">✨</span>
-          <span className="particle p4">💫</span>
-        </div>
-      )}
 
       {/* Status indicator dot */}
       <div className={`status-dot status-${status}`} />

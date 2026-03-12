@@ -3,7 +3,7 @@ import { OpenClawStatus, LevelInfo } from '../types';
 import { formatTokens } from '../utils/levels';
 import './StatusPanel.css';
 
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.1.0';
 
 interface StatusPanelProps {
   status: OpenClawStatus;

@@ -1,6 +1,6 @@
 {
   "name": "lobster-baby",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A cute desktop pet lobster that monitors OpenClaw status",
   "author": "Lobster Baby Team",
   "license": "MIT",
@@ -50,11 +50,17 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["arm64", "x64"]
+          "arch": [
+            "arm64",
+            "x64"
+          ]
         },
         {
           "target": "zip",
-          "arch": ["arm64", "x64"]
+          "arch": [
+            "arm64",
+            "x64"
+          ]
         }
       ],
       "artifactName": "LobsterBaby-${version}-${arch}.${ext}"

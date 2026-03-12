@@ -14,8 +14,8 @@
   transition: transform 0.3s ease, filter 0.3s ease;
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
   image-rendering: auto;
-  will-change: transform; /* Hint browser to optimize */
-  backface-visibility: hidden; /* Prevent flickering */
+  will-change: transform;
+  backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
 
@@ -27,25 +27,32 @@
   transform: scale(0.95);
 }
 
-/* ─── Idle: gentle floating ─── */
+/* ─── Idle: slow gentle breathing + slight bob ─── */
 .lobster-container.idle .lobster-img {
-  animation: float 3s ease-in-out infinite;
+  animation: idle-breathe 4s ease-in-out infinite;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.2));
+  opacity: 0.85;
 }
 
-/* ─── Active: excited shaking ─── */
+/* ─── Active: smooth working sway + gentle glow ─── */
 .lobster-container.active .lobster-img {
-  animation: excited 0.6s ease-in-out infinite;
+  animation: active-sway 2.5s ease-in-out infinite;
+  filter: drop-shadow(0 0 6px rgba(0, 230, 118, 0.35))
+          drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+  opacity: 1;
 }
 
-/* ─── Error: flipped and twitching ─── */
+/* ─── Error: flipped, gray, occasional twitch ─── */
 .lobster-container.error .lobster-img {
-  animation: dead-twitch 2s ease-in-out infinite;
-  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3)) grayscale(0.5);
+  animation: dead-twitch 3s ease-in-out infinite;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3)) grayscale(0.6) brightness(0.7);
+  opacity: 0.7;
 }
 
 /* ─── Clicked: bounce ─── */
 .lobster-container.clicked .lobster-img {
-  animation: bounce 0.5s ease-out !important;
+  animation: click-bounce 0.5s ease-out !important;
+  opacity: 1 !important;
 }
 
 /* ─── Glow effect for high levels ─── */
@@ -54,13 +61,20 @@
           drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
 }
 
+/* Active + glow = green + red glow */
+.lobster-container.active .lobster-img.glow {
+  filter: drop-shadow(0 0 8px rgba(0, 230, 118, 0.35))
+          drop-shadow(0 0 10px rgba(255, 100, 100, 0.3))
+          drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+}
+
 /* ─── Rainbow hue shift for max level ─── */
 .lobster-img.rainbow {
-  animation: float 3s ease-in-out infinite, rainbow-shift 3s linear infinite !important;
+  animation: idle-breathe 4s ease-in-out infinite, rainbow-shift 3s linear infinite !important;
 }
 
 .lobster-container.active .lobster-img.rainbow {
-  animation: excited 0.6s ease-in-out infinite, rainbow-shift 3s linear infinite !important;
+  animation: active-sway 2.5s ease-in-out infinite, rainbow-shift 2s linear infinite !important;
 }
 
 /* ─── Level badge ─── */
@@ -79,15 +93,10 @@
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* ─── Crown for high levels ─── */
-.crown-emoji {
-  position: absolute;
-  top: -20px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 24px;
-  z-index: 10;
-  animation: crown-bob 2s ease-in-out infinite;
+/* Active: badge pulses green */
+.lobster-container.active .level-badge {
+  background: linear-gradient(135deg, #00e676, #00c853);
+  animation: badge-pulse 2s ease-in-out infinite;
 }
 
 /* ─── Status dot ─── */
@@ -104,12 +113,13 @@
 
 .status-dot.status-active {
   background: #00e676;
-  box-shadow: 0 0 6px #00e676;
+  box-shadow: 0 0 8px #00e676, 0 0 16px rgba(0, 230, 118, 0.3);
   animation: pulse-dot 1.5s ease-in-out infinite;
 }
 
 .status-dot.status-idle {
   background: #ffc107;
+  box-shadow: none;
 }
 
 .status-dot.status-error {
@@ -117,46 +127,37 @@
   animation: pulse-dot 1s ease-in-out infinite;
 }
 
-/* ─── Particles ─── */
-.particles {
-  position: absolute;
-  inset: -20px;
-  pointer-events: none;
-}
-
-.particle {
-  position: absolute;
-  font-size: 14px;
-  animation: particle-orbit 3s ease-in-out infinite;
-}
-
-.p1 { top: 0; left: 10%; animation-delay: 0s; }
-.p2 { top: 10%; right: 5%; animation-delay: 0.75s; }
-.p3 { bottom: 15%; left: 5%; animation-delay: 1.5s; }
-.p4 { bottom: 5%; right: 10%; animation-delay: 2.25s; }
-
 /* ─── Keyframes ─── */
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
-}
 
-@keyframes excited {
-  0%, 100% { transform: translateX(0) rotate(0deg) scale(1.05); }
-  25% { transform: translateX(-4px) rotate(-3deg) scale(1.05); }
-  75% { transform: translateX(4px) rotate(3deg) scale(1.05); }
-}
-
-@keyframes dead-twitch {
-  0%, 85%, 100% { transform: rotate(180deg) translateY(0); }
-  90% { transform: rotate(183deg) translateY(-2px); }
-  95% { transform: rotate(177deg) translateY(-1px); }
-}
-
-@keyframes bounce {
+/* Idle: slow, gentle breathing - barely moving */
+@keyframes idle-breathe {
   0%, 100% { transform: translateY(0) scale(1); }
-  40% { transform: translateY(-25px) scale(1.15); }
-  60% { transform: translateY(-10px) scale(1.05); }
+  50% { transform: translateY(-4px) scale(1.02); }
+}
+
+/* Active: smooth working sway - clearly different from idle but not jarring */
+@keyframes active-sway {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  20% { transform: translateY(-6px) rotate(-3deg); }
+  40% { transform: translateY(-2px) rotate(1deg); }
+  60% { transform: translateY(-8px) rotate(2deg); }
+  80% { transform: translateY(-3px) rotate(-1deg); }
+}
+
+/* Error: flipped upside down with occasional sad twitch */
+@keyframes dead-twitch {
+  0%, 80%, 100% { transform: rotate(180deg) translateY(0); }
+  85% { transform: rotate(184deg) translateY(-3px); }
+  90% { transform: rotate(176deg) translateY(-1px); }
+  95% { transform: rotate(182deg) translateY(-2px); }
+}
+
+/* Click: satisfying pop */
+@keyframes click-bounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  30% { transform: translateY(-30px) scale(1.2); }
+  50% { transform: translateY(-15px) scale(1.1); }
+  70% { transform: translateY(-5px) scale(1.03); }
 }
 
 @keyframes rainbow-shift {
@@ -165,31 +166,52 @@
   100% { filter: hue-rotate(360deg) drop-shadow(0 0 12px rgba(255, 100, 100, 0.6)); }
 }
 
-@keyframes crown-bob {
-  0%, 100% { transform: translateX(-50%) translateY(0); }
-  50% { transform: translateX(-50%) translateY(-4px); }
+@keyframes badge-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3); }
+  50% { transform: scale(1.1); box-shadow: 0 2px 10px rgba(0, 230, 118, 0.4); }
 }
 
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
 }
 
-@keyframes particle-orbit {
-  0%, 100% {
-    transform: translateY(0) translateX(0) scale(1);
+/* ─── Token Fly Effect ─── */
+.token-fly {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 20;
+}
+
+.token-fly-number {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: #00e676;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+  animation: token-float-up 2s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes token-float-up {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.8);
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(-8px) scale(1);
+  }
+  70% {
     opacity: 0.8;
+    transform: translateY(-35px) scale(0.95);
   }
-  25% {
-    transform: translateY(-15px) translateX(8px) scale(0.8);
-    opacity: 0.5;
-  }
-  50% {
-    transform: translateY(-25px) translateX(0) scale(0.6);
-    opacity: 0.3;
-  }
-  75% {
-    transform: translateY(-15px) translateX(-8px) scale(0.8);
-    opacity: 0.5;
+  100% {
+    opacity: 0;
+    transform: translateY(-55px) scale(0.7);
   }
 }

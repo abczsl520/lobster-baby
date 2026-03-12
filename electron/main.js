@@ -54,6 +54,102 @@ function writeStore(data) {
     storeCache = data;
     fs.writeFileSync(storePath, JSON.stringify(data, null, 2));
 }
+// ─── Real API Token Scanner ───
+// Scans OpenClaw session JSONL files for actual API usage data
+// Uses incremental scanning: only re-reads files that changed since last scan
+function findOpenClawSessionDir() {
+    const home = process.env.HOME || '';
+    const candidates = [
+        path.join(home, '.openclaw/agents/main/sessions'),
+        path.join(home, '.config/openclaw/agents/main/sessions'),
+    ];
+    for (const dir of candidates) {
+        try {
+            if (fs.existsSync(dir) && fs.statSync(dir).isDirectory())
+                return dir;
+        }
+        catch { /* ignore */ }
+    }
+    return null;
+}
+// Incremental scan state
+let scanTotal = 0; // Running total
+let scanFileCache = new Map();
+let lastScanTime = 0;
+const SCAN_CACHE_MS = 30000; // Re-scan at most every 30s
+let scanInitialized = false;
+function scanRealTokenUsage() {
+    const now = Date.now();
+    if (now - lastScanTime < SCAN_CACHE_MS && scanInitialized) {
+        return scanTotal;
+    }
+    const sessionDir = findOpenClawSessionDir();
+    if (!sessionDir) {
+        log('Session dir not found, falling back to store');
+        return scanTotal || 0;
+    }
+    try {
+        const files = fs.readdirSync(sessionDir).filter(f => f.endsWith('.jsonl'));
+        // Remove entries for deleted files
+        for (const [cachedFile] of scanFileCache) {
+            if (!files.includes(cachedFile)) {
+                const entry = scanFileCache.get(cachedFile);
+                scanTotal -= entry.tokens;
+                scanFileCache.delete(cachedFile);
+            }
+        }
+        for (const file of files) {
+            const fullPath = path.join(sessionDir, file);
+            let mtime;
+            try {
+                mtime = fs.statSync(fullPath).mtimeMs;
+            }
+            catch {
+                continue;
+            }
+            const cached = scanFileCache.get(file);
+            if (cached && cached.mtime === mtime)
+                continue; // File unchanged, skip
+            // File is new or modified — scan it
+            let fileTokens = 0;
+            try {
+                const content = fs.readFileSync(fullPath, 'utf-8');
+                for (const line of content.split('\n')) {
+                    if (!line.includes('"usage"'))
+                        continue; // Fast pre-filter
+                    try {
+                        const obj = JSON.parse(line);
+                        const usage = obj?.message?.usage;
+                        if (usage) {
+                            fileTokens += (usage.input || 0)
+                                + (usage.output || 0)
+                                + (usage.cacheRead || 0)
+                                + (usage.cacheWrite || 0);
+                        }
+                    }
+                    catch { /* skip malformed lines */ }
+                }
+            }
+            catch {
+                continue;
+            }
+            // Update running total
+            if (cached) {
+                scanTotal -= cached.tokens; // Remove old count for this file
+            }
+            scanTotal += fileTokens;
+            scanFileCache.set(file, { mtime, tokens: fileTokens });
+        }
+    }
+    catch (e) {
+        log(`Token scan error: ${e}`);
+        return scanTotal || 0;
+    }
+    lastScanTime = now;
+    scanInitialized = true;
+    log(`Token scan: ${scanTotal.toLocaleString()} total API tokens (${scanFileCache.size} files)`);
+    return scanTotal;
+}
 let mainWindow = null;
 let tray = null;
 let statusCheckInterval = null;
@@ -258,7 +354,9 @@ function checkOpenClawStatus() {
                         const data = JSON.parse(stdout);
                         const sessions = data.sessions || [];
                         activeSessions = sessions.length;
-                        const hasRecentActivity = sessions.some((s) => s.ageMs < 30000 && (s.inputTokens > 0 || s.outputTokens > 0));
+                        // --active 1 already filters to sessions active in last 1 minute
+                        // If any session has recent activity (ageMs < 60s), OpenClaw is working
+                        const hasRecentActivity = sessions.some((s) => s.ageMs < 60000);
                         status = hasRecentActivity ? 'active' : 'idle';
                         log(`OpenClaw status: ${status}, sessions: ${activeSessions}`);
                     }
@@ -271,46 +369,43 @@ function checkOpenClawStatus() {
             });
         }),
         new Promise((resolve) => {
-            exec(`${openclawPath} sessions --json 2>/dev/null`, { timeout: 8000, env }, (err, stdout) => {
-                let allTokens = 0;
-                if (!err && stdout) {
-                    try {
-                        const data = JSON.parse(stdout);
-                        for (const s of (data.sessions || [])) {
-                            if (s.totalTokens)
-                                allTokens += s.totalTokens;
-                        }
-                    }
-                    catch { /* ignore */ }
-                }
-                resolve(allTokens);
-            });
+            // Scan real API token usage from session JSONL files
+            try {
+                const realTokens = scanRealTokenUsage();
+                resolve(realTokens);
+            }
+            catch {
+                resolve(0);
+            }
         }),
     ])
-        .then(([{ status, activeSessions }, allTokens]) => {
+        .then(([{ status, activeSessions }, realTokens]) => {
         if (!mainWindow || mainWindow.isDestroyed())
             return;
         const store = readStore();
         const today = new Date().toISOString().slice(0, 10);
+        // Real API tokens from JSONL scan (already cumulative)
+        const totalTokens = realTokens;
+        // Daily tracking
         if (store.lastDate !== today) {
-            store.dailyTokensBaseline = allTokens;
+            store.dailyTokensBaseline = totalTokens;
             store.lastDate = today;
         }
         if (!store.dailyTokensBaseline)
-            store.dailyTokensBaseline = allTokens;
-        const dailyTokens = Math.max(0, allTokens - (store.dailyTokensBaseline || 0));
-        // FIX #5: Only write store when data actually changes
-        const newPayload = JSON.stringify({ status, allTokens, dailyTokens });
+            store.dailyTokensBaseline = totalTokens;
+        const dailyTokens = Math.max(0, totalTokens - (store.dailyTokensBaseline || 0));
+        // Only write store when data actually changes
+        const newPayload = JSON.stringify({ status, totalTokens, dailyTokens });
         if (newPayload !== lastStatusPayload) {
             lastStatusPayload = newPayload;
-            store.totalTokensFromSessions = allTokens;
+            store.totalTokens = totalTokens; // Store for getLevelData
             writeStore(store);
         }
         try {
             mainWindow.webContents.send('openclaw-status', {
                 status,
                 activeSessions,
-                tokenInfo: { daily: dailyTokens, total: allTokens },
+                tokenInfo: { daily: dailyTokens, total: totalTokens },
             });
         }
         catch { /* window might be closing */ }
@@ -383,8 +478,12 @@ ipcMain.handle('toggle-always-on-top', () => {
     return !isOnTop;
 });
 ipcMain.handle('get-level-data', () => {
+    // Use real API token scan, fall back to stored value
+    const realTokens = scanRealTokenUsage();
+    if (realTokens > 0)
+        return { totalTokens: realTokens };
     const store = readStore();
-    return { totalTokens: store.totalTokensFromSessions || 0 };
+    return { totalTokens: store.totalTokens || 0 };
 });
 // FIX #7: Clamp panel position to screen bounds
 function clampToScreen(x, y, w, h) {
@@ -419,7 +518,7 @@ ipcMain.handle('open-external', async (_event, url) => {
     await shell.openExternal(url);
 });
 // ─── Auto Update Check (System Notification) ───
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.1.0';
 let updateCheckInterval = null;
 function fetchJSON(url) {
     return new Promise((resolve, reject) => {
