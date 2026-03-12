@@ -28,8 +28,11 @@ declare global {
     electronAPI: {
       onOpenClawStatus: (callback: (data: StatusData) => void) => () => void;
       onUpdateAvailable: (callback: (data: any) => void) => () => void;
+      onTogglePanel: (callback: () => void) => () => void;
+      onToggleChart: (callback: () => void) => () => void;
       toggleAlwaysOnTop: () => Promise<boolean>;
       getLevelData: () => Promise<{ totalTokens: number }>;
+      getDailyTokens: () => Promise<Record<string, number>>;
       showPanel: () => Promise<void>;
       hidePanel: () => Promise<void>;
       quitApp: () => Promise<void>;

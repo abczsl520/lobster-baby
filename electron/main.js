@@ -161,8 +161,36 @@ function scanRealTokenUsage() {
     }
     lastScanTime = now;
     scanInitialized = true;
+    // Track daily tokens
+    trackDailyTokens(scanTotal);
     log(`Token scan: ${scanTotal.toLocaleString()} total API tokens (${scanFileCache.size} files)`);
     return scanTotal;
+}
+// ─── Daily Token Tracking ───
+function trackDailyTokens(currentTotal) {
+    const store = readStore();
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    if (!store.dailyTokens)
+        store.dailyTokens = {};
+    if (!store.lastTotalTokens) {
+        // First run: initialize baseline, don't count history as "today"
+        store.lastTotalTokens = currentTotal;
+        writeStore(store);
+        return;
+    }
+    const delta = currentTotal - store.lastTotalTokens;
+    if (delta > 0) {
+        store.dailyTokens[today] = (store.dailyTokens[today] || 0) + delta;
+        store.lastTotalTokens = currentTotal;
+        // Keep only last 30 days
+        const dates = Object.keys(store.dailyTokens).sort();
+        if (dates.length > 30) {
+            for (let i = 0; i < dates.length - 30; i++) {
+                delete store.dailyTokens[dates[i]];
+            }
+        }
+        writeStore(store);
+    }
 }
 let mainWindow = null;
 let tray = null;
@@ -189,6 +217,7 @@ function createWindow() {
             preload: path.join(__dirname, 'preload.cjs'),
             contextIsolation: true,
             nodeIntegration: false,
+            backgroundThrottling: false, // Keep animations smooth when not focused
         },
         x: savedX,
         y: savedY,
@@ -270,11 +299,38 @@ function createWindow() {
         const menu = Menu.buildFromTemplate([
             {
                 label: isOnTop ? '📌 取消置顶' : '📌 置顶',
-                click: () => mainWindow?.setAlwaysOnTop(!isOnTop),
+                click: () => {
+                    mainWindow?.setAlwaysOnTop(!isOnTop);
+                    updateTrayMenu();
+                },
             },
             { type: 'separator' },
-            { label: '🔄 重新加载', click: () => mainWindow?.reload() },
-            { label: '❌ 退出龙虾宝宝', click: () => app.quit() },
+            {
+                label: '📊 状态面板',
+                click: () => mainWindow?.webContents.send('toggle-panel'),
+            },
+            {
+                label: '📈 查看趋势',
+                click: () => mainWindow?.webContents.send('toggle-chart'),
+            },
+            { type: 'separator' },
+            {
+                label: '🔄 重新加载',
+                click: () => mainWindow?.reload(),
+            },
+            {
+                label: '🐛 打开日志',
+                click: () => shell.openPath(logFile),
+            },
+            {
+                label: '📂 打开数据目录',
+                click: () => shell.openPath(app.getPath('userData')),
+            },
+            { type: 'separator' },
+            {
+                label: '❌ 退出龙虾宝宝',
+                click: () => app.quit(),
+            },
         ]);
         menu.popup();
     });
@@ -501,6 +557,10 @@ ipcMain.handle('get-level-data', () => {
     const store = readStore();
     return { totalTokens: store.totalTokens || 0 };
 });
+ipcMain.handle('get-daily-tokens', () => {
+    const store = readStore();
+    return store.dailyTokens || {};
+});
 // FIX #7: Clamp panel position to screen bounds (multi-monitor aware)
 function clampToScreen(x, y, w, h) {
     const display = screen.getDisplayNearestPoint({ x, y }).workArea;
@@ -554,7 +614,7 @@ ipcMain.handle('notify-level-up', (_event, level) => {
     }
 });
 // ─── Auto Update Check (System Notification) ───
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.3.0';
 let updateCheckInterval = null;
 function fetchJSON(url) {
     return new Promise((resolve, reject) => {

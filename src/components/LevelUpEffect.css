@@ -6,6 +6,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  will-change: transform;
+  transform: translateZ(0);
 }
 
 /* Expanding ring flash */

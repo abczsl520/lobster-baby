@@ -1,0 +1,89 @@
+.token-chart {
+  margin-top: 8px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.chart-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.chart-avg {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.chart-bars {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 4px;
+  height: 80px;
+  padding-bottom: 20px;
+  position: relative;
+}
+
+.chart-bar-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  position: relative;
+}
+
+.chart-value {
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.35);
+  white-space: nowrap;
+  position: absolute;
+  top: 0;
+  transform: translateY(-100%);
+}
+
+.chart-bar-bg {
+  width: 100%;
+  max-width: 24px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.chart-bar-fill {
+  width: 100%;
+  background: linear-gradient(180deg, #ff6b6b, #ff4444);
+  border-radius: 4px 4px 0 0;
+  transition: height 0.5s ease;
+  min-height: 2px;
+}
+
+.chart-label {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.35);
+  white-space: nowrap;
+  position: absolute;
+  bottom: -16px;
+}
+
+.chart-total {
+  text-align: center;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.3);
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}

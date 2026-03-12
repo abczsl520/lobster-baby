@@ -12,8 +12,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('update-available', handler);
     return () => ipcRenderer.removeListener('update-available', handler);
   },
+  onTogglePanel: (callback: () => void) => {
+    const handler = () => callback();
+    ipcRenderer.on('toggle-panel', handler);
+    return () => ipcRenderer.removeListener('toggle-panel', handler);
+  },
+  onToggleChart: (callback: () => void) => {
+    const handler = () => callback();
+    ipcRenderer.on('toggle-chart', handler);
+    return () => ipcRenderer.removeListener('toggle-chart', handler);
+  },
   toggleAlwaysOnTop: () => ipcRenderer.invoke('toggle-always-on-top'),
   getLevelData: () => ipcRenderer.invoke('get-level-data'),
+  getDailyTokens: () => ipcRenderer.invoke('get-daily-tokens'),
   showPanel: () => ipcRenderer.invoke('show-panel'),
   hidePanel: () => ipcRenderer.invoke('hide-panel'),
   quitApp: () => ipcRenderer.invoke('quit-app'),
