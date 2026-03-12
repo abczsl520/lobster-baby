@@ -30,6 +30,7 @@ declare global {
       onUpdateAvailable: (callback: (data: any) => void) => () => void;
       onTogglePanel: (callback: () => void) => () => void;
       onToggleChart: (callback: () => void) => () => void;
+      onShowAchievements: (callback: () => void) => () => void;
       toggleAlwaysOnTop: () => Promise<boolean>;
       getLevelData: () => Promise<{ totalTokens: number }>;
       getDailyTokens: () => Promise<Record<string, number>>;

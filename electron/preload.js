@@ -21,6 +21,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
         ipcRenderer.on('toggle-chart', handler);
         return () => ipcRenderer.removeListener('toggle-chart', handler);
     },
+    onShowAchievements: (callback) => {
+        const handler = () => callback();
+        ipcRenderer.on('show-achievements', handler);
+        return () => ipcRenderer.removeListener('show-achievements', handler);
+    },
     toggleAlwaysOnTop: () => ipcRenderer.invoke('toggle-always-on-top'),
     getLevelData: () => ipcRenderer.invoke('get-level-data'),
     getDailyTokens: () => ipcRenderer.invoke('get-daily-tokens'),

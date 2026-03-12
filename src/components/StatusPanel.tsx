@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { OpenClawStatus, LevelInfo } from '../types';
 import { formatTokens } from '../utils/levels';
 import { TokenChart } from './TokenChart';
+import { AchievementList } from './AchievementList';
 import './StatusPanel.css';
 
-const APP_VERSION = '1.4.1';
+const APP_VERSION = '1.4.2';
 
 interface StatusPanelProps {
   status: OpenClawStatus;
@@ -16,6 +17,8 @@ interface StatusPanelProps {
   autoFadeEnabled?: boolean;
   onToggleAutoFade?: () => void;
   updateInfo?: { hasUpdate: boolean; latestVersion?: string; downloadUrl?: string } | null;
+  showAchievements?: boolean;
+  onToggleAchievements?: () => void;
 }
 
 export const StatusPanel: React.FC<StatusPanelProps> = ({
@@ -23,10 +26,14 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
   showChart: externalShowChart, onToggleChart,
   autoFadeEnabled = false, onToggleAutoFade,
   updateInfo,
+  showAchievements: externalShowAchievements, onToggleAchievements,
 }) => {
   const [internalShowChart, setInternalShowChart] = useState(false);
+  const [internalShowAchievements, setInternalShowAchievements] = useState(false);
   const showChart = externalShowChart ?? internalShowChart;
   const toggleChart = onToggleChart ?? (() => setInternalShowChart(!internalShowChart));
+  const showAchievements = externalShowAchievements ?? internalShowAchievements;
+  const toggleAchievements = onToggleAchievements ?? (() => setInternalShowAchievements(!internalShowAchievements));
 
   const statusText: Record<OpenClawStatus, string> = {
     active: '🟢 工作中',
@@ -93,11 +100,17 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
           </div>
 
           {/* Token chart toggle */}
-          <button className="panel-btn" onClick={toggleChart} style={{ marginTop: '4px' }}>
-            {showChart ? '📊 隐藏趋势' : '📈 查看趋势'}
-          </button>
+          <div className="button-group" style={{ marginTop: '4px' }}>
+            <button className="panel-btn" onClick={toggleChart}>
+              {showChart ? '📊 隐藏趋势' : '📈 查看趋势'}
+            </button>
+            <button className="panel-btn" onClick={toggleAchievements}>
+              {showAchievements ? '🏆 隐藏成就' : '🏆 查看成就'}
+            </button>
+          </div>
 
           <TokenChart visible={showChart} />
+          <AchievementList currentTokens={tokenInfo.total} visible={showAchievements} />
 
           {/* Level info */}
           {levelInfo.level === 10 ? (

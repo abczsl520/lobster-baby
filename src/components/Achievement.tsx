@@ -13,8 +13,8 @@ export const Achievement: React.FC<AchievementProps> = ({ title, description, ic
 
   useEffect(() => {
     const t1 = setTimeout(() => setPhase('show'), 100);
-    const t2 = setTimeout(() => setPhase('exit'), 3500);
-    const t3 = setTimeout(onComplete, 4200);
+    const t2 = setTimeout(() => setPhase('exit'), 2000); // Reduced from 3500ms to 2000ms
+    const t3 = setTimeout(onComplete, 2500); // Reduced from 4200ms to 2500ms
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [onComplete]);
 

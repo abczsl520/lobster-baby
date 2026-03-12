@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { checkForUpdates, UpdateInfo } from '../utils/updater';
 
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.4.2';
 
 export function useUpdateChecker() {
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);

@@ -16,6 +16,7 @@ function App() {
   const { updateInfo } = useUpdateChecker();
   const [showPanel, setShowPanel] = useState(false);
   const [showChart, setShowChart] = useState(false);
+  const [showAchievements, setShowAchievements] = useState(false);
   const [emoji, setEmoji] = useState<string | null>(null);
   const [isDraggingState, setIsDraggingState] = useState(false);
   const [showUpdateNotification, setShowUpdateNotification] = useState(false);
@@ -121,7 +122,12 @@ function App() {
       window.electronAPI.showPanel();
       setShowChart(prev => !prev);
     });
-    return () => { cleanupPanel(); cleanupChart(); };
+    const cleanupAchievements = window.electronAPI.onShowAchievements(() => {
+      setShowPanel(true);
+      window.electronAPI.showPanel();
+      setShowAchievements(true);
+    });
+    return () => { cleanupPanel(); cleanupChart(); cleanupAchievements(); };
   }, []);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -276,6 +282,8 @@ function App() {
             window.electronAPI.updateSettings({ autoFadeEnabled: newVal });
           }}
           updateInfo={updateInfo}
+          showAchievements={showAchievements}
+          onToggleAchievements={() => setShowAchievements(prev => !prev)}
         />
       )}
     </div>

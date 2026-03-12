@@ -215,9 +215,11 @@ let isDockedRight = false;
 let dockTimeout: NodeJS.Timeout | null = null;
 let undockedX = 0; // Remember position before docking
 let isDraggingWindow = false; // True while user is actively dragging
+let isDockingInProgress = false; // Prevent moved event loop during dock/undock
 
 function dockToEdge() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
+  if (isDockingInProgress) return;
   const bounds = mainWindow.getBounds();
   const display = screen.getDisplayNearestPoint({ x: bounds.x, y: bounds.y }).workArea;
 
@@ -229,15 +231,17 @@ function dockToEdge() {
     undockedX = bounds.x;
     isDockedLeft = true;
     isDockedRight = false;
-    // Slide 60% off-screen to the left
+    isDockingInProgress = true;
     mainWindow.setBounds({ x: display.x - Math.floor(bounds.width * 0.6), y: bounds.y, width: bounds.width, height: bounds.height });
+    setTimeout(() => { isDockingInProgress = false; }, 200);
     log('Docked to left edge');
   } else if (atRightEdge && !isDockedRight) {
     undockedX = bounds.x;
     isDockedRight = true;
     isDockedLeft = false;
-    // Slide 60% off-screen to the right
+    isDockingInProgress = true;
     mainWindow.setBounds({ x: display.x + display.width - Math.floor(bounds.width * 0.4), y: bounds.y, width: bounds.width, height: bounds.height });
+    setTimeout(() => { isDockingInProgress = false; }, 200);
     log('Docked to right edge');
   }
 }
@@ -245,6 +249,7 @@ function dockToEdge() {
 function undockFromEdge() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   if (!isDockedLeft && !isDockedRight) return;
+  isDockingInProgress = true;
 
   const bounds = mainWindow.getBounds();
   const display = screen.getDisplayNearestPoint({ x: bounds.x, y: bounds.y }).workArea;
@@ -256,6 +261,7 @@ function undockFromEdge() {
     mainWindow.setBounds({ x: display.x + display.width - bounds.width, y: bounds.y, width: bounds.width, height: bounds.height });
     isDockedRight = false;
   }
+  setTimeout(() => { isDockingInProgress = false; }, 200);
   log('Undocked from edge');
 }
 
@@ -313,6 +319,8 @@ function createWindow() {
   // Save position on move + edge snapping (debounced)
   mainWindow.on('moved', () => {
     if (!mainWindow) return;
+    if (isDockingInProgress) return; // Skip if dock/undock is in progress
+
     const bounds = mainWindow.getBounds();
     const display = screen.getDisplayNearestPoint({ x: bounds.x, y: bounds.y }).workArea;
 
@@ -387,6 +395,10 @@ function createWindow() {
       {
         label: '📈 查看趋势',
         click: () => mainWindow?.webContents.send('toggle-chart'),
+      },
+      {
+        label: '🏆 查看成就',
+        click: () => mainWindow?.webContents.send('show-achievements'),
       },
       { type: 'separator' },
       {
@@ -759,7 +771,7 @@ ipcMain.handle('notify-level-up', (_event, level: number) => {
 });
 
 // ─── Auto Update Check (System Notification) ───
-const APP_VERSION = '1.4.1';
+const APP_VERSION = '1.4.2';
 let updateCheckInterval: NodeJS.Timeout | null = null;
 
 function fetchJSON(url: string): Promise<any> {
