@@ -14,9 +14,13 @@
   transition: transform 0.3s ease, filter 0.3s ease;
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
   image-rendering: auto;
-  will-change: transform;
+  /* GPU acceleration */
+  will-change: transform, filter;
+  transform: translateZ(0);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
+  -webkit-transform: translateZ(0);
+  -webkit-font-smoothing: subpixel-antialiased;
 }
 
 .lobster-container:hover .lobster-img {
@@ -91,6 +95,10 @@
   z-index: 10;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  /* GPU acceleration */
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 /* Active: badge pulses green */
@@ -195,6 +203,10 @@
   white-space: nowrap;
   animation: token-float-up 2s ease-out forwards;
   opacity: 0;
+  /* GPU acceleration */
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 @keyframes token-float-up {

@@ -1,18 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { OpenClawStatus, LevelInfo } from '../types';
 import { formatTokens } from '../utils/levels';
+import { TokenChart } from './TokenChart';
 import './StatusPanel.css';
 
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.3.0';
 
 interface StatusPanelProps {
   status: OpenClawStatus;
   levelInfo: LevelInfo;
   tokenInfo: { daily: number; total: number };
   onClose: () => void;
+  showChart?: boolean;
+  onToggleChart?: () => void;
 }
 
-export const StatusPanel: React.FC<StatusPanelProps> = ({ status, levelInfo, tokenInfo, onClose }) => {
+export const StatusPanel: React.FC<StatusPanelProps> = ({ status, levelInfo, tokenInfo, onClose, showChart: externalShowChart, onToggleChart }) => {
+  const [internalShowChart, setInternalShowChart] = useState(false);
+  const showChart = externalShowChart ?? internalShowChart;
+  const toggleChart = onToggleChart ?? (() => setInternalShowChart(!internalShowChart));
+
   const statusText: Record<OpenClawStatus, string> = {
     active: '🟢 工作中',
     idle: '🟡 空闲',
@@ -75,6 +82,17 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({ status, levelInfo, tok
           <span className="label">累计消耗</span>
           <span className="value">{formatTokens(tokenInfo.total)}</span>
         </div>
+
+        {/* Token chart toggle */}
+        <button
+          className="panel-btn"
+          onClick={toggleChart}
+          style={{ marginTop: '4px' }}
+        >
+          {showChart ? '📊 隐藏趋势' : '📈 查看趋势'}
+        </button>
+
+        <TokenChart visible={showChart} />
 
         {/* Level info */}
         {levelInfo.level === 10 ? (

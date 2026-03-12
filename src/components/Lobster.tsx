@@ -33,8 +33,8 @@ export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, on
   const [showLevelUp, setShowLevelUp] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastTokensRef = useRef<number>(levelInfo.currentTokens);
-  const lastLevelRef = useRef<number>(0); // 0 = not initialized yet
-  const initializedRef = useRef(false);
+  const lastLevelRef = useRef<number>(0);
+  const startTimeRef = useRef<number>(Date.now());
 
   useEffect(() => {
     return () => {
@@ -55,16 +55,16 @@ export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, on
     lastTokensRef.current = levelInfo.currentTokens;
   }, [levelInfo.currentTokens, status]);
 
-  // Detect level up (skip on first load)
+  // Detect level up (skip first 10 seconds after startup to avoid false triggers)
   useEffect(() => {
-    if (!initializedRef.current) {
-      initializedRef.current = true;
+    const elapsed = Date.now() - startTimeRef.current;
+    if (elapsed < 10_000) {
+      // Still in startup phase, just track the level
       lastLevelRef.current = levelInfo.level;
       return;
     }
     if (levelInfo.level > lastLevelRef.current && lastLevelRef.current > 0) {
       setShowLevelUp(true);
-      // Send system notification
       window.electronAPI.notifyLevelUp(levelInfo.level);
     }
     lastLevelRef.current = levelInfo.level;

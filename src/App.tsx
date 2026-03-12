@@ -14,6 +14,7 @@ function App() {
   const levelInfo = useLevelSystem();
   const { updateInfo } = useUpdateChecker();
   const [showPanel, setShowPanel] = useState(false);
+  const [showChart, setShowChart] = useState(false);
   const [emoji, setEmoji] = useState<string | null>(null);
   const [isDraggingState, setIsDraggingState] = useState(false);
   const [showUpdateNotification, setShowUpdateNotification] = useState(false);
@@ -39,6 +40,23 @@ function App() {
       setShowUpdateNotification(true);
     }
   }, [updateInfo]);
+
+  // Listen for right-click menu toggle events
+  useEffect(() => {
+    const cleanupPanel = window.electronAPI.onTogglePanel(() => {
+      setShowPanel(prev => {
+        if (!prev) window.electronAPI.showPanel();
+        else window.electronAPI.hidePanel();
+        return !prev;
+      });
+    });
+    const cleanupChart = window.electronAPI.onToggleChart(() => {
+      setShowPanel(true);
+      window.electronAPI.showPanel();
+      setShowChart(prev => !prev);
+    });
+    return () => { cleanupPanel(); cleanupChart(); };
+  }, []);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button !== 0) return;
@@ -155,6 +173,8 @@ function App() {
           levelInfo={levelInfo}
           tokenInfo={tokenInfo}
           onClose={handleClosePanel}
+          showChart={showChart}
+          onToggleChart={() => setShowChart(prev => !prev)}
         />
       )}
     </div>
