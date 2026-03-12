@@ -209,13 +209,55 @@ const SNAP_DISTANCE = 15;
 const NORMAL_SIZE = { width: 200, height: 250 };
 const PANEL_SIZE = { width: 320, height: 600 };
 
-// ─── Edge Docking (QQ Pet style) ───
+// ─── Edge Docking (QQ Pet style - Smooth Animation) ───
 let isDockedLeft = false;
 let isDockedRight = false;
 let dockTimeout: NodeJS.Timeout | null = null;
 let undockedX = 0; // Remember position before docking
 let isDraggingWindow = false; // True while user is actively dragging
 let isDockingInProgress = false; // Prevent moved event loop during dock/undock
+let dockAnimTimer: NodeJS.Timeout | null = null; // Animation frame timer
+let hoverCheckInterval: NodeJS.Timeout | null = null; // Mouse hover polling
+let hoverUndocked = false; // True when temporarily undocked by hover
+
+// Easing functions
+function easeOutCubic(t: number): number { return 1 - Math.pow(1 - t, 3); }
+function easeOutBack(t: number): number {
+  const c1 = 1.70158;
+  const c3 = c1 + 1;
+  return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+}
+function easeInCubic(t: number): number { return t * t * t; }
+
+// Animated window move: smoothly transitions x from startX to endX
+function animateWindowX(startX: number, endX: number, duration: number, easing: (t: number) => number, onDone?: () => void) {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  if (dockAnimTimer) { clearInterval(dockAnimTimer); dockAnimTimer = null; }
+
+  const FRAME_MS = 16; // ~60fps
+  const totalFrames = Math.max(1, Math.round(duration / FRAME_MS));
+  let frame = 0;
+  const bounds = mainWindow.getBounds();
+
+  isDockingInProgress = true;
+
+  dockAnimTimer = setInterval(() => {
+    frame++;
+    const progress = Math.min(1, frame / totalFrames);
+    const easedProgress = easing(progress);
+    const currentX = Math.round(startX + (endX - startX) * easedProgress);
+
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.setBounds({ x: currentX, y: bounds.y, width: bounds.width, height: bounds.height });
+    }
+
+    if (progress >= 1) {
+      if (dockAnimTimer) { clearInterval(dockAnimTimer); dockAnimTimer = null; }
+      isDockingInProgress = false;
+      if (onDone) onDone();
+    }
+  }, FRAME_MS);
+}
 
 function dockToEdge() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
@@ -223,7 +265,6 @@ function dockToEdge() {
   const bounds = mainWindow.getBounds();
   const display = screen.getDisplayNearestPoint({ x: bounds.x, y: bounds.y }).workArea;
 
-  // Check if at left or right edge
   const atLeftEdge = bounds.x <= display.x + 5;
   const atRightEdge = bounds.x + bounds.width >= display.x + display.width - 5;
 
@@ -231,38 +272,112 @@ function dockToEdge() {
     undockedX = bounds.x;
     isDockedLeft = true;
     isDockedRight = false;
-    isDockingInProgress = true;
-    mainWindow.setBounds({ x: display.x - Math.floor(bounds.width * 0.6), y: bounds.y, width: bounds.width, height: bounds.height });
-    setTimeout(() => { isDockingInProgress = false; }, 200);
-    log('Docked to left edge');
+    const targetX = display.x - Math.floor(bounds.width * 0.6);
+    animateWindowX(bounds.x, targetX, 300, easeOutCubic, () => {
+      startHoverCheck();
+      notifyDockState('left');
+      log('Docked to left edge (animated)');
+    });
   } else if (atRightEdge && !isDockedRight) {
     undockedX = bounds.x;
     isDockedRight = true;
     isDockedLeft = false;
-    isDockingInProgress = true;
-    mainWindow.setBounds({ x: display.x + display.width - Math.floor(bounds.width * 0.4), y: bounds.y, width: bounds.width, height: bounds.height });
-    setTimeout(() => { isDockingInProgress = false; }, 200);
-    log('Docked to right edge');
+    const targetX = display.x + display.width - Math.floor(bounds.width * 0.4);
+    animateWindowX(bounds.x, targetX, 300, easeOutCubic, () => {
+      startHoverCheck();
+      notifyDockState('right');
+      log('Docked to right edge (animated)');
+    });
   }
 }
 
 function undockFromEdge() {
   if (!mainWindow || mainWindow.isDestroyed()) return;
   if (!isDockedLeft && !isDockedRight) return;
-  isDockingInProgress = true;
 
+  stopHoverCheck();
   const bounds = mainWindow.getBounds();
   const display = screen.getDisplayNearestPoint({ x: bounds.x, y: bounds.y }).workArea;
 
   if (isDockedLeft) {
-    mainWindow.setBounds({ x: display.x, y: bounds.y, width: bounds.width, height: bounds.height });
-    isDockedLeft = false;
+    const targetX = display.x;
+    animateWindowX(bounds.x, targetX, 250, easeOutBack, () => {
+      isDockedLeft = false;
+      hoverUndocked = false;
+      notifyDockState(null);
+      log('Undocked from left edge (animated)');
+    });
   } else if (isDockedRight) {
-    mainWindow.setBounds({ x: display.x + display.width - bounds.width, y: bounds.y, width: bounds.width, height: bounds.height });
-    isDockedRight = false;
+    const targetX = display.x + display.width - bounds.width;
+    animateWindowX(bounds.x, targetX, 250, easeOutBack, () => {
+      isDockedRight = false;
+      hoverUndocked = false;
+      notifyDockState(null);
+      log('Undocked from right edge (animated)');
+    });
   }
-  setTimeout(() => { isDockingInProgress = false; }, 200);
-  log('Undocked from edge');
+}
+
+// Hover peek: mouse near edge → slide out; mouse leaves → slide back
+function startHoverCheck() {
+  stopHoverCheck();
+  hoverCheckInterval = setInterval(() => {
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    if (isDraggingWindow || isDockingInProgress) return;
+    if (!isDockedLeft && !isDockedRight) { stopHoverCheck(); return; }
+
+    const mousePos = screen.getCursorScreenPoint();
+    const bounds = mainWindow.getBounds();
+    const display = screen.getDisplayNearestPoint({ x: bounds.x, y: bounds.y }).workArea;
+
+    // Check if mouse is near the docked edge and within vertical range
+    const inVerticalRange = mousePos.y >= bounds.y - 20 && mousePos.y <= bounds.y + bounds.height + 20;
+    const PEEK_ZONE = 15; // pixels from screen edge to trigger peek
+
+    if (isDockedLeft) {
+      const mouseNearLeftEdge = mousePos.x <= display.x + PEEK_ZONE;
+      if (mouseNearLeftEdge && inVerticalRange && !hoverUndocked) {
+        // Slide out
+        hoverUndocked = true;
+        const targetX = display.x;
+        animateWindowX(bounds.x, targetX, 200, easeOutBack);
+      } else if (!mouseNearLeftEdge && hoverUndocked && !isDockingInProgress) {
+        // Check if mouse is far enough away to slide back
+        const mouseAwayFromWindow = mousePos.x > display.x + bounds.width + 30 || !inVerticalRange;
+        if (mouseAwayFromWindow) {
+          hoverUndocked = false;
+          const targetX = display.x - Math.floor(bounds.width * 0.6);
+          animateWindowX(bounds.x, targetX, 300, easeInCubic);
+        }
+      }
+    } else if (isDockedRight) {
+      const mouseNearRightEdge = mousePos.x >= display.x + display.width - PEEK_ZONE;
+      if (mouseNearRightEdge && inVerticalRange && !hoverUndocked) {
+        hoverUndocked = true;
+        const targetX = display.x + display.width - bounds.width;
+        animateWindowX(bounds.x, targetX, 200, easeOutBack);
+      } else if (!mouseNearRightEdge && hoverUndocked && !isDockingInProgress) {
+        const mouseAwayFromWindow = mousePos.x < display.x + display.width - bounds.width - 30 || !inVerticalRange;
+        if (mouseAwayFromWindow) {
+          hoverUndocked = false;
+          const targetX = display.x + display.width - Math.floor(bounds.width * 0.4);
+          animateWindowX(bounds.x, targetX, 300, easeInCubic);
+        }
+      }
+    }
+  }, 100); // Check every 100ms
+}
+
+function stopHoverCheck() {
+  if (hoverCheckInterval) { clearInterval(hoverCheckInterval); hoverCheckInterval = null; }
+  hoverUndocked = false;
+}
+
+// Notify renderer about dock state for visual feedback
+function notifyDockState(state: 'left' | 'right' | null) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send('dock-state-changed', state);
+  }
 }
 
 function createWindow() {
@@ -771,7 +886,7 @@ ipcMain.handle('notify-level-up', (_event, level: number) => {
 });
 
 // ─── Auto Update Check (System Notification) ───
-const APP_VERSION = '1.4.2';
+const APP_VERSION = '1.4.3';
 let updateCheckInterval: NodeJS.Timeout | null = null;
 
 function fetchJSON(url: string): Promise<any> {
