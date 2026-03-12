@@ -186,17 +186,17 @@
 
 /* ─── Edge Docking Animations (QQ Pet style) ─── */
 
-/* Docked left: lobster tilts slightly and bobs gently */
+/* Docked left: lobster faces left edge, peeks out */
 .lobster-container.docked-left .lobster-img {
-  animation: dock-left-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
-             dock-left-idle 4s ease-in-out 0.5s infinite !important;
+  animation: dock-left-enter 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+             dock-left-bob 3s ease-in-out 0.4s infinite !important;
   transform-origin: center center;
 }
 
-/* Docked right: mirror of left */
+/* Docked right: lobster faces right edge, peeks out */
 .lobster-container.docked-right .lobster-img {
-  animation: dock-right-enter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
-             dock-right-idle 4s ease-in-out 0.5s infinite !important;
+  animation: dock-right-enter 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+             dock-right-bob 3s ease-in-out 0.4s infinite !important;
   transform-origin: center center;
 }
 
@@ -209,38 +209,32 @@
   transition: opacity 0.3s ease;
 }
 
-/* Enter left: quick tilt + bounce settle */
+/* Enter left: flip to face left + slight bounce */
 @keyframes dock-left-enter {
-  0% { transform: rotate(0deg) scale(1); }
-  40% { transform: rotate(18deg) scale(0.92); }
-  70% { transform: rotate(8deg) scale(0.88); }
-  85% { transform: rotate(14deg) scale(0.9); }
-  100% { transform: rotate(12deg) scale(0.9); }
+  0% { transform: scaleX(1) scale(1) rotate(0deg); }
+  50% { transform: scaleX(-1) scale(0.88) rotate(5deg); }
+  75% { transform: scaleX(-1) scale(0.95) rotate(-2deg); }
+  100% { transform: scaleX(-1) scale(0.92) rotate(3deg); }
 }
 
-/* Idle left: gentle sway + float, like hanging from a thread */
-@keyframes dock-left-idle {
-  0%, 100% { transform: rotate(12deg) scale(0.9) translateY(0); }
-  30% { transform: rotate(14deg) scale(0.9) translateY(-3px); }
-  60% { transform: rotate(10deg) scale(0.9) translateY(2px); }
-  80% { transform: rotate(13deg) scale(0.9) translateY(-1px); }
-}
-
-/* Enter right: mirror */
+/* Enter right: keep facing right + slight bounce */
 @keyframes dock-right-enter {
-  0% { transform: rotate(0deg) scale(1); }
-  40% { transform: rotate(-18deg) scale(0.92); }
-  70% { transform: rotate(-8deg) scale(0.88); }
-  85% { transform: rotate(-14deg) scale(0.9); }
-  100% { transform: rotate(-12deg) scale(0.9); }
+  0% { transform: scaleX(1) scale(1) rotate(0deg); }
+  50% { transform: scaleX(1) scale(0.88) rotate(-5deg); }
+  75% { transform: scaleX(1) scale(0.95) rotate(2deg); }
+  100% { transform: scaleX(1) scale(0.92) rotate(-3deg); }
 }
 
-/* Idle right: mirror */
-@keyframes dock-right-idle {
-  0%, 100% { transform: rotate(-12deg) scale(0.9) translateY(0); }
-  30% { transform: rotate(-14deg) scale(0.9) translateY(-3px); }
-  60% { transform: rotate(-10deg) scale(0.9) translateY(2px); }
-  80% { transform: rotate(-13deg) scale(0.9) translateY(-1px); }
+/* Idle bob: gentle float up and down — left side (flipped) */
+@keyframes dock-left-bob {
+  0%, 100% { transform: scaleX(-1) scale(0.92) rotate(3deg) translateY(0); }
+  50% { transform: scaleX(-1) scale(0.92) rotate(3deg) translateY(-5px); }
+}
+
+/* Idle bob: gentle float up and down — right side */
+@keyframes dock-right-bob {
+  0%, 100% { transform: scaleX(1) scale(0.92) rotate(-3deg) translateY(0); }
+  50% { transform: scaleX(1) scale(0.92) rotate(-3deg) translateY(-5px); }
 }
 
 /* ─── Token Fly Effect ─── */
