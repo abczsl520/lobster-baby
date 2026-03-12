@@ -199,6 +199,53 @@ let savePositionTimeout = null;
 const SNAP_DISTANCE = 15;
 const NORMAL_SIZE = { width: 200, height: 250 };
 const PANEL_SIZE = { width: 320, height: 450 };
+// ─── Edge Docking (QQ Pet style) ───
+let isDockedLeft = false;
+let isDockedRight = false;
+let dockTimeout = null;
+let undockedX = 0; // Remember position before docking
+function dockToEdge() {
+    if (!mainWindow || mainWindow.isDestroyed())
+        return;
+    const bounds = mainWindow.getBounds();
+    const display = screen.getDisplayNearestPoint({ x: bounds.x, y: bounds.y }).workArea;
+    // Check if at left or right edge
+    const atLeftEdge = bounds.x <= display.x + 5;
+    const atRightEdge = bounds.x + bounds.width >= display.x + display.width - 5;
+    if (atLeftEdge && !isDockedLeft) {
+        undockedX = bounds.x;
+        isDockedLeft = true;
+        isDockedRight = false;
+        // Slide 60% off-screen to the left
+        mainWindow.setBounds({ x: display.x - Math.floor(bounds.width * 0.6), y: bounds.y, width: bounds.width, height: bounds.height });
+        log('Docked to left edge');
+    }
+    else if (atRightEdge && !isDockedRight) {
+        undockedX = bounds.x;
+        isDockedRight = true;
+        isDockedLeft = false;
+        // Slide 60% off-screen to the right
+        mainWindow.setBounds({ x: display.x + display.width - Math.floor(bounds.width * 0.4), y: bounds.y, width: bounds.width, height: bounds.height });
+        log('Docked to right edge');
+    }
+}
+function undockFromEdge() {
+    if (!mainWindow || mainWindow.isDestroyed())
+        return;
+    if (!isDockedLeft && !isDockedRight)
+        return;
+    const bounds = mainWindow.getBounds();
+    const display = screen.getDisplayNearestPoint({ x: bounds.x, y: bounds.y }).workArea;
+    if (isDockedLeft) {
+        mainWindow.setBounds({ x: display.x, y: bounds.y, width: bounds.width, height: bounds.height });
+        isDockedLeft = false;
+    }
+    else if (isDockedRight) {
+        mainWindow.setBounds({ x: display.x + display.width - bounds.width, y: bounds.y, width: bounds.width, height: bounds.height });
+        isDockedRight = false;
+    }
+    log('Undocked from edge');
+}
 function createWindow() {
     const { width, height } = screen.getPrimaryDisplay().workAreaSize;
     const store = readStore();
@@ -253,6 +300,11 @@ function createWindow() {
             return;
         const bounds = mainWindow.getBounds();
         const display = screen.getDisplayNearestPoint({ x: bounds.x, y: bounds.y }).workArea;
+        // If we were docked and user moved, undock first
+        if (isDockedLeft || isDockedRight) {
+            isDockedLeft = false;
+            isDockedRight = false;
+        }
         let newX = bounds.x;
         let newY = bounds.y;
         let snapped = false;
@@ -274,6 +326,14 @@ function createWindow() {
         }
         if (snapped) {
             mainWindow.setBounds({ x: newX, y: newY, width: bounds.width, height: bounds.height });
+        }
+        // Schedule edge docking after 1.5 seconds at edge
+        if (dockTimeout)
+            clearTimeout(dockTimeout);
+        const finalX = snapped ? newX : bounds.x;
+        const atEdge = (finalX <= display.x + 5) || (finalX + bounds.width >= display.x + display.width - 5);
+        if (atEdge) {
+            dockTimeout = setTimeout(() => dockToEdge(), 1500);
         }
         // Debounce position saving
         if (savePositionTimeout)
@@ -561,6 +621,25 @@ ipcMain.handle('get-daily-tokens', () => {
     const store = readStore();
     return store.dailyTokens || {};
 });
+ipcMain.handle('get-settings', () => {
+    const store = readStore();
+    return store.settings || { autoFadeEnabled: false };
+});
+ipcMain.handle('update-settings', (_event, settings) => {
+    const store = readStore();
+    store.settings = { ...store.settings, ...settings };
+    writeStore(store);
+    return store.settings;
+});
+ipcMain.handle('undock', () => {
+    undockFromEdge();
+});
+ipcMain.handle('redock', () => {
+    // Re-dock after a delay if still at edge
+    if (dockTimeout)
+        clearTimeout(dockTimeout);
+    dockTimeout = setTimeout(() => dockToEdge(), 2000);
+});
 // FIX #7: Clamp panel position to screen bounds (multi-monitor aware)
 function clampToScreen(x, y, w, h) {
     const display = screen.getDisplayNearestPoint({ x, y }).workArea;
@@ -614,7 +693,7 @@ ipcMain.handle('notify-level-up', (_event, level) => {
     }
 });
 // ─── Auto Update Check (System Notification) ───
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.4.0';
 let updateCheckInterval = null;
 function fetchJSON(url) {
     return new Promise((resolve, reject) => {

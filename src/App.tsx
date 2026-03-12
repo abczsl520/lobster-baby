@@ -3,6 +3,7 @@ import { Lobster } from './components/Lobster';
 import { StatusPanel } from './components/StatusPanel';
 import { EmojiBubble, getRandomEmoji } from './components/EmojiBubble';
 import { UpdateNotification } from './components/UpdateNotification';
+import { Achievement, MILESTONES, Milestone } from './components/Achievement';
 import { useOpenClawStatus } from './hooks/useOpenClawStatus';
 import { useLevelSystem } from './hooks/useLevelSystem';
 import { useUpdateChecker } from './hooks/useUpdateChecker';
@@ -18,6 +19,10 @@ function App() {
   const [emoji, setEmoji] = useState<string | null>(null);
   const [isDraggingState, setIsDraggingState] = useState(false);
   const [showUpdateNotification, setShowUpdateNotification] = useState(false);
+  const [isAutoFaded, setIsAutoFaded] = useState(false);
+  const [autoFadeEnabled, setAutoFadeEnabled] = useState(false);
+  const [currentAchievement, setCurrentAchievement] = useState<Milestone | null>(null);
+  const [unlockedMilestones, setUnlockedMilestones] = useState<Set<string>>(new Set());
 
   // Drag state
   const isDragging = useRef(false);
@@ -25,13 +30,56 @@ function App() {
   const accumulatedDelta = useRef({ x: 0, y: 0 });
   const rafId = useRef<number | null>(null);
 
+  // Auto-fade state
+  const lastInteractionRef = useRef<number>(Date.now());
+  const fadeCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (rafId.current !== null) {
         cancelAnimationFrame(rafId.current);
       }
+      if (fadeCheckIntervalRef.current) {
+        clearInterval(fadeCheckIntervalRef.current);
+      }
     };
+  }, []);
+
+  // Load settings on mount
+  useEffect(() => {
+    window.electronAPI.getSettings().then(settings => {
+      setAutoFadeEnabled(settings.autoFadeEnabled ?? false);
+    });
+  }, []);
+
+  // Auto-fade after 30 seconds of no interaction (only if enabled)
+  useEffect(() => {
+    if (!autoFadeEnabled) {
+      setIsAutoFaded(false);
+      return;
+    }
+
+    const AUTO_FADE_DELAY = 30_000; // 30 seconds
+    
+    fadeCheckIntervalRef.current = setInterval(() => {
+      const elapsed = Date.now() - lastInteractionRef.current;
+      if (elapsed > AUTO_FADE_DELAY && !showPanel) {
+        setIsAutoFaded(true);
+      }
+    }, 5000); // Check every 5 seconds
+
+    return () => {
+      if (fadeCheckIntervalRef.current) {
+        clearInterval(fadeCheckIntervalRef.current);
+      }
+    };
+  }, [showPanel, autoFadeEnabled]);
+
+  // Reset auto-fade on any interaction
+  const resetAutoFade = useCallback(() => {
+    lastInteractionRef.current = Date.now();
+    setIsAutoFaded(false);
   }, []);
 
   // Show update notification when available
@@ -40,6 +88,24 @@ function App() {
       setShowUpdateNotification(true);
     }
   }, [updateInfo]);
+
+  // Check milestones when token count changes
+  useEffect(() => {
+    const totalTokens = tokenInfo.total;
+    if (totalTokens <= 0) return;
+
+    for (const milestone of MILESTONES) {
+      if (totalTokens >= milestone.tokens && !unlockedMilestones.has(milestone.id)) {
+        setUnlockedMilestones(prev => new Set([...prev, milestone.id]));
+        // Only show achievement popup for newly crossed milestones
+        // (not ones already passed on startup)
+        if (unlockedMilestones.size > 0 || totalTokens < milestone.tokens * 1.1) {
+          setCurrentAchievement(milestone);
+        }
+        break; // Show one at a time
+      }
+    }
+  }, [tokenInfo.total, unlockedMilestones]);
 
   // Listen for right-click menu toggle events
   useEffect(() => {
@@ -60,10 +126,11 @@ function App() {
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button !== 0) return;
+    resetAutoFade();
     dragStart.current = { screenX: e.screenX, screenY: e.screenY };
     isDragging.current = false;
     accumulatedDelta.current = { x: 0, y: 0 };
-  }, []);
+  }, [resetAutoFade]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!dragStart.current) return;
@@ -143,16 +210,32 @@ function App() {
 
   return (
     <div
-      className={`app ${showPanel ? 'panel-open' : ''} ${isDraggingState ? 'dragging' : ''}`}
+      className={`app ${showPanel ? 'panel-open' : ''} ${isDraggingState ? 'dragging' : ''} ${isAutoFaded ? 'auto-faded' : ''}`}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
+      onMouseLeave={() => {
+        handleMouseUp();
+        window.electronAPI.redock();
+      }}
+      onMouseEnter={() => {
+        resetAutoFade();
+        window.electronAPI.undock();
+      }}
     >
       {showUpdateNotification && updateInfo && (
         <UpdateNotification
           updateInfo={updateInfo}
           onDismiss={() => setShowUpdateNotification(false)}
+        />
+      )}
+
+      {currentAchievement && (
+        <Achievement
+          title={currentAchievement.title}
+          description={currentAchievement.description}
+          icon={currentAchievement.icon}
+          onComplete={() => setCurrentAchievement(null)}
         />
       )}
 
@@ -175,6 +258,13 @@ function App() {
           onClose={handleClosePanel}
           showChart={showChart}
           onToggleChart={() => setShowChart(prev => !prev)}
+          autoFadeEnabled={autoFadeEnabled}
+          onToggleAutoFade={() => {
+            const newVal = !autoFadeEnabled;
+            setAutoFadeEnabled(newVal);
+            window.electronAPI.updateSettings({ autoFadeEnabled: newVal });
+          }}
+          updateInfo={updateInfo}
         />
       )}
     </div>

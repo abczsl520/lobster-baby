@@ -4,7 +4,7 @@ import { formatTokens } from '../utils/levels';
 import { TokenChart } from './TokenChart';
 import './StatusPanel.css';
 
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.4.0';
 
 interface StatusPanelProps {
   status: OpenClawStatus;
@@ -13,9 +13,17 @@ interface StatusPanelProps {
   onClose: () => void;
   showChart?: boolean;
   onToggleChart?: () => void;
+  autoFadeEnabled?: boolean;
+  onToggleAutoFade?: () => void;
+  updateInfo?: { hasUpdate: boolean; latestVersion?: string; downloadUrl?: string } | null;
 }
 
-export const StatusPanel: React.FC<StatusPanelProps> = ({ status, levelInfo, tokenInfo, onClose, showChart: externalShowChart, onToggleChart }) => {
+export const StatusPanel: React.FC<StatusPanelProps> = ({
+  status, levelInfo, tokenInfo, onClose,
+  showChart: externalShowChart, onToggleChart,
+  autoFadeEnabled = false, onToggleAutoFade,
+  updateInfo,
+}) => {
   const [internalShowChart, setInternalShowChart] = useState(false);
   const showChart = externalShowChart ?? internalShowChart;
   const toggleChart = onToggleChart ?? (() => setInternalShowChart(!internalShowChart));
@@ -42,84 +50,114 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({ status, levelInfo, tok
         <button className="close-btn" onClick={onClose}>×</button>
       </div>
 
-      <div className="status-panel-content">
-        {/* Status */}
-        <div className="status-item">
-          <span className="label">OpenClaw</span>
-          <span className="value" style={{ color: statusColor[status] }}>
-            {statusText[status]}
-          </span>
-        </div>
-
-        {/* Level progress */}
-        <div className="status-item">
-          <span className="label">等级进度</span>
-          <span className="value">{progressPercent.toFixed(1)}%</span>
-        </div>
-
-        <div className="progress-bar">
-          <div
-            className="progress-fill"
-            style={{
-              width: `${progressPercent}%`,
-              backgroundColor: levelInfo.isRainbow ? '#ff4444' : levelInfo.color,
-            }}
-          />
-        </div>
-        <div className="progress-text">
-          {formatTokens(levelInfo.currentTokens)} / {formatTokens(levelInfo.nextLevelTokens)}
-          {levelInfo.level < 10 && ` (还需 ${formatTokens(tokensToNextLevel)})`}
-        </div>
-
-        {/* Daily tokens */}
-        <div className="status-item">
-          <span className="label">今日消耗</span>
-          <span className="value">{formatTokens(tokenInfo.daily)}</span>
-        </div>
-
-        {/* Total tokens */}
-        <div className="status-item">
-          <span className="label">累计消耗</span>
-          <span className="value">{formatTokens(tokenInfo.total)}</span>
-        </div>
-
-        {/* Token chart toggle */}
-        <button
-          className="panel-btn"
-          onClick={toggleChart}
-          style={{ marginTop: '4px' }}
-        >
-          {showChart ? '📊 隐藏趋势' : '📈 查看趋势'}
-        </button>
-
-        <TokenChart visible={showChart} />
-
-        {/* Level info */}
-        {levelInfo.level === 10 ? (
-          <div className="status-item" style={{ marginTop: '4px' }}>
-            <span className="label">🎉 满级</span>
-            <span className="value" style={{ color: '#ffd700' }}>龙虾之王</span>
+      <div className="status-panel-scroll">
+        <div className="status-panel-content">
+          {/* Status */}
+          <div className="status-item">
+            <span className="label">OpenClaw</span>
+            <span className="value" style={{ color: statusColor[status] }}>
+              {statusText[status]}
+            </span>
           </div>
-        ) : (
-          <div className="status-item" style={{ marginTop: '4px' }}>
-            <span className="label">下一级</span>
-            <span className="value">Lv.{levelInfo.level + 1}</span>
+
+          {/* Level progress */}
+          <div className="status-item">
+            <span className="label">等级进度</span>
+            <span className="value">{progressPercent.toFixed(1)}%</span>
           </div>
-        )}
 
-        {/* Action buttons */}
-        <div className="button-group">
-          <button className="panel-btn" onClick={() => {
-            window.electronAPI.toggleAlwaysOnTop();
-          }}>
-            📌 切换置顶
+          <div className="progress-bar">
+            <div
+              className="progress-fill"
+              style={{
+                width: `${progressPercent}%`,
+                backgroundColor: levelInfo.isRainbow ? '#ff4444' : levelInfo.color,
+              }}
+            />
+          </div>
+          <div className="progress-text">
+            {formatTokens(levelInfo.currentTokens)} / {formatTokens(levelInfo.nextLevelTokens)}
+            {levelInfo.level < 10 && ` (还需 ${formatTokens(tokensToNextLevel)})`}
+          </div>
+
+          {/* Daily tokens */}
+          <div className="status-item">
+            <span className="label">今日消耗</span>
+            <span className="value">{formatTokens(tokenInfo.daily)}</span>
+          </div>
+
+          {/* Total tokens */}
+          <div className="status-item">
+            <span className="label">累计消耗</span>
+            <span className="value">{formatTokens(tokenInfo.total)}</span>
+          </div>
+
+          {/* Token chart toggle */}
+          <button className="panel-btn" onClick={toggleChart} style={{ marginTop: '4px' }}>
+            {showChart ? '📊 隐藏趋势' : '📈 查看趋势'}
           </button>
-          <button className="panel-btn danger" onClick={() => window.electronAPI.quitApp()}>
-            ❌ 退出
-          </button>
+
+          <TokenChart visible={showChart} />
+
+          {/* Level info */}
+          {levelInfo.level === 10 ? (
+            <div className="status-item" style={{ marginTop: '4px' }}>
+              <span className="label">🎉 满级</span>
+              <span className="value" style={{ color: '#ffd700' }}>龙虾之王</span>
+            </div>
+          ) : (
+            <div className="status-item" style={{ marginTop: '4px' }}>
+              <span className="label">下一级</span>
+              <span className="value">Lv.{levelInfo.level + 1}</span>
+            </div>
+          )}
+
+          {/* Settings section */}
+          <div className="panel-section-title">⚙️ 设置</div>
+
+          <div className="status-item">
+            <span className="label">自动隐藏</span>
+            <label className="toggle-switch">
+              <input
+                type="checkbox"
+                checked={autoFadeEnabled}
+                onChange={onToggleAutoFade}
+              />
+              <span className="toggle-slider" />
+            </label>
+          </div>
+
+          {/* Action buttons */}
+          <div className="button-group">
+            <button className="panel-btn" onClick={() => window.electronAPI.toggleAlwaysOnTop()}>
+              📌 切换置顶
+            </button>
+            <button className="panel-btn danger" onClick={() => window.electronAPI.quitApp()}>
+              ❌ 退出
+            </button>
+          </div>
+
+          {/* Version & Update */}
+          <div className="version-section">
+            <div className="version-info">v{APP_VERSION}</div>
+            {updateInfo?.hasUpdate && (
+              <div className="update-available">
+                <span>🆕 新版本 v{updateInfo.latestVersion} 可用</span>
+                {updateInfo.downloadUrl && (
+                  <button
+                    className="update-btn"
+                    onClick={() => window.electronAPI.openExternal(updateInfo.downloadUrl!)}
+                  >
+                    下载更新
+                  </button>
+                )}
+              </div>
+            )}
+            {!updateInfo?.hasUpdate && (
+              <div className="version-info">已是最新版本 ✓</div>
+            )}
+          </div>
         </div>
-
-        <div className="version-info">v{APP_VERSION}</div>
       </div>
     </div>
   );

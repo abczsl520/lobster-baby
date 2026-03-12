@@ -33,12 +33,16 @@ declare global {
       toggleAlwaysOnTop: () => Promise<boolean>;
       getLevelData: () => Promise<{ totalTokens: number }>;
       getDailyTokens: () => Promise<Record<string, number>>;
+      getSettings: () => Promise<{ autoFadeEnabled: boolean }>;
+      updateSettings: (settings: Record<string, any>) => Promise<any>;
       showPanel: () => Promise<void>;
       hidePanel: () => Promise<void>;
       quitApp: () => Promise<void>;
       moveWindow: (deltaX: number, deltaY: number) => void;
       openExternal: (url: string) => Promise<void>;
       notifyLevelUp: (level: number) => Promise<void>;
+      undock: () => Promise<void>;
+      redock: () => Promise<void>;
     };
   }
 }
