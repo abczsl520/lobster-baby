@@ -1,0 +1,361 @@
+/* ─── Plugin Panel ─── */
+
+.plugin-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  color: #e8eaed;
+}
+
+.plugin-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.plugin-header h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.plugin-back {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+
+.plugin-back:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* Tabs */
+.plugin-tabs {
+  display: flex;
+  padding: 6px 14px;
+  gap: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.plugin-tab {
+  flex: 1;
+  padding: 6px 0;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.plugin-tab:hover {
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.plugin-tab.active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+}
+
+/* Body */
+.plugin-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 14px;
+}
+
+.plugin-error {
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  background: rgba(255, 80, 80, 0.15);
+  border-radius: 8px;
+  color: #ff8a8a;
+  font-size: 12px;
+}
+
+.plugin-loading {
+  text-align: center;
+  padding: 24px;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 13px;
+}
+
+.plugin-empty {
+  text-align: center;
+  padding: 30px 16px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.plugin-empty .empty-icon {
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+
+.plugin-empty p {
+  margin: 4px 0;
+  font-size: 13px;
+}
+
+.plugin-empty .empty-hint {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* Plugin Card */
+.plugin-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: border-color 0.15s;
+}
+
+.plugin-card:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.plugin-card.inactive {
+  opacity: 0.55;
+}
+
+.plugin-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.plugin-card-info {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.plugin-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.plugin-version {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.plugin-card-desc {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.55);
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.plugin-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.plugin-card-perms {
+  display: flex;
+  gap: 3px;
+  margin-left: auto;
+}
+
+.perm-badge {
+  font-size: 12px;
+  cursor: help;
+}
+
+.plugin-author {
+  white-space: nowrap;
+}
+
+.plugin-downloads {
+  white-space: nowrap;
+}
+
+.installed-badge {
+  font-size: 11px;
+  color: rgba(100, 220, 140, 0.8);
+  padding: 2px 8px;
+  background: rgba(100, 220, 140, 0.1);
+  border-radius: 10px;
+}
+
+/* Buttons */
+.plugin-btn {
+  padding: 5px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.plugin-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.plugin-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.plugin-btn.primary {
+  background: rgba(100, 160, 255, 0.2);
+  border-color: rgba(100, 160, 255, 0.3);
+  color: #8ac4ff;
+}
+
+.plugin-btn.primary:hover:not(:disabled) {
+  background: rgba(100, 160, 255, 0.3);
+}
+
+.plugin-btn.danger {
+  color: #ff8a8a;
+  border-color: rgba(255, 80, 80, 0.2);
+}
+
+.plugin-btn.danger:hover:not(:disabled) {
+  background: rgba(255, 80, 80, 0.15);
+}
+
+.plugin-btn.small {
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+/* Toggle switch (reuse from social) */
+.toggle-switch.small {
+  transform: scale(0.8);
+}
+
+/* Input */
+.plugin-input {
+  flex: 1;
+  padding: 7px 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #e8eaed;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.plugin-input:focus {
+  border-color: rgba(100, 160, 255, 0.4);
+}
+
+.plugin-input::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+/* Store search */
+.store-search {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+/* Import */
+.import-section {
+  margin-bottom: 20px;
+}
+
+.import-section h4 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.import-hint {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+
+.import-form {
+  display: flex;
+  gap: 6px;
+}
+
+/* Permission confirm */
+.perm-confirm {
+  padding: 10px 0;
+}
+
+.perm-warning {
+  padding: 10px 12px;
+  background: rgba(255, 180, 50, 0.15);
+  border-radius: 8px;
+  color: #ffc966;
+  font-size: 13px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.perm-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.perm-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.perm-item.high {
+  background: rgba(255, 80, 80, 0.1);
+  color: #ff8a8a;
+}
+
+.perm-item.medium {
+  background: rgba(255, 180, 50, 0.1);
+  color: #ffc966;
+}
+
+.perm-item.low {
+  background: rgba(100, 220, 140, 0.1);
+  color: #7de8a0;
+}
+
+.perm-item.safe {
+  background: rgba(100, 220, 140, 0.1);
+  color: #7de8a0;
+}
+
+.perm-icon {
+  font-size: 16px;
+}
+
+.perm-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}

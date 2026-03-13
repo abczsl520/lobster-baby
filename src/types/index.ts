@@ -59,6 +59,18 @@ declare global {
       socialDeleteAccount: () => Promise<any>;
       socialGetLocal: () => Promise<{ lobsterId: string | null; nickname: string | null; hasToken: boolean }>;
       socialStats: () => Promise<any>;
+      // Plugin features
+      pluginList: () => Promise<any[]>;
+      pluginEnable: (id: string) => Promise<boolean>;
+      pluginDisable: (id: string) => Promise<void>;
+      pluginUninstall: (id: string) => Promise<void>;
+      pluginInstallUrl: (url: string) => Promise<{ success: boolean; pluginId?: string; error?: string }>;
+      pluginFeatured: () => Promise<any[]>;
+      pluginSearch: (query: string) => Promise<any[]>;
+      pluginMenuItems: () => Promise<any[]>;
+      pluginMenuClick: (menuId: string) => Promise<void>;
+      onShowPlugins: (callback: () => void) => () => void;
+      onPluginToast: (callback: (data: { message: string; duration: number }) => void) => () => void;
     };
   }
 }

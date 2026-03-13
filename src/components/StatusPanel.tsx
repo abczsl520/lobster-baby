@@ -4,6 +4,7 @@ import { formatTokens } from '../utils/levels';
 import { TokenChart } from './TokenChart';
 import { AchievementList } from './AchievementList';
 import { SocialPanel } from './SocialPanel';
+import { PluginPanel } from './PluginPanel';
 import './StatusPanel.css';
 
 const APP_VERSION = '1.7.0';
@@ -23,6 +24,9 @@ interface StatusPanelProps {
   showSocial?: boolean;
   onCloseSocial?: () => void;
   onOpenSocial?: () => void;
+  showPlugins?: boolean;
+  onOpenPlugins?: () => void;
+  onClosePlugins?: () => void;
 }
 
 export const StatusPanel: React.FC<StatusPanelProps> = ({
@@ -32,10 +36,12 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
   updateInfo,
   showAchievements: externalShowAchievements, onToggleAchievements,
   showSocial: externalShowSocial, onCloseSocial, onOpenSocial,
+  showPlugins: externalShowPlugins, onOpenPlugins, onClosePlugins,
 }) => {
   const [internalShowChart, setInternalShowChart] = useState(false);
   const [internalShowAchievements, setInternalShowAchievements] = useState(false);
   const [internalShowSocial, setInternalShowSocial] = useState(false);
+  const [internalShowPlugins, setInternalShowPlugins] = useState(false);
   const [socialStats, setSocialStats] = useState<{ total_users: number } | null>(null);
   const showChart = externalShowChart !== undefined ? externalShowChart : internalShowChart;
   const toggleChart = onToggleChart ?? (() => setInternalShowChart(!internalShowChart));
@@ -44,6 +50,9 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
   const showSocial = externalShowSocial !== undefined ? externalShowSocial : internalShowSocial;
   const closeSocial = onCloseSocial ?? (() => setInternalShowSocial(false));
   const openSocial = onOpenSocial ?? (() => setInternalShowSocial(true));
+  const showPlugins = externalShowPlugins !== undefined ? externalShowPlugins : internalShowPlugins;
+  const closePlugins = onClosePlugins ?? (() => setInternalShowPlugins(false));
+  const openPlugins = onOpenPlugins ?? (() => setInternalShowPlugins(true));
 
   useEffect(() => {
     window.electronAPI.socialStats().then(s => {
@@ -65,6 +74,10 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
 
   const tokensToNextLevel = levelInfo.nextLevelTokens - levelInfo.currentTokens;
   const progressPercent = Math.min(100, levelInfo.progress);
+
+  if (showPlugins) {
+    return <PluginPanel visible={true} onClose={closePlugins} />;
+  }
 
   if (showSocial) {
     return <SocialPanel visible={true} onClose={closeSocial} />;
@@ -142,6 +155,10 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
               {socialStats && socialStats.total_users > 0 && (
                 <span className="feature-badge">{socialStats.total_users}</span>
               )}
+            </button>
+            <button className="feature-card" onClick={openPlugins}>
+              <span className="feature-icon">🧩</span>
+              <span className="feature-label">插件</span>
             </button>
           </div>
 

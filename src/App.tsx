@@ -8,6 +8,7 @@ import { useOpenClawStatus } from './hooks/useOpenClawStatus';
 import { useLevelSystem } from './hooks/useLevelSystem';
 import { useUpdateChecker } from './hooks/useUpdateChecker';
 import { SpeechBubble } from './components/SpeechBubble';
+import { PluginToast } from './components/PluginToast';
 import { DRAG } from './constants';
 import './App.css';
 
@@ -19,6 +20,7 @@ function App() {
   const [showChart, setShowChart] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
   const [showSocial, setShowSocial] = useState(false);
+  const [showPlugins, setShowPlugins] = useState(false);
   const [emoji, setEmoji] = useState<string | null>(null);
   const [isDraggingState, setIsDraggingState] = useState(false);
   const [dockState, setDockState] = useState<string | null>(null);
@@ -135,10 +137,15 @@ function App() {
       window.electronAPI.showPanel();
       setShowSocial(true);
     });
+    const cleanupPlugins = window.electronAPI.onShowPlugins(() => {
+      setShowPanel(true);
+      window.electronAPI.showPanel();
+      setShowPlugins(true);
+    });
     const cleanupDockState = window.electronAPI.onDockStateChanged((state) => {
       setDockState(state);
     });
-    return () => { cleanupPanel(); cleanupChart(); cleanupAchievements(); cleanupSocial(); cleanupDockState(); };
+    return () => { cleanupPanel(); cleanupChart(); cleanupAchievements(); cleanupSocial(); cleanupPlugins(); cleanupDockState(); };
   }, []);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -296,8 +303,13 @@ function App() {
           showSocial={showSocial}
           onOpenSocial={() => setShowSocial(true)}
           onCloseSocial={() => setShowSocial(false)}
+          showPlugins={showPlugins}
+          onOpenPlugins={() => setShowPlugins(true)}
+          onClosePlugins={() => setShowPlugins(false)}
         />
       )}
+
+      <PluginToast />
     </div>
   );
 }

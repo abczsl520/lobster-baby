@@ -8,6 +8,7 @@ import * as dock from './dock';
 import { createTray, updateTrayMenu, setMainWindowGetter as setTrayMainWindow } from './tray';
 import { initStatus, startStatusCheck, stopStatusCheck } from './status';
 import * as social from './social';
+import * as plugins from './plugins';
 
 log('=== Lobster Baby starting ===');
 
@@ -123,14 +124,29 @@ function createWindow() {
   // Right-click context menu
   mainWindow.webContents.on('context-menu', () => {
     const isOnTop = mainWindow?.isAlwaysOnTop() ?? true;
+
+    // Build plugin menu items dynamically
+    const pluginMenuItems = plugins.getMenuItems();
+    const pluginSubMenu: Electron.MenuItemConstructorOptions[] = pluginMenuItems.length > 0
+      ? [
+          { type: 'separator' },
+          ...pluginMenuItems.map(item => ({
+            label: item.label,
+            click: async () => { try { await item.onClick(); } catch (e) { log(`Plugin menu error: ${e}`); } },
+          })),
+        ]
+      : [];
+
     const menu = Menu.buildFromTemplate([
       { label: isOnTop ? '📌 取消置顶' : '📌 置顶', click: () => { mainWindow?.setAlwaysOnTop(!isOnTop); updateTrayMenu(); } },
       { type: 'separator' },
       { label: '📊 状态面板', click: () => mainWindow?.webContents.send('toggle-panel') },
       { label: '🌐 龙虾社区', click: () => mainWindow?.webContents.send('show-social') },
+      { label: '🧩 插件', click: () => mainWindow?.webContents.send('show-plugins') },
       { type: 'separator' },
       { label: '📈 查看趋势', click: () => mainWindow?.webContents.send('toggle-chart') },
       { label: '🏆 查看成就', click: () => mainWindow?.webContents.send('show-achievements') },
+      ...pluginSubMenu,
       { type: 'separator' },
       { label: '🔄 重新加载', click: () => mainWindow?.reload() },
       { label: '📂 数据目录', click: () => shell.openPath(app.getPath('userData')) },
@@ -345,6 +361,22 @@ ipcMain.handle('social-stats', async () => {
   catch (err: any) { return { error: err.message }; }
 });
 
+// ─── Plugin IPC ───
+ipcMain.handle('plugin-list', () => plugins.getInstalledPlugins());
+ipcMain.handle('plugin-enable', async (_event, id: string) => plugins.enablePlugin(id));
+ipcMain.handle('plugin-disable', async (_event, id: string) => plugins.disablePlugin(id));
+ipcMain.handle('plugin-uninstall', async (_event, id: string) => plugins.uninstallPlugin(id));
+ipcMain.handle('plugin-install-url', async (_event, url: string) => plugins.installFromUrl(url));
+ipcMain.handle('plugin-featured', async () => plugins.fetchFeaturedPlugins());
+ipcMain.handle('plugin-search', async (_event, query: string) => plugins.searchPlugins(query));
+ipcMain.handle('plugin-menu-items', () => {
+  return plugins.getMenuItems().map(m => ({ id: m.id, label: m.label, pluginId: m.pluginId }));
+});
+ipcMain.handle('plugin-menu-click', async (_event, menuId: string) => {
+  const item = plugins.getMenuItems().find(m => m.id === menuId);
+  if (item) { try { await item.onClick(); } catch (e) { log(`Plugin menu click error: ${e}`); } }
+});
+
 // ─── Panel resize ───
 ipcMain.handle('show-panel', () => {
   if (!mainWindow || mainWindow.isDestroyed()) return;
@@ -466,8 +498,27 @@ function startSocialSync() {
 }
 
 // ─── App Lifecycle ───
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   createWindow();
+
+  // Init plugin system
+  plugins.setStatusGetter(() => {
+    const store = readStore();
+    const realTokens = scanRealTokenUsage();
+    return {
+      status: 'active',
+      level: calcLevel(realTokens),
+      totalTokens: realTokens,
+      dailyTokens: Math.max(0, realTokens - (store.dailyTokensBaseline || 0)),
+    };
+  });
+  plugins.setToastSender((msg, duration) => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('plugin-toast', { message: msg, duration: duration || 3000 });
+    }
+  });
+  await plugins.initPlugins();
+
   setTimeout(checkForUpdatesMain, 10000);
   updateCheckInterval = setInterval(checkForUpdatesMain, 6 * 60 * 60 * 1000);
   startSocialSync();
@@ -496,6 +547,7 @@ app.on('window-all-closed', () => { stopStatusCheck(); if (process.platform !== 
 app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 app.on('before-quit', () => {
   stopStatusCheck();
+  plugins.shutdownPlugins().catch(() => {});
   if (updateCheckInterval) clearInterval(updateCheckInterval);
   globalShortcut.unregisterAll();
   if (savePositionTimeout) clearTimeout(savePositionTimeout);

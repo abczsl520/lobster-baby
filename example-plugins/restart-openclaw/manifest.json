@@ -1,0 +1,9 @@
+{
+  "id": "restart-openclaw",
+  "name": "重启 OpenClaw",
+  "version": "1.0.0",
+  "description": "一键重启 OpenClaw Gateway 服务",
+  "author": "龙虾宝宝官方",
+  "entry": "index.js",
+  "permissions": ["shell", "notification"]
+}
