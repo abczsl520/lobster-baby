@@ -3,6 +3,7 @@ import path from 'path';
 import { exec } from 'child_process';
 import fs from 'fs';
 import https from 'https';
+import * as social from './social';
 
 // ─── Logging ───
 const logFile = path.join(process.env.HOME || '/tmp', 'lobster-baby-debug.log');
@@ -843,6 +844,143 @@ ipcMain.handle('redock', () => {
   dockTimeout = setTimeout(() => dockToEdge(), 2000);
 });
 
+// ─── Social Feature IPC Handlers ───
+
+ipcMain.handle('social-register', async (_event, nickname: string) => {
+  try {
+    const realTokens = scanRealTokenUsage();
+    const THRESHOLDS = [0, 50000000, 200000000, 500000000, 1000000000, 2500000000, 5000000000, 10000000000, 25000000000, 50000000000];
+    let level = 1;
+    for (let i = THRESHOLDS.length - 1; i >= 0; i--) {
+      if (realTokens >= THRESHOLDS[i]) { level = i + 1; break; }
+    }
+    const uptimeHours = Math.floor(process.uptime() / 3600);
+    const result = await social.socialRegister(nickname, realTokens, level, Math.max(1, uptimeHours));
+    // Save token locally
+    const store = readStore();
+    store.socialToken = result.token;
+    store.lobsterId = result.lobster_id;
+    store.socialNickname = nickname;
+    writeStore(store);
+    return result;
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('social-login', async () => {
+  try {
+    const result = await social.socialLogin();
+    const store = readStore();
+    store.socialToken = result.token;
+    store.lobsterId = result.lobster_id;
+    store.socialNickname = result.nickname;
+    writeStore(store);
+    return result;
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('social-sync', async () => {
+  try {
+    const store = readStore();
+    if (!store.socialToken) return { error: '未注册' };
+    const realTokens = scanRealTokenUsage();
+    const THRESHOLDS = [0, 50000000, 200000000, 500000000, 1000000000, 2500000000, 5000000000, 10000000000, 25000000000, 50000000000];
+    let level = 1;
+    for (let i = THRESHOLDS.length - 1; i >= 0; i--) {
+      if (realTokens >= THRESHOLDS[i]) { level = i + 1; break; }
+    }
+    const result = await social.socialSync(store.socialToken, realTokens, level, 0, 0);
+    return result;
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('social-leaderboard', async (_event, type: string, page: number) => {
+  try {
+    const store = readStore();
+    return await social.socialGetLeaderboard(store.socialToken || null, type, page);
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('social-pk-create', async () => {
+  try {
+    const store = readStore();
+    if (!store.socialToken) return { error: '未注册' };
+    return await social.socialCreatePK(store.socialToken);
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('social-pk-join', async (_event, code: string) => {
+  try {
+    const store = readStore();
+    if (!store.socialToken) return { error: '未注册' };
+    return await social.socialJoinPK(store.socialToken, code);
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('social-profile', async () => {
+  try {
+    const store = readStore();
+    if (!store.socialToken) return { error: '未注册' };
+    return await social.socialGetProfile(store.socialToken);
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('social-update-profile', async (_event, data: Record<string, any>) => {
+  try {
+    const store = readStore();
+    if (!store.socialToken) return { error: '未注册' };
+    return await social.socialUpdateProfile(store.socialToken, data);
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('social-delete-account', async () => {
+  try {
+    const store = readStore();
+    if (!store.socialToken) return { error: '未注册' };
+    const result = await social.socialDeleteAccount(store.socialToken);
+    // Clear local social data
+    delete store.socialToken;
+    delete store.lobsterId;
+    delete store.socialNickname;
+    writeStore(store);
+    return result;
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('social-get-local', () => {
+  const store = readStore();
+  return {
+    lobsterId: store.lobsterId || null,
+    nickname: store.socialNickname || null,
+    hasToken: !!store.socialToken,
+  };
+});
+
+ipcMain.handle('social-stats', async () => {
+  try {
+    return await social.socialGetStats();
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
 // FIX #7: Clamp panel position to screen bounds (multi-monitor aware)
 function clampToScreen(x: number, y: number, w: number, h: number) {
   const display = screen.getDisplayNearestPoint({ x, y }).workArea;
@@ -982,10 +1120,53 @@ function stopUpdateCheck() {
   }
 }
 
+// ─── Social Auto-Sync ───
+let socialSyncInterval: NodeJS.Timeout | null = null;
+
+async function doSocialSync() {
+  try {
+    const store = readStore();
+    if (!store.socialToken) return;
+    const realTokens = scanRealTokenUsage();
+    const THRESHOLDS = [0, 50000000, 200000000, 500000000, 1000000000, 2500000000, 5000000000, 10000000000, 25000000000, 50000000000];
+    let level = 1;
+    for (let i = THRESHOLDS.length - 1; i >= 0; i--) {
+      if (realTokens >= THRESHOLDS[i]) { level = i + 1; break; }
+    }
+    await social.socialSync(store.socialToken, realTokens, level, 0, 0);
+    log('Social sync completed');
+  } catch (err: any) {
+    log(`Social sync failed: ${err.message}`);
+  }
+}
+
+function startSocialSync() {
+  // Auto-login on startup
+  const store = readStore();
+  if (!store.socialToken && !store.lobsterId) {
+    // Try to login with device fingerprint (in case registered on another session)
+    social.socialLogin().then(result => {
+      if (result.success) {
+        const s = readStore();
+        s.socialToken = result.token;
+        s.lobsterId = result.lobster_id;
+        s.socialNickname = result.nickname;
+        writeStore(s);
+        log(`Social auto-login: ${result.lobster_id}`);
+      }
+    }).catch(() => { /* Not registered yet, that's fine */ });
+  }
+
+  // Sync every hour
+  setTimeout(doSocialSync, 30000); // First sync after 30s
+  socialSyncInterval = setInterval(doSocialSync, 60 * 60 * 1000);
+}
+
 // ─── App Lifecycle ───
 app.whenReady().then(() => {
   createWindow();
   startUpdateCheck();
+  startSocialSync();
 
   // Global shortcuts
   globalShortcut.register('CommandOrControl+Shift+L', () => {
