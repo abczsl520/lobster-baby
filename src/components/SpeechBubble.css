@@ -1,0 +1,73 @@
+.speech-bubble {
+  position: absolute;
+  left: 50%;
+  top: -12px;
+  transform: translate3d(calc(-50% + var(--bubble-offset, 0px)), 0, 0);
+  max-width: 180px;
+  padding: 10px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.97);
+  color: #24313c;
+  font-size: 13px;
+  line-height: 1.35;
+  text-align: center;
+  box-shadow:
+    0 10px 30px rgba(32, 54, 73, 0.2),
+    0 4px 10px rgba(32, 54, 73, 0.1);
+  pointer-events: none;
+  z-index: 4;
+  will-change: transform, opacity;
+  animation: speech-bubble-in 0.45s cubic-bezier(0.22, 1.15, 0.36, 1) forwards;
+}
+
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -10px;
+  width: 18px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.97);
+  transform: translateX(-50%) rotate(45deg);
+  border-radius: 3px;
+  box-shadow: 4px 4px 10px rgba(32, 54, 73, 0.06);
+}
+
+.speech-bubble.leaving {
+  animation: speech-bubble-out 0.5s ease forwards;
+}
+
+.speech-bubble-text {
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
+}
+
+@keyframes speech-bubble-in {
+  0% {
+    opacity: 0;
+    transform: translate3d(calc(-50% + var(--bubble-offset, 0px)), 18px, 0) scale(0.78);
+  }
+  55% {
+    opacity: 1;
+    transform: translate3d(calc(-50% + var(--bubble-offset, 0px)), -6px, 0) scale(1.04);
+  }
+  72% {
+    transform: translate3d(calc(-50% + var(--bubble-offset, 0px)), -2px, 0) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(calc(-50% + var(--bubble-offset, 0px)), 0, 0) scale(1);
+  }
+}
+
+@keyframes speech-bubble-out {
+  0% {
+    opacity: 1;
+    transform: translate3d(calc(-50% + var(--bubble-offset, 0px)), 0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(calc(-50% + var(--bubble-offset, 0px)), -20px, 0) scale(0.92);
+  }
+}

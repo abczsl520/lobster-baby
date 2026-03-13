@@ -52,7 +52,13 @@ body {
 }
 
 .lobster-area {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 42px 18px 20px;
+  min-width: 210px;
+  min-height: 220px;
+  overflow: visible;
+  isolation: isolate;
 }
