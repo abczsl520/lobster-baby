@@ -1022,7 +1022,7 @@ ipcMain.handle('notify-level-up', (_event, level) => {
     }
 });
 // ─── Auto Update Check (System Notification) ───
-const APP_VERSION = '1.5.1';
+const APP_VERSION = '1.6.0';
 let updateCheckInterval = null;
 function fetchJSON(url) {
     return new Promise((resolve, reject) => {
