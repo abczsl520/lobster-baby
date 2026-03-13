@@ -294,6 +294,7 @@ function App() {
           showAchievements={showAchievements}
           onToggleAchievements={() => setShowAchievements(prev => !prev)}
           showSocial={showSocial}
+          onOpenSocial={() => setShowSocial(true)}
           onCloseSocial={() => setShowSocial(false)}
         />
       )}

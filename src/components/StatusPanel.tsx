@@ -22,6 +22,7 @@ interface StatusPanelProps {
   onToggleAchievements?: () => void;
   showSocial?: boolean;
   onCloseSocial?: () => void;
+  onOpenSocial?: () => void;
 }
 
 export const StatusPanel: React.FC<StatusPanelProps> = ({
@@ -30,19 +31,19 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
   autoFadeEnabled = false, onToggleAutoFade,
   updateInfo,
   showAchievements: externalShowAchievements, onToggleAchievements,
-  showSocial: externalShowSocial, onCloseSocial,
+  showSocial: externalShowSocial, onCloseSocial, onOpenSocial,
 }) => {
   const [internalShowChart, setInternalShowChart] = useState(false);
   const [internalShowAchievements, setInternalShowAchievements] = useState(false);
   const [internalShowSocial, setInternalShowSocial] = useState(false);
   const [socialStats, setSocialStats] = useState<{ total_users: number } | null>(null);
-  const showChart = externalShowChart ?? internalShowChart;
+  const showChart = externalShowChart !== undefined ? externalShowChart : internalShowChart;
   const toggleChart = onToggleChart ?? (() => setInternalShowChart(!internalShowChart));
-  const showAchievements = externalShowAchievements ?? internalShowAchievements;
+  const showAchievements = externalShowAchievements !== undefined ? externalShowAchievements : internalShowAchievements;
   const toggleAchievements = onToggleAchievements ?? (() => setInternalShowAchievements(!internalShowAchievements));
-  const showSocial = externalShowSocial ?? internalShowSocial;
+  const showSocial = externalShowSocial !== undefined ? externalShowSocial : internalShowSocial;
   const closeSocial = onCloseSocial ?? (() => setInternalShowSocial(false));
-  const openSocial = () => { setInternalShowSocial(true); };
+  const openSocial = onOpenSocial ?? (() => setInternalShowSocial(true));
 
   useEffect(() => {
     window.electronAPI.socialStats().then(s => {
