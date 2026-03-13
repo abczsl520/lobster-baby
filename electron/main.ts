@@ -1047,7 +1047,7 @@ ipcMain.handle('notify-level-up', (_event, level: number) => {
 });
 
 // ─── Auto Update Check (System Notification) ───
-const APP_VERSION = '1.5.1';
+const APP_VERSION = '1.6.0';
 let updateCheckInterval: NodeJS.Timeout | null = null;
 
 function fetchJSON(url: string): Promise<any> {
