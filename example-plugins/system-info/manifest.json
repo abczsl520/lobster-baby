@@ -1,0 +1,9 @@
+{
+  "id": "system-info",
+  "name": "系统信息",
+  "version": "1.0.0",
+  "description": "在右键菜单显示当前龙虾状态摘要",
+  "author": "龙虾宝宝官方",
+  "entry": "index.js",
+  "permissions": []
+}

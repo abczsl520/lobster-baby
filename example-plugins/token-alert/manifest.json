@@ -1,0 +1,9 @@
+{
+  "id": "token-alert",
+  "name": "Token 提醒",
+  "version": "1.0.0",
+  "description": "当日 Token 消耗达到设定阈值时发送通知提醒",
+  "author": "龙虾宝宝官方",
+  "entry": "index.js",
+  "permissions": ["notification"]
+}

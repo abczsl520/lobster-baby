@@ -63,4 +63,24 @@ contextBridge.exposeInMainWorld('electronAPI', {
   socialDeleteAccount: () => ipcRenderer.invoke('social-delete-account'),
   socialGetLocal: () => ipcRenderer.invoke('social-get-local'),
   socialStats: () => ipcRenderer.invoke('social-stats'),
+  // Plugin features
+  pluginList: () => ipcRenderer.invoke('plugin-list'),
+  pluginEnable: (id: string) => ipcRenderer.invoke('plugin-enable', id),
+  pluginDisable: (id: string) => ipcRenderer.invoke('plugin-disable', id),
+  pluginUninstall: (id: string) => ipcRenderer.invoke('plugin-uninstall', id),
+  pluginInstallUrl: (url: string) => ipcRenderer.invoke('plugin-install-url', url),
+  pluginFeatured: () => ipcRenderer.invoke('plugin-featured'),
+  pluginSearch: (query: string) => ipcRenderer.invoke('plugin-search', query),
+  pluginMenuItems: () => ipcRenderer.invoke('plugin-menu-items'),
+  pluginMenuClick: (menuId: string) => ipcRenderer.invoke('plugin-menu-click', menuId),
+  onShowPlugins: (callback: () => void) => {
+    const handler = () => callback();
+    ipcRenderer.on('show-plugins', handler);
+    return () => ipcRenderer.removeListener('show-plugins', handler);
+  },
+  onPluginToast: (callback: (data: { message: string; duration: number }) => void) => {
+    const handler = (_event: any, data: any) => callback(data);
+    ipcRenderer.on('plugin-toast', handler);
+    return () => ipcRenderer.removeListener('plugin-toast', handler);
+  },
 });
