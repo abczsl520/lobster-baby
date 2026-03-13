@@ -7,6 +7,7 @@ import { Achievement, MILESTONES, Milestone } from './components/Achievement';
 import { useOpenClawStatus } from './hooks/useOpenClawStatus';
 import { useLevelSystem } from './hooks/useLevelSystem';
 import { useUpdateChecker } from './hooks/useUpdateChecker';
+import { SpeechBubble } from './components/SpeechBubble';
 import { DRAG } from './constants';
 import './App.css';
 
@@ -216,14 +217,6 @@ function App() {
     setEmoji(getRandomEmoji(status));
   }, [status]);
 
-  const handleDoubleClick = useCallback(async () => {
-    if (isDragging.current) return;
-    if (!showPanel) {
-      await window.electronAPI.showPanel();
-      setShowPanel(true);
-    }
-  }, [showPanel]);
-
   const handleClosePanel = useCallback(async () => {
     await window.electronAPI.hidePanel();
     setShowPanel(false);
@@ -269,11 +262,16 @@ function App() {
       {emoji && <EmojiBubble emoji={emoji} onComplete={() => setEmoji(null)} />}
 
       <div className="lobster-area">
+        <SpeechBubble
+          status={status}
+          levelInfo={levelInfo}
+          tokenInfo={tokenInfo}
+          isPanelOpen={showPanel}
+        />
         <Lobster
           status={status}
           levelInfo={levelInfo}
           onClick={handleClick}
-          onDoubleClick={handleDoubleClick}
           dockState={dockState}
         />
       </div>

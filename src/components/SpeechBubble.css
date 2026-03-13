@@ -1,0 +1,77 @@
+.speech-bubble {
+  position: absolute;
+  left: 50%;
+  top: -12px;
+  transform: translate3d(calc(-50% + var(--bubble-offset, 0px)), 0, 0);
+  max-width: 180px;
+  padding: 8px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.97);
+  color: #24313c;
+  font-size: 13px;
+  line-height: 1.35;
+  text-align: center;
+  box-shadow:
+    0 8px 24px rgba(32, 54, 73, 0.18),
+    0 3px 8px rgba(32, 54, 73, 0.08);
+  pointer-events: none;
+  z-index: 999;
+  will-change: transform, opacity;
+  animation: speech-in 0.45s cubic-bezier(0.22, 1.15, 0.36, 1) forwards;
+  white-space: nowrap;
+}
+
+/* Triangle tail using pseudo-element */
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  width: 14px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.97);
+  transform: translateX(-50%) rotate(45deg);
+  border-radius: 2px;
+  box-shadow: 3px 3px 8px rgba(32, 54, 73, 0.06);
+}
+
+.speech-text {
+  position: relative;
+  z-index: 1;
+  user-select: none;
+}
+
+/* Enter animation */
+@keyframes speech-in {
+  0% {
+    opacity: 0;
+    transform: translate3d(calc(-50% + var(--bubble-offset, 0px)), 16px, 0) scale(0.75);
+  }
+  55% {
+    opacity: 1;
+    transform: translate3d(calc(-50% + var(--bubble-offset, 0px)), -5px, 0) scale(1.04);
+  }
+  75% {
+    transform: translate3d(calc(-50% + var(--bubble-offset, 0px)), -2px, 0) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(calc(-50% + var(--bubble-offset, 0px)), 0, 0) scale(1);
+  }
+}
+
+/* Exit animation */
+.speech-bubble.leaving {
+  animation: speech-out 0.4s ease-in forwards;
+}
+
+@keyframes speech-out {
+  0% {
+    opacity: 1;
+    transform: translate3d(calc(-50% + var(--bubble-offset, 0px)), 0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(calc(-50% + var(--bubble-offset, 0px)), -18px, 0) scale(0.9);
+  }
+}
