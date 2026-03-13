@@ -443,6 +443,8 @@ function createWindow() {
     if (isDockedLeft || isDockedRight) {
       isDockedLeft = false;
       isDockedRight = false;
+      stopHoverCheck();
+      notifyDockState(null);
     }
 
     let newX = bounds.x;
