@@ -46,6 +46,18 @@ declare global {
       notifyLevelUp: (level: number) => Promise<void>;
       undock: () => Promise<void>;
       redock: () => Promise<void>;
+      // Social features
+      socialRegister: (nickname: string) => Promise<any>;
+      socialLogin: () => Promise<any>;
+      socialSync: () => Promise<any>;
+      socialLeaderboard: (type: string, page: number) => Promise<any>;
+      socialPKCreate: () => Promise<any>;
+      socialPKJoin: (code: string) => Promise<any>;
+      socialProfile: () => Promise<any>;
+      socialUpdateProfile: (data: Record<string, any>) => Promise<any>;
+      socialDeleteAccount: () => Promise<any>;
+      socialGetLocal: () => Promise<{ lobsterId: string | null; nickname: string | null; hasToken: boolean }>;
+      socialStats: () => Promise<any>;
     };
   }
 }
