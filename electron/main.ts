@@ -652,7 +652,19 @@ function checkOpenClawStatus() {
 
         if (!error && stdout) {
           try {
-            const data = JSON.parse(stdout);
+            // OpenClaw CLI may append plugin logs after JSON output.
+            // Extract only the first valid JSON object from stdout.
+            const jsonStart = stdout.indexOf('{');
+            let jsonEnd = -1;
+            if (jsonStart >= 0) {
+              let depth = 0;
+              for (let i = jsonStart; i < stdout.length; i++) {
+                if (stdout[i] === '{') depth++;
+                else if (stdout[i] === '}') { depth--; if (depth === 0) { jsonEnd = i + 1; break; } }
+              }
+            }
+            const cleanJson = (jsonStart >= 0 && jsonEnd > jsonStart) ? stdout.slice(jsonStart, jsonEnd) : stdout;
+            const data = JSON.parse(cleanJson);
             const sessions = data.sessions || [];
             activeSessions = sessions.length;
 
