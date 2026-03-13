@@ -3,9 +3,10 @@ import path from 'path';
 import { exec } from 'child_process';
 import fs from 'fs';
 import https from 'https';
+import os from 'os';
 import * as social from './social';
 // ─── Logging ───
-const logFile = path.join(process.env.HOME || '/tmp', 'lobster-baby-debug.log');
+const logFile = path.join(os.homedir(), 'lobster-baby-debug.log');
 const MAX_LOG_SIZE = 512 * 1024; // 512KB max
 function log(msg) {
     const line = `[${new Date().toISOString()}] ${msg}\n`;
@@ -27,10 +28,15 @@ function log(msg) {
 log('=== Lobster Baby starting ===');
 // ─── Find OpenClaw ───
 function findOpenClaw() {
+    const home = os.homedir();
     const possiblePaths = [
+        // macOS / Linux
         '/opt/homebrew/bin/openclaw',
         '/usr/local/bin/openclaw',
-        path.join(process.env.HOME || '', '.local/bin/openclaw'),
+        path.join(home, '.local/bin/openclaw'),
+        // Windows
+        path.join(home, 'AppData/Roaming/npm/openclaw.cmd'),
+        path.join(home, 'AppData/Roaming/npm/openclaw'),
         'openclaw', // Try PATH
     ];
     for (const p of possiblePaths) {
@@ -73,10 +79,12 @@ function writeStore(data) {
 // Scans OpenClaw session JSONL files for actual API usage data
 // Uses incremental scanning: only re-reads files that changed since last scan
 function findOpenClawSessionDir() {
-    const home = process.env.HOME || '';
+    const home = os.homedir();
     const candidates = [
         path.join(home, '.openclaw/agents/main/sessions'),
         path.join(home, '.config/openclaw/agents/main/sessions'),
+        // Windows
+        path.join(home, 'AppData/Local/openclaw/agents/main/sessions'),
     ];
     for (const dir of candidates) {
         try {
@@ -199,7 +207,7 @@ let statusCheckInterval = null;
 let savePositionTimeout = null;
 const SNAP_DISTANCE = 15;
 const NORMAL_SIZE = { width: 200, height: 250 };
-const PANEL_SIZE = { width: 320, height: 600 };
+const PANEL_SIZE = { width: 320, height: 680 };
 // ─── Edge Docking (QQ Pet style - Smooth Animation) ───
 let isDockedLeft = false;
 let isDockedRight = false;
@@ -395,6 +403,7 @@ function createWindow() {
         resizable: false,
         skipTaskbar: true,
         hasShadow: false,
+        backgroundColor: '#00000000',
         webPreferences: {
             preload: path.join(__dirname, 'preload.cjs'),
             contextIsolation: true,
