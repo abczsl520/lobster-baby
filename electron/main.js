@@ -867,7 +867,12 @@ ipcMain.handle('social-sync', async () => {
                 break;
             }
         }
-        const result = await social.socialSync(store.socialToken, realTokens, level, 0, 0);
+        // Count achievements based on token milestones
+        const ACHIEVEMENT_THRESHOLDS = [1e6, 1e7, 1e8, 1e9, 5e9, 1e10, 5e10];
+        const achievements = ACHIEVEMENT_THRESHOLDS.filter(t => realTokens >= t).length;
+        // Daily tokens
+        const dailyTokens = Math.max(0, realTokens - (store.dailyTokensBaseline || 0));
+        const result = await social.socialSync(store.socialToken, realTokens, level, achievements, dailyTokens);
         return result;
     }
     catch (err) {
@@ -1110,7 +1115,10 @@ async function doSocialSync() {
                 break;
             }
         }
-        await social.socialSync(store.socialToken, realTokens, level, 0, 0);
+        const ACHIEVEMENT_THRESHOLDS = [1e6, 1e7, 1e8, 1e9, 5e9, 1e10, 5e10];
+        const achievements = ACHIEVEMENT_THRESHOLDS.filter(t => realTokens >= t).length;
+        const dailyTokens = Math.max(0, realTokens - (store.dailyTokensBaseline || 0));
+        await social.socialSync(store.socialToken, realTokens, level, achievements, dailyTokens);
         log('Social sync completed');
     }
     catch (err) {
