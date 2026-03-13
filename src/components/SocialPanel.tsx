@@ -211,6 +211,22 @@ export const SocialPanel: React.FC<SocialPanelProps> = ({ visible, onClose }) =>
           <h3>🏆 排行榜</h3>
         </div>
         <div className="social-body">
+          {/* Leaderboard visibility toggle */}
+          {localData.hasToken && (
+            <div className="lb-visibility-toggle">
+              <span>参与排行榜</span>
+              <label className="toggle-switch">
+                <input
+                  type="checkbox"
+                  checked={profile?.show_on_leaderboard ?? true}
+                  onChange={handleToggleLeaderboard}
+                  disabled={loading}
+                />
+                <span className="toggle-slider" />
+              </label>
+            </div>
+          )}
+
           <div className="lb-tabs">
             {[
               { key: 'tokens', label: '💰 Token' },
@@ -433,7 +449,7 @@ export const SocialPanel: React.FC<SocialPanelProps> = ({ visible, onClose }) =>
             </div>
 
             <div className="social-menu">
-              <button className="social-menu-item" onClick={() => { loadLeaderboard(); setView('leaderboard'); }}>
+              <button className="social-menu-item" onClick={() => { loadLeaderboard(); if (!profile) loadProfile(); setView('leaderboard'); }}>
                 <span className="menu-icon">🏆</span>
                 <span className="menu-text">排行榜</span>
                 <span className="menu-arrow">›</span>

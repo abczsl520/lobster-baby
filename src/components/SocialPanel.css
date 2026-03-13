@@ -480,3 +480,16 @@
   border-radius: 10px;
   font-size: 13px;
 }
+
+/* Leaderboard visibility toggle */
+.lb-visibility-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.75);
+}
