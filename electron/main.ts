@@ -219,6 +219,7 @@ let isDockingInProgress = false; // Prevent moved event loop during dock/undock
 let dockAnimTimer: NodeJS.Timeout | null = null; // Animation frame timer
 let hoverCheckInterval: NodeJS.Timeout | null = null; // Mouse hover polling
 let hoverUndocked = false; // True when temporarily undocked by hover
+let isPanelResizing = false; // True during show-panel/hide-panel to suppress moved event
 
 // Easing functions
 function easeOutCubic(t: number): number { return 1 - Math.pow(1 - t, 3); }
@@ -230,9 +231,17 @@ function easeOutBack(t: number): number {
 function easeInCubic(t: number): number { return t * t * t; }
 
 // Animated window move: smoothly transitions x from startX to endX
+function cancelDockAnimation() {
+  if (dockAnimTimer) {
+    clearInterval(dockAnimTimer);
+    dockAnimTimer = null;
+  }
+  isDockingInProgress = false;
+}
+
 function animateWindowX(startX: number, endX: number, duration: number, easing: (t: number) => number, onDone?: () => void) {
   if (!mainWindow || mainWindow.isDestroyed()) return;
-  if (dockAnimTimer) { clearInterval(dockAnimTimer); dockAnimTimer = null; }
+  cancelDockAnimation(); // Cancel any in-progress animation (and reset isDockingInProgress)
 
   const FRAME_MS = 16; // ~60fps
   const totalFrames = Math.max(1, Math.round(duration / FRAME_MS));
@@ -434,7 +443,7 @@ function createWindow() {
   // Save position on move + edge snapping (debounced)
   mainWindow.on('moved', () => {
     if (!mainWindow) return;
-    if (isDockingInProgress) return; // Skip if dock/undock is in progress
+    if (isDockingInProgress || isPanelResizing) return; // Skip if dock/undock or panel resize is in progress
 
     const bounds = mainWindow.getBounds();
     const display = screen.getDisplayNearestPoint({ x: bounds.x, y: bounds.y }).workArea;
@@ -733,6 +742,9 @@ ipcMain.on('move-window', (event, deltaX: number, deltaY: number) => {
   if (isDockedLeft || isDockedRight) {
     isDockedLeft = false;
     isDockedRight = false;
+    stopHoverCheck();
+    cancelDockAnimation();
+    notifyDockState(null);
   }
   isDraggingWindow = true;
 
@@ -844,18 +856,22 @@ function clampToScreen(x: number, y: number, w: number, h: number) {
 
 ipcMain.handle('show-panel', () => {
   if (!mainWindow || mainWindow.isDestroyed()) return;
+  isPanelResizing = true;
   const bounds = mainWindow.getBounds();
   const newX = bounds.x - (PANEL_SIZE.width - NORMAL_SIZE.width) / 2;
   const newY = bounds.y - (PANEL_SIZE.height - NORMAL_SIZE.height);
   mainWindow.setBounds(clampToScreen(newX, newY, PANEL_SIZE.width, PANEL_SIZE.height));
+  setTimeout(() => { isPanelResizing = false; }, 100);
 });
 
 ipcMain.handle('hide-panel', () => {
   if (!mainWindow || mainWindow.isDestroyed()) return;
+  isPanelResizing = true;
   const bounds = mainWindow.getBounds();
   const newX = bounds.x + (PANEL_SIZE.width - NORMAL_SIZE.width) / 2;
   const newY = bounds.y + (PANEL_SIZE.height - NORMAL_SIZE.height);
   mainWindow.setBounds(clampToScreen(newX, newY, NORMAL_SIZE.width, NORMAL_SIZE.height));
+  setTimeout(() => { isPanelResizing = false; }, 100);
 });
 
 ipcMain.handle('quit-app', () => app.quit());
@@ -888,7 +904,7 @@ ipcMain.handle('notify-level-up', (_event, level: number) => {
 });
 
 // ─── Auto Update Check (System Notification) ───
-const APP_VERSION = '1.5.0';
+const APP_VERSION = '1.5.1';
 let updateCheckInterval: NodeJS.Timeout | null = null;
 
 function fetchJSON(url: string): Promise<any> {
