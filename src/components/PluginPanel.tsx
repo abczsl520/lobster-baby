@@ -239,7 +239,7 @@ export const PluginPanel: React.FC<PluginPanelProps> = ({ visible, onClose }) =>
             {!loading && featuredPlugins.length === 0 && (
               <div className="plugin-empty">
                 <p>暂无精选插件</p>
-                <p className="empty-hint">lbhub.ai 即将上线，敬请期待~</p>
+                <p className="empty-hint">在 lbhub.ai 发现更多插件~</p>
               </div>
             )}
 
