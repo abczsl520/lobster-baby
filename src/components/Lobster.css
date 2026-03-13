@@ -266,3 +266,194 @@
     transform: translateY(-55px) scale(0.7);
   }
 }
+
+/* Level-up skin crossfade */
+.lobster-img-old {
+  position: absolute;
+  inset: 0;
+  animation: skin-fade-out 1.2s ease-in-out forwards;
+  z-index: 2;
+}
+
+.lobster-img-new {
+  animation: skin-fade-in 1.2s ease-in-out forwards;
+  z-index: 1;
+}
+
+@keyframes skin-fade-out {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  40% {
+    opacity: 0.8;
+    transform: scale(1.15);
+    filter: brightness(2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.3);
+    filter: brightness(3);
+  }
+}
+
+@keyframes skin-fade-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+    filter: brightness(3);
+  }
+  40% {
+    opacity: 0.5;
+    transform: scale(0.9);
+    filter: brightness(1.5);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+/* === Combo click easter eggs === */
+
+/* 5 clicks: spin */
+.combo-spin .lobster-img {
+  animation: combo-spin 1s ease-in-out !important;
+}
+
+@keyframes combo-spin {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(180deg) scale(1.1); }
+  50% { transform: rotate(360deg) scale(1.2); }
+  75% { transform: rotate(540deg) scale(1.1); }
+  100% { transform: rotate(720deg) scale(1); }
+}
+
+/* 10 clicks: dance */
+.combo-dance .lobster-img {
+  animation: combo-dance 2s ease-in-out !important;
+}
+
+@keyframes combo-dance {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  10% { transform: translateY(-15px) rotate(-10deg); }
+  20% { transform: translateY(0) rotate(10deg); }
+  30% { transform: translateY(-20px) rotate(-15deg); }
+  40% { transform: translateY(0) rotate(15deg); }
+  50% { transform: translateY(-25px) rotate(0deg) scale(1.2); }
+  60% { transform: translateY(0) rotate(-10deg); }
+  70% { transform: translateY(-15px) rotate(10deg); }
+  80% { transform: translateY(0) rotate(-5deg); }
+  90% { transform: translateY(-10px) rotate(5deg); }
+}
+
+/* 15 clicks: rainbow burst */
+.combo-rainbow-burst .lobster-img {
+  animation: combo-rainbow 2.5s ease-in-out !important;
+}
+
+@keyframes combo-rainbow {
+  0% { filter: hue-rotate(0deg) brightness(1) drop-shadow(0 0 0 transparent); }
+  20% { filter: hue-rotate(72deg) brightness(1.3) drop-shadow(0 0 15px #ff0); }
+  40% { filter: hue-rotate(144deg) brightness(1.3) drop-shadow(0 0 15px #0f0); }
+  60% { filter: hue-rotate(216deg) brightness(1.3) drop-shadow(0 0 15px #0ff); }
+  80% { filter: hue-rotate(288deg) brightness(1.3) drop-shadow(0 0 15px #f0f); }
+  100% { filter: hue-rotate(360deg) brightness(1) drop-shadow(0 0 0 transparent); }
+}
+
+/* 20 clicks: mega spin + rainbow + bounce */
+.combo-mega-spin .lobster-img {
+  animation: combo-mega 3s ease-in-out !important;
+}
+
+@keyframes combo-mega {
+  0% { transform: rotate(0deg) scale(1); filter: hue-rotate(0deg) brightness(1); }
+  10% { transform: rotate(180deg) scale(1.3) translateY(-20px); filter: hue-rotate(60deg) brightness(1.5); }
+  20% { transform: rotate(360deg) scale(0.8) translateY(10px); filter: hue-rotate(120deg) brightness(1.3); }
+  30% { transform: rotate(540deg) scale(1.4) translateY(-25px); filter: hue-rotate(180deg) brightness(1.5); }
+  40% { transform: rotate(720deg) scale(0.9) translateY(5px); filter: hue-rotate(240deg) brightness(1.3); }
+  50% { transform: rotate(900deg) scale(1.5) translateY(-30px); filter: hue-rotate(300deg) brightness(2); }
+  60% { transform: rotate(1080deg) scale(1.1) translateY(-10px); filter: hue-rotate(360deg) brightness(1.5); }
+  70% { transform: rotate(1260deg) scale(1.3) translateY(-20px); filter: hue-rotate(60deg) brightness(1.3); }
+  80% { transform: rotate(1440deg) scale(1.1) translateY(-5px); filter: hue-rotate(120deg) brightness(1.2); }
+  90% { transform: rotate(1620deg) scale(1.05); filter: hue-rotate(180deg) brightness(1.1); }
+  100% { transform: rotate(1800deg) scale(1); filter: hue-rotate(0deg) brightness(1); }
+}
+
+/* === Combo badge (from PR, adapted) === */
+.combo-badge {
+  position: absolute;
+  top: 35px;
+  right: -15px;
+  z-index: 35;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(255, 250, 221, 0.98), rgba(255, 196, 87, 0.98));
+  color: #7a4100;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  box-shadow:
+    0 6px 18px rgba(255, 173, 64, 0.25),
+    0 2px 6px rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation: combo-badge-pop 0.8s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}
+
+@keyframes combo-badge-pop {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0) scale(0.5);
+  }
+  35% {
+    opacity: 1;
+    transform: translate3d(0, -5px, 0) scale(1.15);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -16px, 0) scale(0.9);
+  }
+}
+
+/* === Star burst effect === */
+.combo-starburst {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.combo-star {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  margin-top: -6px;
+  border-radius: 20%;
+  clip-path: polygon(50% 0%, 62% 34%, 100% 38%, 72% 58%, 82% 100%, 50% 74%, 18% 100%, 28% 58%, 0% 38%, 38% 34%);
+  background: radial-gradient(circle, #fff 0%, #ffe08d 40%, #6ff7b2 80%, transparent 100%);
+  box-shadow: 0 0 10px rgba(255, 230, 120, 0.4);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: combo-star-burst 0.7s ease-out forwards;
+}
+
+@keyframes combo-star-burst {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.2) rotate(0deg);
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+    transform: translate3d(calc(var(--burst-x) * 0.3), calc(var(--burst-y) * 0.3), 0) scale(1.15) rotate(40deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--burst-x), var(--burst-y), 0) scale(0.4) rotate(160deg);
+  }
+}
