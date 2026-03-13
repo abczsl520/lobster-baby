@@ -4,6 +4,8 @@ import { StatusPanel } from './components/StatusPanel';
 import { EmojiBubble, getRandomEmoji } from './components/EmojiBubble';
 import { UpdateNotification } from './components/UpdateNotification';
 import { Achievement, MILESTONES, Milestone } from './components/Achievement';
+import { Particles } from './components/Particles';
+import { SpeechBubble } from './components/SpeechBubble';
 import { useOpenClawStatus } from './hooks/useOpenClawStatus';
 import { useLevelSystem } from './hooks/useLevelSystem';
 import { useUpdateChecker } from './hooks/useUpdateChecker';
@@ -269,6 +271,8 @@ function App() {
       {emoji && <EmojiBubble emoji={emoji} onComplete={() => setEmoji(null)} />}
 
       <div className="lobster-area">
+        <Particles status={status} level={levelInfo.level} />
+        <SpeechBubble status={status} />
         <Lobster
           status={status}
           levelInfo={levelInfo}

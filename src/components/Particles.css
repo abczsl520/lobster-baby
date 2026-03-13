@@ -1,0 +1,160 @@
+.particles-layer {
+  position: absolute;
+  inset: -18px;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 1;
+}
+
+.particle-node {
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0);
+}
+
+.particle-core {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  will-change: transform, opacity, filter;
+  transform: translateZ(0);
+}
+
+.particle-enhanced {
+  filter: brightness(1.16) saturate(1.12);
+}
+
+.particle-idle {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 28% 28%, rgba(255, 255, 255, 0.9) 0%, rgba(186, 235, 255, 0.78) 22%, rgba(101, 201, 255, 0.42) 58%, rgba(101, 201, 255, 0.06) 100%);
+  box-shadow:
+    0 0 10px rgba(92, 197, 255, 0.26),
+    inset 0 0 8px rgba(255, 255, 255, 0.22);
+  animation: particle-bubble-pulse 3.6s ease-in-out infinite;
+}
+
+.particle-idle::before {
+  content: '';
+  position: absolute;
+  top: 18%;
+  left: 22%;
+  width: 28%;
+  height: 28%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.62);
+  filter: blur(0.5px);
+}
+
+.particle-active {
+  border-radius: 20%;
+  clip-path: polygon(50% 0%, 62% 34%, 100% 38%, 72% 58%, 82% 100%, 50% 74%, 18% 100%, 28% 58%, 0% 38%, 38% 34%);
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(255, 237, 148, 0.95) 28%, rgba(117, 255, 170, 0.86) 58%, rgba(117, 255, 170, 0.08) 100%);
+  box-shadow:
+    0 0 14px rgba(140, 255, 175, 0.36),
+    0 0 20px rgba(255, 217, 90, 0.28);
+  animation: particle-spark-twinkle 0.68s steps(2, end) infinite;
+}
+
+.particle-active::before {
+  content: '';
+  position: absolute;
+  inset: 14%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0) 70%);
+  transform: scale(1.6);
+  opacity: 0.75;
+}
+
+.particle-error {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(215, 215, 215, 0.7) 0%, rgba(135, 135, 135, 0.48) 48%, rgba(95, 95, 95, 0.04) 100%);
+  box-shadow: 0 0 12px rgba(90, 90, 90, 0.18);
+  filter: blur(1.3px);
+  animation: particle-smoke-pulse 4.8s ease-in-out infinite;
+}
+
+.particle-trail::after {
+  content: '';
+  position: absolute;
+  top: 52%;
+  left: 50%;
+  width: 40%;
+  height: 170%;
+  border-radius: 999px;
+  transform: translate(-50%, -8%);
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0));
+  filter: blur(4px);
+  opacity: 0.42;
+}
+
+.particle-active.particle-trail::after {
+  width: 34%;
+  height: 150%;
+  background: linear-gradient(to bottom, rgba(255, 245, 180, 0.42), rgba(108, 255, 162, 0));
+}
+
+.particle-error.particle-trail::after {
+  width: 72%;
+  height: 130%;
+  background: linear-gradient(to bottom, rgba(155, 155, 155, 0.28), rgba(100, 100, 100, 0));
+}
+
+.particle-rainbow {
+  background:
+    conic-gradient(from 0deg, rgba(255, 92, 92, 0.92), rgba(255, 193, 79, 0.92), rgba(255, 240, 103, 0.92), rgba(84, 243, 163, 0.92), rgba(91, 201, 255, 0.92), rgba(190, 118, 255, 0.92), rgba(255, 92, 92, 0.92));
+  box-shadow:
+    0 0 16px rgba(255, 255, 255, 0.42),
+    0 0 22px rgba(255, 170, 95, 0.3);
+  animation: particle-rainbow-spin 2.4s linear infinite;
+}
+
+.particle-idle.particle-rainbow::before,
+.particle-active.particle-rainbow::before {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 75%);
+}
+
+@keyframes particle-bubble-pulse {
+  0%, 100% {
+    transform: scale(0.92);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+@keyframes particle-spark-twinkle {
+  0%, 100% {
+    opacity: 0.45;
+    transform: scale(0.7) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.16) rotate(22deg);
+  }
+}
+
+@keyframes particle-smoke-pulse {
+  0%, 100% {
+    transform: scale(0.88);
+    opacity: 0.66;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.88;
+  }
+}
+
+@keyframes particle-rainbow-spin {
+  0% {
+    filter: hue-rotate(0deg) saturate(1.1);
+  }
+  100% {
+    filter: hue-rotate(360deg) saturate(1.15);
+  }
+}
