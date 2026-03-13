@@ -26,6 +26,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
         ipcRenderer.on('show-achievements', handler);
         return () => ipcRenderer.removeListener('show-achievements', handler);
     },
+    onShowSocial: (callback) => {
+        const handler = () => callback();
+        ipcRenderer.on('show-social', handler);
+        return () => ipcRenderer.removeListener('show-social', handler);
+    },
     onDockStateChanged: (callback) => {
         const handler = (_event, state) => callback(state);
         ipcRenderer.on('dock-state-changed', handler);

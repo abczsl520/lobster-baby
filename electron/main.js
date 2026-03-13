@@ -520,6 +520,11 @@ function createWindow() {
                 click: () => mainWindow?.webContents.send('toggle-panel'),
             },
             {
+                label: '🌐 龙虾社区',
+                click: () => mainWindow?.webContents.send('show-social'),
+            },
+            { type: 'separator' },
+            {
                 label: '📈 查看趋势',
                 click: () => mainWindow?.webContents.send('toggle-chart'),
             },
@@ -533,16 +538,12 @@ function createWindow() {
                 click: () => mainWindow?.reload(),
             },
             {
-                label: '🐛 打开日志',
-                click: () => shell.openPath(logFile),
-            },
-            {
-                label: '📂 打开数据目录',
+                label: '📂 数据目录',
                 click: () => shell.openPath(app.getPath('userData')),
             },
             { type: 'separator' },
             {
-                label: '❌ 退出龙虾宝宝',
+                label: '❌ 退出',
                 click: () => app.quit(),
             },
         ]);
