@@ -3,6 +3,7 @@ import { OpenClawStatus, LevelInfo } from '../types';
 import { formatTokens } from '../utils/levels';
 import { TokenChart } from './TokenChart';
 import { AchievementList } from './AchievementList';
+import { SocialPanel } from './SocialPanel';
 import './StatusPanel.css';
 
 const APP_VERSION = '1.5.1';
@@ -30,6 +31,7 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
 }) => {
   const [internalShowChart, setInternalShowChart] = useState(false);
   const [internalShowAchievements, setInternalShowAchievements] = useState(false);
+  const [showSocial, setShowSocial] = useState(false);
   const showChart = externalShowChart ?? internalShowChart;
   const toggleChart = onToggleChart ?? (() => setInternalShowChart(!internalShowChart));
   const showAchievements = externalShowAchievements ?? internalShowAchievements;
@@ -49,6 +51,10 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
 
   const tokensToNextLevel = levelInfo.nextLevelTokens - levelInfo.currentTokens;
   const progressPercent = Math.min(100, levelInfo.progress);
+
+  if (showSocial) {
+    return <SocialPanel visible={true} onClose={() => setShowSocial(false)} />;
+  }
 
   return (
     <div className="status-panel" onClick={(e) => e.stopPropagation()}>
@@ -106,6 +112,9 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
             </button>
             <button className="panel-btn" onClick={toggleAchievements}>
               {showAchievements ? '🏆 隐藏成就' : '🏆 查看成就'}
+            </button>
+            <button className="panel-btn" onClick={() => setShowSocial(true)}>
+              🌐 社交
             </button>
           </div>
 
