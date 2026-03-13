@@ -303,6 +303,17 @@ export async function installFromUrl(url: string, source: 'lbhub' | 'github' | '
     // Load immediately
     await loadPlugin(manifest.id);
 
+    // Track install on lbhub.ai (fire-and-forget)
+    try {
+      const trackReq = https.request(`${LBHUB_API}/plugins/${manifest.id}/install`, {
+        method: 'POST',
+        headers: { 'User-Agent': 'LobsterBaby', 'Content-Length': '0' },
+        timeout: 5_000,
+      });
+      trackReq.on('error', () => {}); // ignore errors
+      trackReq.end();
+    } catch { /* ignore */ }
+
     log(`Plugin [${manifest.id}] installed from ${source}: ${url}`);
     return { success: true, pluginId: manifest.id, manifest };
   } catch (e: any) {
