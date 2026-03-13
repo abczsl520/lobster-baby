@@ -1,7 +1,6 @@
 import { app, BrowserWindow, ipcMain, screen, Menu, shell, Notification, globalShortcut } from 'electron';
 import path from 'path';
 import https from 'https';
-import os from 'os';
 import { log } from './logger';
 import { readStore, writeStore } from './store';
 import { findOpenClaw, scanRealTokenUsage } from './scanner';
