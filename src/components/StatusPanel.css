@@ -1,6 +1,6 @@
 .status-panel {
   width: 300px;
-  max-height: 500px;
+  max-height: calc(100vh - 140px);
   background: rgba(15, 15, 25, 0.96);
   border: 1px solid rgba(255, 77, 77, 0.3);
   border-radius: 16px;

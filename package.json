@@ -80,6 +80,31 @@
           "path": "/Applications"
         }
       ]
+    },
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "artifactName": "LobsterBaby-${version}-win-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "deleteAppDataOnUninstall": false,
+      "shortcutName": "Lobster Baby",
+      "artifactName": "LobsterBaby-${version}-win-x64-setup.${ext}"
+    },
+    "portable": {
+      "artifactName": "LobsterBaby-${version}-win-x64-portable.${ext}"
     }
   }
 }
