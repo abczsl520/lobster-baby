@@ -46,4 +46,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   notifyLevelUp: (level: number) => ipcRenderer.invoke('notify-level-up', level),
   undock: () => ipcRenderer.invoke('undock'),
   redock: () => ipcRenderer.invoke('redock'),
+  // Social features
+  socialRegister: (nickname: string) => ipcRenderer.invoke('social-register', nickname),
+  socialLogin: () => ipcRenderer.invoke('social-login'),
+  socialSync: () => ipcRenderer.invoke('social-sync'),
+  socialLeaderboard: (type: string, page: number) => ipcRenderer.invoke('social-leaderboard', type, page),
+  socialPKCreate: () => ipcRenderer.invoke('social-pk-create'),
+  socialPKJoin: (code: string) => ipcRenderer.invoke('social-pk-join', code),
+  socialProfile: () => ipcRenderer.invoke('social-profile'),
+  socialUpdateProfile: (data: Record<string, any>) => ipcRenderer.invoke('social-update-profile', data),
+  socialDeleteAccount: () => ipcRenderer.invoke('social-delete-account'),
+  socialGetLocal: () => ipcRenderer.invoke('social-get-local'),
+  socialStats: () => ipcRenderer.invoke('social-stats'),
 });
