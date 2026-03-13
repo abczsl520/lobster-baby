@@ -17,6 +17,7 @@ function App() {
   const [showPanel, setShowPanel] = useState(false);
   const [showChart, setShowChart] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
+  const [showSocial, setShowSocial] = useState(false);
   const [emoji, setEmoji] = useState<string | null>(null);
   const [isDraggingState, setIsDraggingState] = useState(false);
   const [dockState, setDockState] = useState<string | null>(null);
@@ -128,10 +129,15 @@ function App() {
       window.electronAPI.showPanel();
       setShowAchievements(true);
     });
+    const cleanupSocial = window.electronAPI.onShowSocial(() => {
+      setShowPanel(true);
+      window.electronAPI.showPanel();
+      setShowSocial(true);
+    });
     const cleanupDockState = window.electronAPI.onDockStateChanged((state) => {
       setDockState(state);
     });
-    return () => { cleanupPanel(); cleanupChart(); cleanupAchievements(); cleanupDockState(); };
+    return () => { cleanupPanel(); cleanupChart(); cleanupAchievements(); cleanupSocial(); cleanupDockState(); };
   }, []);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -289,6 +295,8 @@ function App() {
           updateInfo={updateInfo}
           showAchievements={showAchievements}
           onToggleAchievements={() => setShowAchievements(prev => !prev)}
+          showSocial={showSocial}
+          onCloseSocial={() => setShowSocial(false)}
         />
       )}
     </div>

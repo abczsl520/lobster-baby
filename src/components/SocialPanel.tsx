@@ -242,8 +242,8 @@ export const SocialPanel: React.FC<SocialPanelProps> = ({ visible, onClose }) =>
                     {item.rank <= 3 ? ['🥇', '🥈', '🥉'][item.rank - 1] : `#${item.rank}`}
                   </span>
                   <span className="lb-name">
-                    {item.nickname}
-                    <span className="lb-level">Lv.{item.level}</span>
+                    <span className="lb-nickname">{item.nickname}</span>
+                    <span className="lb-id">{item.lobster_id}</span>
                   </span>
                   <span className="lb-value">
                     {lbType === 'tokens' ? formatTokens(item.total_tokens) :
