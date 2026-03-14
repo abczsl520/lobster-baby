@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useReducer } from 'react';
 import { OpenClawStatus, LevelInfo } from '../types';
 import { TokenFly } from './TokenFly';
 import { LevelUpEffect } from './LevelUpEffect';
@@ -43,28 +43,103 @@ interface LobsterProps {
   dockState: string | null;
 }
 
+// ─── Combo System ───
+type ComboTier = 3 | 5 | 7 | 10;
+const COMBO_TIERS: ComboTier[] = [3, 5, 7, 10];
+const COMBO_RESET_MS = 1000;
+
+interface ComboState {
+  spin: boolean;
+  bounce: boolean;
+  rainbow: boolean;
+  dance: boolean;
+  badge: ComboTier | null;
+  starBurst: boolean;
+  starBurstKey: number;
+  screenFlash: boolean;
+  screenFlashKey: number;
+}
+
+const COMBO_INIT: ComboState = {
+  spin: false, bounce: false, rainbow: false, dance: false,
+  badge: null, starBurst: false, starBurstKey: 0,
+  screenFlash: false, screenFlashKey: 0,
+};
+
+type ComboAction =
+  | { type: 'TRIGGER'; tier: ComboTier }
+  | { type: 'CLEAR_SPIN' }
+  | { type: 'CLEAR_BOUNCE' }
+  | { type: 'CLEAR_RAINBOW' }
+  | { type: 'CLEAR_DANCE' }
+  | { type: 'CLEAR_BADGE' }
+  | { type: 'CLEAR_STARBURST' }
+  | { type: 'CLEAR_FLASH' }
+  | { type: 'RESET' };
+
+function comboReducer(state: ComboState, action: ComboAction): ComboState {
+  switch (action.type) {
+    case 'TRIGGER': {
+      const s = { ...state, badge: action.tier };
+      switch (action.tier) {
+        case 3: return { ...s, spin: true };
+        case 5: return { ...s, bounce: true, starBurst: true, starBurstKey: state.starBurstKey + 1 };
+        case 7: return { ...s, rainbow: true, screenFlash: true, screenFlashKey: state.screenFlashKey + 1 };
+        case 10: return { ...s, dance: true, starBurst: true, starBurstKey: state.starBurstKey + 1, screenFlash: true, screenFlashKey: state.screenFlashKey + 1 };
+      }
+      return s;
+    }
+    case 'CLEAR_SPIN': return { ...state, spin: false };
+    case 'CLEAR_BOUNCE': return { ...state, bounce: false };
+    case 'CLEAR_RAINBOW': return { ...state, rainbow: false };
+    case 'CLEAR_DANCE': return { ...state, dance: false };
+    case 'CLEAR_BADGE': return { ...state, badge: null };
+    case 'CLEAR_STARBURST': return { ...state, starBurst: false };
+    case 'CLEAR_FLASH': return { ...state, screenFlash: false };
+    case 'RESET': return COMBO_INIT;
+    default: return state;
+  }
+}
+
+// Durations per tier: [badge, effect]
+const COMBO_DURATIONS: Record<ComboTier, { badge: number; effect: number; starBurst?: number; flash?: number }> = {
+  3:  { badge: 900, effect: 700 },
+  5:  { badge: 900, effect: 850, starBurst: 850 },
+  7:  { badge: 900, effect: 1200, flash: 550 },
+  10: { badge: 900, effect: 3000, starBurst: 1000, flash: 550 },
+};
+
 export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, dockState }) => {
   const [isClicked, setIsClicked] = useState(false);
   const [tokenDelta, setTokenDelta] = useState<number | null>(null);
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [skinTransition, setSkinTransition] = useState(false);
   const [prevSkin, setPrevSkin] = useState<string | null>(null);
-  const [comboEffect, setComboEffect] = useState<string | null>(null);
-  const [comboBadge, setComboBadge] = useState<number | null>(null);
-  const [showStarBurst, setShowStarBurst] = useState(false);
-  const [starBurstKey, setStarBurstKey] = useState(0);
+  const [combo, dispatchCombo] = useReducer(comboReducer, COMBO_INIT);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const clickCountRef = useRef(0);
-  const comboTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const comboResetRef = useRef<NodeJS.Timeout | null>(null);
+  const triggeredRef = useRef<Set<ComboTier>>(new Set());
+  const comboTimersRef = useRef<NodeJS.Timeout[]>([]);
   const lastTokensRef = useRef<number>(levelInfo.currentTokens);
   const lastLevelRef = useRef<number>(0);
   const startTimeRef = useRef<number>(Date.now());
 
+  // Cleanup all combo timers
+  const clearComboTimers = () => {
+    comboTimersRef.current.forEach(t => clearTimeout(t));
+    comboTimersRef.current = [];
+  };
+
+  const scheduleCombo = (fn: () => void, ms: number) => {
+    comboTimersRef.current.push(setTimeout(fn, ms));
+  };
+
   useEffect(() => {
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (comboResetRef.current) clearTimeout(comboResetRef.current);
+      clearComboTimers();
     };
   }, []);
 
@@ -107,48 +182,63 @@ export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, do
 
   const handleClick = () => {
     setIsClicked(true);
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
       setIsClicked(false);
       timeoutRef.current = null;
     }, 500);
 
-    // Combo click tracking
+    // Combo tracking
     clickCountRef.current += 1;
-    if (comboTimerRef.current) clearTimeout(comboTimerRef.current);
-    comboTimerRef.current = setTimeout(() => {
+    if (comboResetRef.current) clearTimeout(comboResetRef.current);
+    comboResetRef.current = setTimeout(() => {
       clickCountRef.current = 0;
-    }, 800); // Reset combo after 800ms of no clicks
+      triggeredRef.current.clear();
+      comboResetRef.current = null;
+    }, COMBO_RESET_MS);
 
-    const count = clickCountRef.current;
-    if (count === 5) {
-      setComboEffect('spin');
-      setComboBadge(5);
-      setTimeout(() => { setComboEffect(null); setComboBadge(null); }, 1000);
-    } else if (count === 10) {
-      setComboEffect('dance');
-      setComboBadge(10);
-      setShowStarBurst(true);
-      setStarBurstKey(k => k + 1);
-      setTimeout(() => { setComboEffect(null); setComboBadge(null); setShowStarBurst(false); }, 2000);
-    } else if (count === 15) {
-      setComboEffect('rainbow-burst');
-      setComboBadge(15);
-      setShowStarBurst(true);
-      setStarBurstKey(k => k + 1);
-      setTimeout(() => { setComboEffect(null); setComboBadge(null); setShowStarBurst(false); }, 2500);
-    } else if (count >= 20) {
-      setComboEffect('mega-spin');
-      setComboBadge(20);
-      setShowStarBurst(true);
-      setStarBurstKey(k => k + 1);
-      setTimeout(() => { setComboEffect(null); setComboBadge(null); setShowStarBurst(false); }, 3000);
+    // Check thresholds (ascending, trigger each once per combo chain)
+    for (const tier of COMBO_TIERS) {
+      if (clickCountRef.current >= tier && !triggeredRef.current.has(tier)) {
+        triggeredRef.current.add(tier);
+        triggerCombo(tier);
+        break; // Only trigger one per click
+      }
+    }
+
+    // Reset at 20 for looping
+    if (clickCountRef.current >= 20) {
       clickCountRef.current = 0;
+      triggeredRef.current.clear();
     }
 
     onClick();
+  };
+
+  const triggerCombo = (tier: ComboTier) => {
+    dispatchCombo({ type: 'TRIGGER', tier });
+    const dur = COMBO_DURATIONS[tier];
+
+    scheduleCombo(() => dispatchCombo({ type: 'CLEAR_BADGE' }), dur.badge);
+
+    switch (tier) {
+      case 3:
+        scheduleCombo(() => dispatchCombo({ type: 'CLEAR_SPIN' }), dur.effect);
+        break;
+      case 5:
+        scheduleCombo(() => dispatchCombo({ type: 'CLEAR_BOUNCE' }), dur.effect);
+        scheduleCombo(() => dispatchCombo({ type: 'CLEAR_STARBURST' }), dur.starBurst!);
+        break;
+      case 7:
+        scheduleCombo(() => dispatchCombo({ type: 'CLEAR_RAINBOW' }), dur.effect);
+        scheduleCombo(() => dispatchCombo({ type: 'CLEAR_FLASH' }), dur.flash!);
+        break;
+      case 10:
+        scheduleCombo(() => dispatchCombo({ type: 'CLEAR_DANCE' }), dur.effect);
+        scheduleCombo(() => dispatchCombo({ type: 'CLEAR_STARBURST' }), dur.starBurst!);
+        scheduleCombo(() => dispatchCombo({ type: 'CLEAR_FLASH' }), dur.flash!);
+        break;
+    }
   };
 
   const skinSrc = dockState
@@ -159,28 +249,31 @@ export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, do
   const burstStars = Array.from({ length: 10 }, (_, i) => {
     const angle = (Math.PI * 2 * i) / 10;
     return {
-      id: `${starBurstKey}-${i}`,
-      x: `${Math.cos(angle) * 60}px`,
-      y: `${Math.sin(angle) * 60}px`,
+      id: `${combo.starBurstKey}-${i}`,
+      x: `${Math.cos(angle) * 64}px`,
+      y: `${Math.sin(angle) * 64}px`,
       delay: `${i * 0.02}s`,
     };
   });
 
   return (
     <div
-      className={`lobster-container ${status} ${isClicked ? 'clicked' : ''} ${dockState ? `docked-${dockState}` : ''} ${comboEffect ? `combo-${comboEffect}` : ''}`}
+      className={`lobster-container ${status} ${isClicked ? 'clicked' : ''} ${dockState ? `docked-${dockState}` : ''}`}
       onClick={handleClick}
     >
+      {/* Screen flash (fixed, outside lobster) */}
+      {combo.screenFlash && <div key={combo.screenFlashKey} className="combo-screen-flash" />}
+
       {/* Combo badge */}
-      {comboBadge !== null && (
-        <div className="combo-badge">×{comboBadge}</div>
+      {combo.badge !== null && (
+        <div className="combo-badge">×{combo.badge}</div>
       )}
 
       {/* Star burst effect */}
-      {showStarBurst && (
-        <div className="combo-starburst">
+      {combo.starBurst && (
+        <div key={combo.starBurstKey} className="combo-starburst">
           {burstStars.map(star => (
-            <div
+            <span
               key={star.id}
               className="combo-star"
               style={{
@@ -207,22 +300,30 @@ export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, do
         <LevelUpEffect level={levelInfo.level} onComplete={() => setShowLevelUp(false)} />
       )}
 
-      {/* Main lobster image - uses level-specific skin */}
-      {/* Old skin fading out during level transition */}
-      {skinTransition && prevSkin && (
-        <img
-          src={prevSkin}
-          alt=""
-          className="lobster-img lobster-img-old"
-          draggable={false}
-        />
-      )}
-      <img
-        src={skinSrc}
-        alt="龙虾宝宝"
-        className={`lobster-img ${levelInfo.hasGlow ? 'glow' : ''} ${levelInfo.isRainbow ? 'rainbow' : ''} ${skinTransition ? 'lobster-img-new' : ''}`}
-        draggable={false}
-      />
+      {/* Main lobster image - nested shells for stackable combo animations */}
+      <div className={`combo-shell-dance ${combo.dance ? 'combo-dance' : ''}`}>
+        <div className={`combo-shell-rainbow ${combo.rainbow ? 'combo-rainbow' : ''}`}>
+          <div className={`combo-shell-spin ${combo.spin ? 'combo-spin' : ''}`}>
+            <div className={`combo-shell-bounce ${combo.bounce ? 'combo-mega-bounce' : ''}`}>
+              {/* Old skin fading out during level transition */}
+              {skinTransition && prevSkin && (
+                <img
+                  src={prevSkin}
+                  alt=""
+                  className="lobster-img lobster-img-old"
+                  draggable={false}
+                />
+              )}
+              <img
+                src={skinSrc}
+                alt="龙虾宝宝"
+                className={`lobster-img ${levelInfo.hasGlow ? 'glow' : ''} ${levelInfo.isRainbow ? 'rainbow' : ''} ${skinTransition ? 'lobster-img-new' : ''}`}
+                draggable={false}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Status indicator dot */}
       <div className={`status-dot status-${status}`} />
