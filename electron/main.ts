@@ -9,6 +9,7 @@ import { createTray, updateTrayMenu, setMainWindowGetter as setTrayMainWindow } 
 import { initStatus, startStatusCheck, stopStatusCheck } from './status';
 import * as social from './social';
 import * as plugins from './plugins';
+import { t } from './i18n-main';
 
 log('=== Lobster Baby starting ===');
 
@@ -138,20 +139,20 @@ function createWindow() {
       : [];
 
     const menu = Menu.buildFromTemplate([
-      { label: isOnTop ? '📌 取消置顶' : '📌 置顶', click: () => { mainWindow?.setAlwaysOnTop(!isOnTop); updateTrayMenu(); } },
+      { label: isOnTop ? t('menu.unpin') : t('menu.pin'), click: () => { mainWindow?.setAlwaysOnTop(!isOnTop); updateTrayMenu(); } },
       { type: 'separator' },
-      { label: '📊 状态面板', click: () => mainWindow?.webContents.send('toggle-panel') },
-      { label: '🌐 龙虾社区', click: () => mainWindow?.webContents.send('show-social') },
-      { label: '🧩 插件', click: () => mainWindow?.webContents.send('show-plugins') },
+      { label: t('menu.status'), click: () => mainWindow?.webContents.send('toggle-panel') },
+      { label: t('menu.community'), click: () => mainWindow?.webContents.send('show-social') },
+      { label: t('menu.plugins'), click: () => mainWindow?.webContents.send('show-plugins') },
       { type: 'separator' },
-      { label: '📈 查看趋势', click: () => mainWindow?.webContents.send('toggle-chart') },
-      { label: '🏆 查看成就', click: () => mainWindow?.webContents.send('show-achievements') },
+      { label: t('menu.trends'), click: () => mainWindow?.webContents.send('toggle-chart') },
+      { label: t('menu.achievements'), click: () => mainWindow?.webContents.send('show-achievements') },
       ...pluginSubMenu,
       { type: 'separator' },
-      { label: '🔄 重新加载', click: () => mainWindow?.reload() },
-      { label: '📂 数据目录', click: () => shell.openPath(app.getPath('userData')) },
+      { label: t('menu.reload'), click: () => mainWindow?.reload() },
+      { label: t('menu.dataDir'), click: () => shell.openPath(app.getPath('userData')) },
       { type: 'separator' },
-      { label: '❌ 退出', click: () => app.quit() },
+      { label: t('menu.quit'), click: () => app.quit() },
     ]);
     menu.popup();
   });
@@ -294,7 +295,7 @@ ipcMain.handle('social-login', async () => {
 ipcMain.handle('social-sync', async () => {
   try {
     const store = readStore();
-    if (!store.socialToken) return { error: '未注册' };
+    if (!store.socialToken) return { error: t('social.notRegistered') };
     const realTokens = scanRealTokenUsage();
     const level = calcLevel(realTokens);
     const achievements = ACHIEVEMENT_THRESHOLDS.filter(t => realTokens >= t).length;
@@ -311,7 +312,7 @@ ipcMain.handle('social-leaderboard', async (_event, type: string, page: number) 
 ipcMain.handle('social-pk-create', async () => {
   try {
     const store = readStore();
-    if (!store.socialToken) return { error: '未注册' };
+    if (!store.socialToken) return { error: t('social.notRegistered') };
     return await social.socialCreatePK(store.socialToken);
   } catch (err: any) { return { error: err.message }; }
 });
@@ -319,7 +320,7 @@ ipcMain.handle('social-pk-create', async () => {
 ipcMain.handle('social-pk-join', async (_event, code: string) => {
   try {
     const store = readStore();
-    if (!store.socialToken) return { error: '未注册' };
+    if (!store.socialToken) return { error: t('social.notRegistered') };
     return await social.socialJoinPK(store.socialToken, code);
   } catch (err: any) { return { error: err.message }; }
 });
@@ -327,7 +328,7 @@ ipcMain.handle('social-pk-join', async (_event, code: string) => {
 ipcMain.handle('social-profile', async () => {
   try {
     const store = readStore();
-    if (!store.socialToken) return { error: '未注册' };
+    if (!store.socialToken) return { error: t('social.notRegistered') };
     return await social.socialGetProfile(store.socialToken);
   } catch (err: any) { return { error: err.message }; }
 });
@@ -335,7 +336,7 @@ ipcMain.handle('social-profile', async () => {
 ipcMain.handle('social-update-profile', async (_event, data: Record<string, any>) => {
   try {
     const store = readStore();
-    if (!store.socialToken) return { error: '未注册' };
+    if (!store.socialToken) return { error: t('social.notRegistered') };
     return await social.socialUpdateProfile(store.socialToken, data);
   } catch (err: any) { return { error: err.message }; }
 });
@@ -343,7 +344,7 @@ ipcMain.handle('social-update-profile', async (_event, data: Record<string, any>
 ipcMain.handle('social-delete-account', async () => {
   try {
     const store = readStore();
-    if (!store.socialToken) return { error: '未注册' };
+    if (!store.socialToken) return { error: t('social.notRegistered') };
     const result = await social.socialDeleteAccount(store.socialToken);
     delete store.socialToken; delete store.lobsterId; delete store.socialNickname;
     writeStore(store);
@@ -409,23 +410,17 @@ ipcMain.handle('open-external', async (_event, url: string) => {
 });
 
 // ─── Level Up Notification ───
-const LEVEL_NAMES: Record<number, string> = {
-  1: '粉色宝宝', 2: '活泼小虾', 3: '皇冠龙虾', 4: '肌肉猛男',
-  5: '金冠金链', 6: '银甲骑士', 7: '紫色魔法师', 8: '金甲将军',
-  9: '彩虹龙虾', 10: '龙虾之王',
-};
-
 ipcMain.handle('notify-level-up', (_event, level: number) => {
   if (typeof level !== 'number' || level < 1 || level > 10) return;
-  const name = LEVEL_NAMES[level] || `Lv.${level}`;
+  const name = t(`levelName.${level}`) || `Lv.${level}`;
   log(`Level up! Now Lv.${level} (${name})`);
   if (Notification.isSupported()) {
-    new Notification({ title: '🦞 龙虾宝宝升级了！', body: `恭喜！升到了 Lv.${level}「${name}」🎉`, silent: false }).show();
+    new Notification({ title: t('levelUp.title'), body: t('levelUp.body', { level, name }), silent: false }).show();
   }
 });
 
 // ─── Auto Update Check ───
-const APP_VERSION = '1.8.0';
+const APP_VERSION = '1.9.0';
 let updateCheckInterval: NodeJS.Timeout | null = null;
 
 function fetchJSON(url: string): Promise<any> {
@@ -458,7 +453,7 @@ async function checkForUpdatesMain() {
       mainWindow.webContents.send('update-available', { version: latest, url: data.html_url });
     }
     if (Notification.isSupported()) {
-      const n = new Notification({ title: '🦞 有新版本！', body: `v${latest} 已发布`, silent: false });
+      const n = new Notification({ title: t('update.newVersionNotif'), body: t('update.versionPublished', { version: latest }), silent: false });
       n.on('click', () => shell.openExternal(data.html_url));
       n.show();
     }

@@ -1,4 +1,5 @@
-import { BrowserWindow, Menu, Tray, nativeImage, shell, app } from 'electron';
+import { BrowserWindow, Menu, Tray, nativeImage, app } from 'electron';
+import { t } from './i18n-main';
 
 let tray: Tray | null = null;
 let _mainWindow: (() => BrowserWindow | null) | null = null;
@@ -17,11 +18,11 @@ export function updateTrayMenu() {
   const isOnTop = win?.isAlwaysOnTop() ?? true;
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: '🦞 显示龙虾宝宝',
+      label: t('menu.showLobster'),
       click: () => { if (win) { win.show(); win.focus(); } },
     },
     {
-      label: isOnTop ? '📌 取消置顶' : '📌 置顶',
+      label: isOnTop ? t('menu.unpin') : t('menu.pin'),
       click: () => {
         if (win) {
           win.setAlwaysOnTop(!isOnTop);
@@ -30,8 +31,8 @@ export function updateTrayMenu() {
       },
     },
     { type: 'separator' },
-    { label: '🔄 重新加载', click: () => win?.reload() },
-    { label: '❌ 退出', click: () => app.quit() },
+    { label: t('menu.reload'), click: () => win?.reload() },
+    { label: t('menu.quit'), click: () => app.quit() },
   ]);
   tray.setContextMenu(contextMenu);
 }
@@ -42,7 +43,7 @@ export function createTray() {
   );
 
   tray = new Tray(icon);
-  tray.setToolTip('龙虾宝宝 🦞');
+  tray.setToolTip('🦞 Lobster Baby');
   updateTrayMenu();
 
   tray.on('click', () => {
