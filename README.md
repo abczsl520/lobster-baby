@@ -44,7 +44,19 @@
 
 ## 📦 下载安装 / Download
 
-前往 [Releases](https://github.com/abczsl520/lobster-baby/releases/latest) 下载最新版本：
+### 🖥️ 终端一键安装 / Terminal Install (Mac, recommended)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/abczsl520/lobster-baby/main/install.sh | bash
+```
+
+自动检测芯片架构、下载最新版、安装到 /Applications、清除隔离标记（不会弹"已损坏"提示）。
+
+Auto-detects chip architecture, downloads latest release, installs to /Applications, and clears quarantine flag (no "damaged" warning).
+
+### 📥 手动下载 / Manual Download
+
+前往 [Releases](https://github.com/abczsl520/lobster-baby/releases/latest) 下载：
 
 **Mac:**
 - `arm64.dmg` — Apple Silicon (M1/M2/M3/M4)
@@ -54,7 +66,10 @@
 - `win-x64-setup.exe` — 安装版 / Installer (recommended)
 - `win-x64-portable.exe` — 免安装版 / Portable
 
-### ⚠️ Mac 打开提示"已损坏"？ / Mac "damaged" warning?
+### ⚠️ Mac 手动安装提示"已损坏"？ / Mac "damaged" warning?
+
+> 终端安装不会有这个问题。手动下载 DMG 安装的话需要执行：
+> Terminal install avoids this. For manual DMG installs:
 
 ```bash
 xattr -cr /Applications/Lobster\ Baby.app
