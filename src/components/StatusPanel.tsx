@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { OpenClawStatus, LevelInfo } from '../types';
 import { formatTokens } from '../utils/levels';
@@ -43,7 +43,6 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
   const [internalShowAchievements, setInternalShowAchievements] = useState(false);
   const [internalShowSocial, setInternalShowSocial] = useState(false);
   const [internalShowPlugins, setInternalShowPlugins] = useState(false);
-  const [socialStats, setSocialStats] = useState<{ total_users: number } | null>(null);
   const { t, i18n } = useTranslation();
   const showChart = externalShowChart !== undefined ? externalShowChart : internalShowChart;
   const toggleChart = onToggleChart ?? (() => setInternalShowChart(!internalShowChart));
@@ -56,13 +55,7 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
   const closePlugins = onClosePlugins ?? (() => setInternalShowPlugins(false));
   const openPlugins = onOpenPlugins ?? (() => setInternalShowPlugins(true));
 
-  useEffect(() => {
-    window.electronAPI.socialStats().then(s => {
-      if (!s.error) setSocialStats(s);
-    }).catch(() => {});
-  }, []);
-
-  const statusColor: Record<OpenClawStatus, string> = {
+    const statusColor: Record<OpenClawStatus, string> = {
     active: '#00e676',
     idle: '#ffc107',
     error: '#ff5252',
@@ -155,12 +148,9 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
               <span className="feature-icon">🏆</span>
               <span className="feature-label">{t('status.achievements')}</span>
             </button>
-            <button className="feature-card social-card" onClick={openSocial}>
+            <button className="feature-card" onClick={openSocial}>
               <span className="feature-icon">🌐</span>
               <span className="feature-label">{t('status.social')}</span>
-              {socialStats && socialStats.total_users > 0 && (
-                <span className="feature-badge">{socialStats.total_users}</span>
-              )}
             </button>
             <button className="feature-card" onClick={openPlugins}>
               <span className="feature-icon">🧩</span>
