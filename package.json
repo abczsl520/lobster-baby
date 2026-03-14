@@ -66,7 +66,12 @@
           ]
         }
       ],
-      "artifactName": "LobsterBaby-${version}-${arch}.${ext}"
+      "artifactName": "LobsterBaby-${version}-${arch}.${ext}",
+      "identity": "Sile Zhang (KQ4XH838VV)",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist"
     },
     "dmg": {
       "title": "Lobster Baby ${version}",
@@ -112,6 +117,7 @@
     },
     "portable": {
       "artifactName": "LobsterBaby-${version}-win-x64-portable.${ext}"
-    }
+    },
+    "afterSign": "scripts/notarize.js"
   }
 }
