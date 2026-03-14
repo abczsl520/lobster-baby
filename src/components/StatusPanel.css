@@ -214,15 +214,15 @@
   color: rgba(255, 255, 255, 0.7);
 }
 
-/* Social card highlight */
+/* Social card — same style as others */
 .social-card {
-  background: rgba(255, 77, 77, 0.06);
-  border-color: rgba(255, 77, 77, 0.15);
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.06);
 }
 
 .social-card:hover {
-  background: rgba(255, 77, 77, 0.12);
-  border-color: rgba(255, 77, 77, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .feature-badge {
@@ -230,8 +230,8 @@
   top: 4px;
   right: 6px;
   font-size: 9px;
-  background: rgba(255, 77, 77, 0.3);
-  color: #ff8a8a;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.45);
   padding: 1px 5px;
   border-radius: 8px;
   font-weight: 600;
