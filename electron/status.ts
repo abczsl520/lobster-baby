@@ -35,14 +35,16 @@ export function checkOpenClawStatus() {
 
   isCheckingStatus = true;
 
+  const isWin = process.platform === 'win32';
   const env = {
     ...process.env,
-    PATH: `/opt/homebrew/bin:/usr/local/bin:${process.env.PATH || '/usr/bin:/bin:/usr/sbin:/sbin'}`,
+    ...(isWin ? {} : { PATH: `/opt/homebrew/bin:/usr/local/bin:${process.env.PATH || '/usr/bin:/bin:/usr/sbin:/sbin'}` }),
   };
+  const suppress = isWin ? '2>NUL' : '2>/dev/null';
 
   Promise.all([
     new Promise<{ status: string; activeSessions: number }>((resolve) => {
-      exec(`${_openclawPath} sessions --json --active 1 2>/dev/null`, { timeout: 8000, env }, (error, stdout) => {
+      exec(`${_openclawPath} sessions --json --active 1 ${suppress}`, { timeout: 8000, env, shell: isWin ? 'cmd.exe' : undefined }, (error, stdout) => {
         let status: 'active' | 'idle' | 'error' = 'error';
         let activeSessions = 0;
 
