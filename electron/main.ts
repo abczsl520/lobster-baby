@@ -425,7 +425,7 @@ ipcMain.handle('notify-level-up', (_event, level: number) => {
 });
 
 // ─── Auto Update Check ───
-const APP_VERSION = '1.7.0';
+const APP_VERSION = '1.8.0';
 let updateCheckInterval: NodeJS.Timeout | null = null;
 
 function fetchJSON(url: string): Promise<any> {

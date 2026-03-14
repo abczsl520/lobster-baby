@@ -7,7 +7,7 @@ import { SocialPanel } from './SocialPanel';
 import { PluginPanel } from './PluginPanel';
 import './StatusPanel.css';
 
-const APP_VERSION = '1.7.0';
+const APP_VERSION = '1.8.0';
 
 interface StatusPanelProps {
   status: OpenClawStatus;
