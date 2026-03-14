@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { OpenClawStatus, LevelInfo } from '../types';
 import { formatTokens } from '../utils/levels';
 import { TokenChart } from './TokenChart';
@@ -7,7 +8,7 @@ import { SocialPanel } from './SocialPanel';
 import { PluginPanel } from './PluginPanel';
 import './StatusPanel.css';
 
-const APP_VERSION = '1.8.0';
+const APP_VERSION = '1.9.0';
 
 interface StatusPanelProps {
   status: OpenClawStatus;
@@ -43,6 +44,7 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
   const [internalShowSocial, setInternalShowSocial] = useState(false);
   const [internalShowPlugins, setInternalShowPlugins] = useState(false);
   const [socialStats, setSocialStats] = useState<{ total_users: number } | null>(null);
+  const { t, i18n } = useTranslation();
   const showChart = externalShowChart !== undefined ? externalShowChart : internalShowChart;
   const toggleChart = onToggleChart ?? (() => setInternalShowChart(!internalShowChart));
   const showAchievements = externalShowAchievements !== undefined ? externalShowAchievements : internalShowAchievements;
@@ -116,25 +118,25 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
               <span className="level-target">{formatTokens(levelInfo.nextLevelTokens)}</span>
             </div>
             {levelInfo.level < 10 && (
-              <div className="level-remaining">还需 {formatTokens(tokensToNextLevel)} 升级</div>
+              <div className="level-remaining">{t('status.needTokens', { tokens: formatTokens(tokensToNextLevel) })}</div>
             )}
             {levelInfo.level === 10 && (
-              <div className="level-remaining" style={{ color: '#ffd700' }}>🎉 满级 · 龙虾之王</div>
+              <div className="level-remaining" style={{ color: '#ffd700' }}>{t('status.maxLevel')}</div>
             )}
           </div>
 
           {/* ── Token Stats ── */}
           <div className="stats-row">
             <div className="stat-chip">
-              <span className="stat-chip-label">今日</span>
+              <span className="stat-chip-label">{t('status.today')}</span>
               <span className="stat-chip-value">{formatTokens(tokenInfo.daily)}</span>
             </div>
             <div className="stat-chip">
-              <span className="stat-chip-label">累计</span>
+              <span className="stat-chip-label">{t('status.total')}</span>
               <span className="stat-chip-value">{formatTokens(tokenInfo.total)}</span>
             </div>
             <div className="stat-chip">
-              <span className="stat-chip-label">进度</span>
+              <span className="stat-chip-label">{t('status.progress')}</span>
               <span className="stat-chip-value">{progressPercent.toFixed(1)}%</span>
             </div>
           </div>
@@ -143,22 +145,22 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
           <div className="feature-grid">
             <button className="feature-card" onClick={toggleChart}>
               <span className="feature-icon">{showChart ? '📊' : '📈'}</span>
-              <span className="feature-label">趋势</span>
+              <span className="feature-label">{t('status.trends')}</span>
             </button>
             <button className="feature-card" onClick={toggleAchievements}>
               <span className="feature-icon">🏆</span>
-              <span className="feature-label">成就</span>
+              <span className="feature-label">{t('status.achievements')}</span>
             </button>
             <button className="feature-card social-card" onClick={openSocial}>
               <span className="feature-icon">🌐</span>
-              <span className="feature-label">社交</span>
+              <span className="feature-label">{t('status.social')}</span>
               {socialStats && socialStats.total_users > 0 && (
                 <span className="feature-badge">{socialStats.total_users}</span>
               )}
             </button>
             <button className="feature-card" onClick={openPlugins}>
               <span className="feature-icon">🧩</span>
-              <span className="feature-label">插件</span>
+              <span className="feature-label">{t('status.plugins')}</span>
             </button>
           </div>
 
@@ -169,7 +171,7 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
           {/* ── Settings ── */}
           <div className="settings-section">
             <div className="setting-row">
-              <span className="setting-label">自动隐藏</span>
+              <span className="setting-label">{t('status.autoHide')}</span>
               <label className="toggle-switch">
                 <input
                   type="checkbox"
@@ -179,12 +181,26 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
                 <span className="toggle-slider" />
               </label>
             </div>
+            <div className="setting-row">
+              <span className="setting-label">{t('settings.language')}</span>
+              <select
+                className="lang-select"
+                value={i18n.language?.startsWith('zh') ? 'zh-CN' : 'en'}
+                onChange={(e) => {
+                  i18n.changeLanguage(e.target.value);
+                  localStorage.setItem('lobster-lang', e.target.value);
+                }}
+              >
+                <option value="zh-CN">{t('settings.chinese')}</option>
+                <option value="en">{t('settings.english')}</option>
+              </select>
+            </div>
             <div className="action-row">
               <button className="action-btn" onClick={() => window.electronAPI.toggleAlwaysOnTop()}>
-                📌 置顶
+                {t('status.pinToTop')}
               </button>
               <button className="action-btn danger" onClick={() => window.electronAPI.quitApp()}>
-                退出
+                {t('status.quit')}
               </button>
             </div>
           </div>
@@ -200,7 +216,7 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
                 🆕 v{updateInfo.latestVersion}
               </button>
             ) : (
-              <span className="version-text">✓ 最新</span>
+              <span className="version-text">{t('status.upToDate')}</span>
             )}
           </div>
 

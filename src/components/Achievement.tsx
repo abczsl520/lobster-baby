@@ -13,8 +13,8 @@ export const Achievement: React.FC<AchievementProps> = ({ title, description, ic
 
   useEffect(() => {
     const t1 = setTimeout(() => setPhase('show'), 100);
-    const t2 = setTimeout(() => setPhase('exit'), 2000); // Reduced from 3500ms to 2000ms
-    const t3 = setTimeout(onComplete, 2500); // Reduced from 4200ms to 2500ms
+    const t2 = setTimeout(() => setPhase('exit'), 2000);
+    const t3 = setTimeout(onComplete, 2500);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [onComplete]);
 
@@ -29,21 +29,21 @@ export const Achievement: React.FC<AchievementProps> = ({ title, description, ic
   );
 };
 
-// Milestone definitions
+// Milestone definitions — use i18n keys
 export interface Milestone {
   id: string;
   tokens: number;
-  title: string;
-  description: string;
+  titleKey: string;
+  descKey: string;
   icon: string;
 }
 
 export const MILESTONES: Milestone[] = [
-  { id: 'first-million', tokens: 1_000_000, title: '百万起步', description: '累计消耗 1M tokens', icon: '🎯' },
-  { id: 'ten-million', tokens: 10_000_000, title: '千万俱乐部', description: '累计消耗 10M tokens', icon: '🔥' },
-  { id: 'hundred-million', tokens: 100_000_000, title: '亿级玩家', description: '累计消耗 100M tokens', icon: '💎' },
-  { id: 'one-billion', tokens: 1_000_000_000, title: '十亿大佬', description: '累计消耗 1B tokens', icon: '🏆' },
-  { id: 'five-billion', tokens: 5_000_000_000, title: '五十亿传说', description: '累计消耗 5B tokens', icon: '👑' },
-  { id: 'ten-billion', tokens: 10_000_000_000, title: '百亿神话', description: '累计消耗 10B tokens', icon: '🌟' },
-  { id: 'fifty-billion', tokens: 50_000_000_000, title: '五百亿永恒', description: '累计消耗 50B tokens', icon: '🦞' },
+  { id: 'first-million', tokens: 1_000_000, titleKey: 'milestone.firstMillion', descKey: 'milestone.firstMillionDesc', icon: '🎯' },
+  { id: 'ten-million', tokens: 10_000_000, titleKey: 'milestone.tenMillion', descKey: 'milestone.tenMillionDesc', icon: '🔥' },
+  { id: 'hundred-million', tokens: 100_000_000, titleKey: 'milestone.hundredMillion', descKey: 'milestone.hundredMillionDesc', icon: '💎' },
+  { id: 'one-billion', tokens: 1_000_000_000, titleKey: 'milestone.oneBillion', descKey: 'milestone.oneBillionDesc', icon: '🏆' },
+  { id: 'five-billion', tokens: 5_000_000_000, titleKey: 'milestone.fiveBillion', descKey: 'milestone.fiveBillionDesc', icon: '👑' },
+  { id: 'ten-billion', tokens: 10_000_000_000, titleKey: 'milestone.tenBillion', descKey: 'milestone.tenBillionDesc', icon: '🌟' },
+  { id: 'fifty-billion', tokens: 50_000_000_000, titleKey: 'milestone.fiftyBillion', descKey: 'milestone.fiftyBillionDesc', icon: '🦞' },
 ];

@@ -1,6 +1,6 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { MILESTONES } from './Achievement';
-import './AchievementList.css';
 
 interface AchievementListProps {
   currentTokens: number;
@@ -8,6 +8,7 @@ interface AchievementListProps {
 }
 
 export const AchievementList: React.FC<AchievementListProps> = ({ currentTokens, visible }) => {
+  const { t } = useTranslation();
   if (!visible) return null;
 
   return (
@@ -19,8 +20,8 @@ export const AchievementList: React.FC<AchievementListProps> = ({ currentTokens,
           <div key={m.id} className={`achievement-item ${unlocked ? 'unlocked' : 'locked'}`}>
             <div className="achievement-item-icon">{unlocked ? m.icon : '🔒'}</div>
             <div className="achievement-item-info">
-              <div className="achievement-item-title">{m.title}</div>
-              <div className="achievement-item-desc">{m.description}</div>
+              <div className="achievement-item-title">{t(m.titleKey)}</div>
+              <div className="achievement-item-desc">{t(m.descKey)}</div>
               {!unlocked && (
                 <div className="achievement-item-progress">
                   <div className="achievement-item-bar">
