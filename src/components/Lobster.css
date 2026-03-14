@@ -316,70 +316,96 @@
   }
 }
 
-/* === Combo click easter eggs === */
+/* === Combo System — Nested Shell Architecture === */
 
-/* 5 clicks: spin */
-.combo-spin .lobster-img {
-  animation: combo-spin 1s ease-in-out !important;
+/* Shared shell base */
+.combo-shell-dance,
+.combo-shell-rainbow,
+.combo-shell-spin,
+.combo-shell-bounce {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  will-change: transform, filter;
+  transform: translateZ(0);
+}
+
+/* x3: 360° spin */
+.combo-spin {
+  animation: combo-spin 0.7s cubic-bezier(0.18, 0.89, 0.32, 1.2);
 }
 
 @keyframes combo-spin {
   0% { transform: rotate(0deg) scale(1); }
-  25% { transform: rotate(180deg) scale(1.1); }
-  50% { transform: rotate(360deg) scale(1.2); }
-  75% { transform: rotate(540deg) scale(1.1); }
-  100% { transform: rotate(720deg) scale(1); }
+  45% { transform: rotate(220deg) scale(1.04); }
+  100% { transform: rotate(360deg) scale(1); }
 }
 
-/* 10 clicks: dance */
-.combo-dance .lobster-img {
-  animation: combo-dance 2s ease-in-out !important;
+/* x5: mega bounce */
+.combo-mega-bounce {
+  animation: combo-mega-bounce 0.85s cubic-bezier(0.2, 0.95, 0.3, 1.2);
+}
+
+@keyframes combo-mega-bounce {
+  0% { transform: translateY(0) scale(1); }
+  24% { transform: translateY(-26px) scale(1.24); }
+  52% { transform: translateY(0) scale(0.95); }
+  78% { transform: translateY(-10px) scale(1.08); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* x7: rainbow hue-rotate */
+.combo-rainbow {
+  animation: combo-rainbow-shimmer 1.2s linear;
+}
+
+.combo-rainbow .lobster-img {
+  filter:
+    hue-rotate(0deg)
+    saturate(1.35)
+    drop-shadow(0 0 12px rgba(255, 255, 255, 0.55))
+    drop-shadow(0 0 18px rgba(255, 204, 94, 0.38));
+}
+
+@keyframes combo-rainbow-shimmer {
+  0% { filter: hue-rotate(0deg) saturate(1); }
+  100% { filter: hue-rotate(360deg) saturate(1.4); }
+}
+
+/* x10: dance */
+.combo-dance {
+  animation: combo-dance 3s ease-in-out;
 }
 
 @keyframes combo-dance {
   0%, 100% { transform: translateY(0) rotate(0deg); }
-  10% { transform: translateY(-15px) rotate(-10deg); }
-  20% { transform: translateY(0) rotate(10deg); }
-  30% { transform: translateY(-20px) rotate(-15deg); }
-  40% { transform: translateY(0) rotate(15deg); }
-  50% { transform: translateY(-25px) rotate(0deg) scale(1.2); }
-  60% { transform: translateY(0) rotate(-10deg); }
-  70% { transform: translateY(-15px) rotate(10deg); }
-  80% { transform: translateY(0) rotate(-5deg); }
-  90% { transform: translateY(-10px) rotate(5deg); }
+  10% { transform: translateY(-8px) rotate(-6deg); }
+  20% { transform: translateY(-2px) rotate(7deg); }
+  30% { transform: translateY(-14px) rotate(-8deg); }
+  40% { transform: translateY(0) rotate(8deg); }
+  50% { transform: translateY(-12px) rotate(-7deg); }
+  60% { transform: translateY(2px) rotate(7deg); }
+  70% { transform: translateY(-15px) rotate(-8deg); }
+  80% { transform: translateY(0) rotate(8deg); }
+  90% { transform: translateY(-8px) rotate(-5deg); }
 }
 
-/* 15 clicks: rainbow burst */
-.combo-rainbow-burst .lobster-img {
-  animation: combo-rainbow 2.5s ease-in-out !important;
+/* Screen flash (x7, x10) */
+.combo-screen-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.92) 0%, rgba(255, 247, 174, 0.64) 18%, rgba(255, 255, 255, 0) 62%);
+  animation: combo-screen-flash 0.55s ease-out forwards;
 }
 
-@keyframes combo-rainbow {
-  0% { filter: hue-rotate(0deg) brightness(1) drop-shadow(0 0 0 transparent); }
-  20% { filter: hue-rotate(72deg) brightness(1.3) drop-shadow(0 0 15px #ff0); }
-  40% { filter: hue-rotate(144deg) brightness(1.3) drop-shadow(0 0 15px #0f0); }
-  60% { filter: hue-rotate(216deg) brightness(1.3) drop-shadow(0 0 15px #0ff); }
-  80% { filter: hue-rotate(288deg) brightness(1.3) drop-shadow(0 0 15px #f0f); }
-  100% { filter: hue-rotate(360deg) brightness(1) drop-shadow(0 0 0 transparent); }
-}
-
-/* 20 clicks: mega spin + rainbow + bounce */
-.combo-mega-spin .lobster-img {
-  animation: combo-mega 3s ease-in-out !important;
-}
-
-@keyframes combo-mega {
-  0% { transform: rotate(0deg) scale(1); filter: hue-rotate(0deg) brightness(1); }
-  10% { transform: rotate(180deg) scale(1.3) translateY(-20px); filter: hue-rotate(60deg) brightness(1.5); }
-  20% { transform: rotate(360deg) scale(0.8) translateY(10px); filter: hue-rotate(120deg) brightness(1.3); }
-  30% { transform: rotate(540deg) scale(1.4) translateY(-25px); filter: hue-rotate(180deg) brightness(1.5); }
-  40% { transform: rotate(720deg) scale(0.9) translateY(5px); filter: hue-rotate(240deg) brightness(1.3); }
-  50% { transform: rotate(900deg) scale(1.5) translateY(-30px); filter: hue-rotate(300deg) brightness(2); }
-  60% { transform: rotate(1080deg) scale(1.1) translateY(-10px); filter: hue-rotate(360deg) brightness(1.5); }
-  70% { transform: rotate(1260deg) scale(1.3) translateY(-20px); filter: hue-rotate(60deg) brightness(1.3); }
-  80% { transform: rotate(1440deg) scale(1.1) translateY(-5px); filter: hue-rotate(120deg) brightness(1.2); }
-  90% { transform: rotate(1620deg) scale(1.05); filter: hue-rotate(180deg) brightness(1.1); }
-  100% { transform: rotate(1800deg) scale(1); filter: hue-rotate(0deg) brightness(1); }
+@keyframes combo-screen-flash {
+  0% { opacity: 0; }
+  18% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 /* === Combo badge (from PR, adapted) === */
