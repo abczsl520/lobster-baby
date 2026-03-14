@@ -6,13 +6,15 @@ import { readStore, writeStore } from './store';
 
 export function findOpenClaw(): string | null {
   const home = os.homedir();
+  const isWin = process.platform === 'win32';
   const possiblePaths = [
     '/opt/homebrew/bin/openclaw',
     '/usr/local/bin/openclaw',
     path.join(home, '.local/bin/openclaw'),
     path.join(home, 'AppData/Roaming/npm/openclaw.cmd'),
     path.join(home, 'AppData/Roaming/npm/openclaw'),
-    'openclaw',
+    path.join(home, 'AppData/Local/npm/openclaw.cmd'),
+    isWin ? 'openclaw.cmd' : 'openclaw',
   ];
 
   for (const p of possiblePaths) {
@@ -35,6 +37,8 @@ export function findOpenClawSessionDir(): string | null {
     path.join(home, '.openclaw/agents/main/sessions'),
     path.join(home, '.config/openclaw/agents/main/sessions'),
     path.join(home, 'AppData/Local/openclaw/agents/main/sessions'),
+    path.join(home, 'AppData/Roaming/openclaw/agents/main/sessions'),
+    path.join(home, '.openclaw/workspace'),  // fallback: check if workspace exists to find root
   ];
   for (const dir of candidates) {
     try {
