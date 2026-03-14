@@ -8,11 +8,22 @@ All notable changes to Lobster Baby.
 - 🌍 **i18n support** — Chinese/English with auto system language detection
 - Language switcher in status panel settings
 - `react-i18next` for renderer, custom lightweight `t()` helper for Electron main process
-- Full translation coverage (~150+ keys) for all UI: status panel, achievements, speech bubbles, social, plugins, tray menu, notifications
+- Full translation coverage (~150+ keys) for all UI
+- 🔏 **Apple code signing + notarization** — Developer ID Application certificate, no more "damaged" warnings
+- Hardened runtime + entitlements for Electron
+- afterSign hook: auto zip → notarytool submit → staple
+- 🔥 **Combo system revamp** — nested shell architecture for stackable animations
+- Thresholds: ×3 spin, ×5 bounce + star burst, ×7 rainbow + screen flash, ×10 dance (3s)
+- `useReducer` replaces multiple useState/useRef for cleaner state management
+- Loops at ×20 for continuous feedback
+- Screen flash effect (new)
+- 🖥️ **Terminal install script** — `curl | bash` one-liner, auto xattr
 
 ### Changed
-- Level names resolved lazily via `t()` instead of static map (fixes `app.getLocale()` timing issue)
-- PK score displays plain number (removed locale-dependent `分` suffix)
+- Level names resolved lazily via `t()` instead of static map
+- PK score displays plain number (removed locale-dependent suffix)
+- Combo reset window: 800ms → 1000ms (more forgiving)
+- Combo thresholds: x5/x10/x15/x20 → x3/x5/x7/x10 (easier to trigger)
 
 ## [1.8.0] - 2026-03-13
 
