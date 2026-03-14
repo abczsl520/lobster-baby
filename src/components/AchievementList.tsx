@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { MILESTONES } from './Achievement';
+import './AchievementList.css';
 
 interface AchievementListProps {
   currentTokens: number;

@@ -78,7 +78,11 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
   const progressPercent = Math.min(100, levelInfo.progress);
 
   if (showPlugins) {
-    return <PluginPanel visible={true} onClose={closePlugins} />;
+    return (
+      <div className="status-panel">
+        <PluginPanel visible={true} onClose={closePlugins} />
+      </div>
+    );
   }
 
   if (showSocial) {
