@@ -11,6 +11,7 @@
 [![GitHub release](https://img.shields.io/github/v/release/abczsl520/lobster-baby)](https://github.com/abczsl520/lobster-baby/releases)
 [![License](https://img.shields.io/github/license/abczsl520/lobster-baby)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey)](https://github.com/abczsl520/lobster-baby)
+[![Signed](https://img.shields.io/badge/macOS-Signed%20%26%20Notarized-brightgreen)](https://github.com/abczsl520/lobster-baby/releases)
 
 [中文](#-特性) | [English](#-features)
 
@@ -20,45 +21,45 @@
 
 ## ✨ 特性
 
+- 🔏 **Apple 签名 + 公证** — 双击安装，零警告，Gatekeeper 直接放行
 - 🎨 **10 级龙虾皮肤** — AI 生成，从粉色宝宝到龙虾之王
 - 📊 **真实 API 用量** — 扫描 OpenClaw session 文件，精确统计
 - 🌐 **龙虾社区** — 注册编号、排行榜、PK 对战
 - 🏆 **成就系统** — Token 里程碑解锁
 - 📈 **趋势图表** — 每日 Token 消耗可视化
 - 🖱️ **边缘吸附** — 拖到屏幕边缘自动停靠，专属停靠动画
+- 🔥 **连击特效** — 快速点击触发旋转/弹跳/彩虹/跳舞，动画可叠加
 - 🔔 **自动更新** — 检测新版本并提示
 - 🧩 **插件系统** — 安装/开发插件扩展功能，权限沙箱保护
 - 🌍 **多语言** — 中文/English，自动检测系统语言
 
 ## ✨ Features
 
+- 🔏 **Apple Signed & Notarized** — Double-click to install, no warnings, Gatekeeper approved
 - 🎨 **10-Level Skins** — AI-generated, from pink baby to Lobster King
 - 📊 **Real API Usage** — Scans OpenClaw session files for accurate stats
 - 🌐 **Lobster Community** — Registration, leaderboards, PK battles
 - 🏆 **Achievements** — Token milestone unlocks
 - 📈 **Trend Charts** — Daily token consumption visualization
 - 🖱️ **Edge Docking** — Drag to screen edge, auto-dock with custom animations
+- 🔥 **Combo Effects** — Rapid clicks trigger spin/bounce/rainbow/dance, stackable animations
 - 🔔 **Auto Update** — Detects new versions and prompts
 - 🧩 **Plugin System** — Install/develop plugins with sandboxed permissions
 - 🌍 **i18n** — Chinese/English, auto-detects system language
 
 ## 📦 下载安装 / Download
 
-### 🖥️ 终端一键安装 / Terminal Install (Mac, recommended)
+### 🖥️ 终端一键安装 / Terminal Install (Mac)
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/abczsl520/lobster-baby/main/install.sh | bash
 ```
 
-自动检测芯片架构、下载最新版、安装到 /Applications、清除隔离标记（不会弹"已损坏"提示）。
-
-Auto-detects chip architecture, downloads latest release, installs to /Applications, and clears quarantine flag (no "damaged" warning).
-
 ### 📥 手动下载 / Manual Download
 
 前往 [Releases](https://github.com/abczsl520/lobster-baby/releases/latest) 下载：
 
-**Mac:**
+**Mac (已签名+公证 / Signed & Notarized):**
 - `arm64.dmg` — Apple Silicon (M1/M2/M3/M4)
 - `x64.dmg` — Intel Mac
 
@@ -66,14 +67,9 @@ Auto-detects chip architecture, downloads latest release, installs to /Applicati
 - `win-x64-setup.exe` — 安装版 / Installer (recommended)
 - `win-x64-portable.exe` — 免安装版 / Portable
 
-### ⚠️ Mac 手动安装提示"已损坏"？ / Mac "damaged" warning?
-
-> 终端安装不会有这个问题。手动下载 DMG 安装的话需要执行：
-> Terminal install avoids this. For manual DMG installs:
-
-```bash
-xattr -cr /Applications/Lobster\ Baby.app
-```
+> Mac 版已通过 Apple Developer ID 签名和公证，双击 DMG 直接安装，不会弹出"已损坏"或"无法验证开发者"警告。
+>
+> Mac builds are signed with Apple Developer ID and notarized. Just double-click the DMG — no security warnings.
 
 ### ⚠️ Windows SmartScreen 提示？
 
@@ -86,6 +82,20 @@ xattr -cr /Applications/Lobster\ Baby.app
 3. **双击** — 打开状态面板 / Double-click to open status panel
 4. **右键** — 快捷菜单 / Right-click for menu (community, trends, achievements, plugins)
 5. **边缘停靠** — 拖到屏幕边缘自动挂靠 / Drag to edge for auto-docking
+6. **连击** — 快速点击龙虾触发特效 / Rapid clicks trigger combo effects
+
+### 🔥 连击系统 / Combo System
+
+| 连击/Combo | 效果/Effect |
+|-----------|------------|
+| ×3 | 🌀 360° 旋转 / Spin |
+| ×5 | ⭐ 弹跳 + 星爆 / Bounce + Star burst |
+| ×7 | 🌈 彩虹 + 屏幕闪光 / Rainbow + Screen flash |
+| ×10 | 💃 跳舞 3 秒 / Dance for 3s |
+
+1 秒内连续点击触发，×20 自动循环。动画可叠加（嵌套 shell 架构）。
+
+Trigger within 1 second, loops at ×20. Animations are stackable (nested shell architecture).
 
 ## 🌐 龙虾社区 / Community
 
@@ -95,10 +105,6 @@ xattr -cr /Applications/Lobster\ Baby.app
 - **隐私保护** — 仅收集昵称和游戏数据 / Only collects nickname and game data
 
 ## 🧩 插件系统 / Plugin System
-
-v1.8.0 新增插件系统，支持通过插件扩展龙虾宝宝功能。
-
-Plugin system added in v1.8.0 — extend Lobster Baby with community plugins.
 
 - **安装** — 右键龙虾 → 🧩 插件 → 导入链接或 zip / Right-click → Plugins → Import URL or zip
 - **插件库** — [lbhub.ai](https://lbhub.ai) 浏览和发布插件 / Browse & publish at [lbhub.ai](https://lbhub.ai)
@@ -126,12 +132,7 @@ module.exports = {
 };
 ```
 
-**安全机制 / Security:**
-- 权限声明 + 用户确认 / Permission declarations + user consent
-- Shell 命令黑名单 / Command blacklist
-- 30s 超时 / 10KB 输出限制 / Timeouts and output limits
-- 路径穿越防护 / Path traversal prevention
-- 私有 IP 屏蔽 / Private IP blocking
+**安全机制 / Security:** 权限声明 + 用户确认、Shell 命令黑名单、30s 超时、路径穿越防护、私有 IP 屏蔽
 
 ## 🎮 等级系统 / Level System
 
@@ -156,7 +157,7 @@ cd lobster-baby
 npm install
 npm run dev          # Dev mode
 npm run build        # Build
-npx electron-builder --mac --arm64  # Package Mac
+npx electron-builder --mac --arm64  # Package Mac (auto signs + notarizes if cert installed)
 npx electron-builder --win --x64    # Package Windows
 ```
 
