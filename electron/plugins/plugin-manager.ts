@@ -4,7 +4,6 @@
 import fs from 'fs';
 import path from 'path';
 import https from 'https';
-import http from 'http';
 import { app } from 'electron';
 import { log } from '../logger';
 import { createPluginAPI, removePluginMenuItems, removePluginEventListeners } from './plugin-api';
@@ -198,10 +197,15 @@ export async function uninstallPlugin(pluginId: string): Promise<void> {
 
 function downloadFile(url: string, destPath: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const mod = url.startsWith('https') ? https : http;
+    // Security: only allow HTTPS downloads
+    if (!url.startsWith('https://')) {
+      reject(new Error('Only HTTPS downloads are allowed'));
+      return;
+    }
     const request = (targetUrl: string, redirects = 0) => {
       if (redirects > 5) { reject(new Error('too many redirects')); return; }
-      mod.get(targetUrl, { headers: { 'User-Agent': 'LobsterBaby-PluginManager' }, timeout: 30_000 }, (res) => {
+      if (!targetUrl.startsWith('https://')) { reject(new Error('redirect to non-HTTPS blocked')); return; }
+      https.get(targetUrl, { headers: { 'User-Agent': 'LobsterBaby-PluginManager' }, timeout: 30_000 }, (res) => {
         if (res.statusCode === 301 || res.statusCode === 302) {
           const location = res.headers.location;
           if (location) { request(location, redirects + 1); return; }
@@ -224,10 +228,10 @@ function downloadFile(url: string, destPath: string): Promise<void> {
 }
 
 async function extractZip(zipPath: string, destDir: string): Promise<void> {
-  // Use system unzip — available on macOS and most Linux
-  const { exec: execCb } = require('child_process');
+  // Use execFile (no shell) to prevent command injection
+  const { execFile } = require('child_process');
   return new Promise((resolve, reject) => {
-    execCb(`unzip -o "${zipPath}" -d "${destDir}"`, { timeout: 30_000 }, (error: any) => {
+    execFile('unzip', ['-o', zipPath, '-d', destDir], { timeout: 30_000 }, (error: any) => {
       if (error) reject(error);
       else resolve();
     });
@@ -346,7 +350,9 @@ export async function fetchFeaturedPlugins(): Promise<any[]> {
 
 export async function searchPlugins(query: string): Promise<any[]> {
   return new Promise((resolve) => {
-    const encodedQuery = encodeURIComponent(query);
+    const sanitized = query.slice(0, 100).trim();
+    if (!sanitized) { resolve([]); return; }
+    const encodedQuery = encodeURIComponent(sanitized);
     https.get(`${LBHUB_API}/plugins/search?q=${encodedQuery}`, {
       headers: { 'User-Agent': 'LobsterBaby' },
       timeout: 10_000,
