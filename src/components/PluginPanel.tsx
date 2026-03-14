@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import './PluginPanel.css';
 
 type PluginView = 'installed' | 'store' | 'import';
@@ -26,13 +27,6 @@ interface FeaturedPlugin {
   permissions: string[];
 }
 
-const PERM_LABELS: Record<string, { icon: string; label: string; level: string }> = {
-  shell: { icon: '⚠️', label: '执行命令', level: 'high' },
-  notification: { icon: '🔔', label: '系统通知', level: 'low' },
-  network: { icon: '🌐', label: '网络请求', level: 'medium' },
-  clipboard: { icon: '📋', label: '剪贴板', level: 'medium' },
-};
-
 export const PluginPanel: React.FC<PluginPanelProps> = ({ visible, onClose }) => {
   const [view, setView] = useState<PluginView>('installed');
   const [installedPlugins, setInstalledPlugins] = useState<InstalledPlugin[]>([]);
@@ -42,6 +36,14 @@ export const PluginPanel: React.FC<PluginPanelProps> = ({ visible, onClose }) =>
   const [importUrl, setImportUrl] = useState('');
   const [confirmInstall, setConfirmInstall] = useState<{ url: string; permissions?: string[] } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const { t } = useTranslation();
+
+  const PERM_LABELS: Record<string, { icon: string; label: string; level: string }> = {
+    shell: { icon: '⚠️', label: t('perm.shell'), level: 'high' },
+    notification: { icon: '🔔', label: t('perm.notification'), level: 'low' },
+    network: { icon: '🌐', label: t('perm.network'), level: 'medium' },
+    clipboard: { icon: '📋', label: t('perm.clipboard'), level: 'medium' },
+  };
 
   const loadInstalled = useCallback(async () => {
     const list = await window.electronAPI.pluginList();
@@ -70,26 +72,21 @@ export const PluginPanel: React.FC<PluginPanelProps> = ({ visible, onClose }) =>
     setLoading(false);
   };
 
-  const handleUninstall = async (id: string, _name: string) => {
-    setLoading(true);
-    setError('');
+  const handleUninstall = async (id: string) => {
+    setLoading(true); setError('');
     await window.electronAPI.pluginUninstall(id);
     await loadInstalled();
     setLoading(false);
   };
 
   const handleInstall = async (url: string) => {
-    setLoading(true);
-    setError('');
-    setConfirmInstall(null);
+    setLoading(true); setError(''); setConfirmInstall(null);
     const result = await window.electronAPI.pluginInstallUrl(url);
     setLoading(false);
     if (result.success) {
-      setImportUrl('');
-      setView('installed');
-      await loadInstalled();
+      setImportUrl(''); setView('installed'); await loadInstalled();
     } else {
-      setError(result.error || '安装失败');
+      setError(t('plugin.installFailed', { error: result.error || 'unknown' }));
     }
   };
 
@@ -111,17 +108,13 @@ export const PluginPanel: React.FC<PluginPanelProps> = ({ visible, onClose }) =>
       <div className="plugin-panel">
         <div className="plugin-header">
           <button className="plugin-back" onClick={() => setConfirmInstall(null)}>←</button>
-          <h3>🔒 权限确认</h3>
+          <h3>🔒 {t('plugin.confirmInstall')}</h3>
         </div>
         <div className="plugin-body">
           <div className="perm-confirm">
-            {hasHighRisk && (
-              <div className="perm-warning">
-                ⚠️ 此插件需要高危权限，请确认来源可信
-              </div>
-            )}
+            {hasHighRisk && <div className="perm-warning">{t('plugin.highRiskWarning')}</div>}
             <div className="perm-list">
-              {perms.length === 0 && <div className="perm-item safe">✅ 无需特殊权限</div>}
+              {perms.length === 0 && <div className="perm-item safe">✅ {t('plugin.noPermsNeeded', 'No special permissions needed')}</div>}
               {perms.map(p => {
                 const info = PERM_LABELS[p] || { icon: '❓', label: p, level: 'unknown' };
                 return (
@@ -133,9 +126,9 @@ export const PluginPanel: React.FC<PluginPanelProps> = ({ visible, onClose }) =>
               })}
             </div>
             <div className="perm-actions">
-              <button className="plugin-btn" onClick={() => setConfirmInstall(null)}>取消</button>
+              <button className="plugin-btn" onClick={() => setConfirmInstall(null)}>←</button>
               <button className="plugin-btn primary" onClick={() => handleInstall(confirmInstall.url)} disabled={loading}>
-                {loading ? '安装中...' : '确认安装'}
+                {loading ? t('plugin.installing') : t('plugin.confirmInstall')}
               </button>
             </div>
           </div>
@@ -148,18 +141,13 @@ export const PluginPanel: React.FC<PluginPanelProps> = ({ visible, onClose }) =>
     <div className="plugin-panel">
       <div className="plugin-header">
         <button className="plugin-back" onClick={onClose}>←</button>
-        <h3>🧩 插件</h3>
+        <h3>🧩 {t('status.plugins')}</h3>
       </div>
 
-      {/* Tabs */}
       <div className="plugin-tabs">
         {(['installed', 'store', 'import'] as PluginView[]).map(tab => (
-          <button
-            key={tab}
-            className={`plugin-tab ${view === tab ? 'active' : ''}`}
-            onClick={() => { setView(tab); setError(''); }}
-          >
-            {tab === 'installed' ? '已安装' : tab === 'store' ? '插件库' : '导入'}
+          <button key={tab} className={`plugin-tab ${view === tab ? 'active' : ''}`} onClick={() => { setView(tab); setError(''); }}>
+            {tab === 'installed' ? t('plugin.installed') : tab === 'store' ? t('plugin.store') : t('plugin.import')}
           </button>
         ))}
       </div>
@@ -167,16 +155,13 @@ export const PluginPanel: React.FC<PluginPanelProps> = ({ visible, onClose }) =>
       <div className="plugin-body">
         {error && <div className="plugin-error">{error}</div>}
 
-        {/* ─── Installed Tab ─── */}
         {view === 'installed' && (
           <div className="plugin-list">
             {installedPlugins.length === 0 && (
               <div className="plugin-empty">
                 <div className="empty-icon">🧩</div>
-                <p>还没有安装插件</p>
-                <button className="plugin-btn primary" onClick={() => setView('store')}>
-                  去插件库看看
-                </button>
+                <p>{t('plugin.noPlugins')}</p>
+                <button className="plugin-btn primary" onClick={() => setView('store')}>{t('plugin.goStore')}</button>
               </div>
             )}
             {installedPlugins.map(p => (
@@ -187,62 +172,38 @@ export const PluginPanel: React.FC<PluginPanelProps> = ({ visible, onClose }) =>
                     <span className="plugin-version">v{p.manifest.version}</span>
                   </div>
                   <label className="toggle-switch small">
-                    <input
-                      type="checkbox"
-                      checked={p.record.enabled}
-                      onChange={() => handleToggle(p.id, p.record.enabled)}
-                      disabled={loading}
-                    />
+                    <input type="checkbox" checked={p.record.enabled} onChange={() => handleToggle(p.id, p.record.enabled)} disabled={loading} />
                     <span className="toggle-slider" />
                   </label>
                 </div>
                 <div className="plugin-card-desc">{p.manifest.description}</div>
                 <div className="plugin-card-footer">
-                  <span className="plugin-author">by {p.manifest.author}</span>
+                  <span className="plugin-author">{t('plugin.by', { author: p.manifest.author })}</span>
                   <div className="plugin-card-perms">
                     {p.manifest.permissions.map(perm => (
-                      <span key={perm} className={`perm-badge ${perm}`} title={PERM_LABELS[perm]?.label || perm}>
-                        {PERM_LABELS[perm]?.icon || '❓'}
-                      </span>
+                      <span key={perm} className={`perm-badge ${perm}`} title={PERM_LABELS[perm]?.label || perm}>{PERM_LABELS[perm]?.icon || '❓'}</span>
                     ))}
                   </div>
-                  <button
-                    className="plugin-btn danger small"
-                    onClick={() => handleUninstall(p.id, p.manifest.name)}
-                    disabled={loading}
-                  >
-                    卸载
-                  </button>
+                  <button className="plugin-btn danger small" onClick={() => handleUninstall(p.id)} disabled={loading}>{t('plugin.uninstall')}</button>
                 </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* ─── Store Tab ─── */}
         {view === 'store' && (
           <div className="plugin-store">
             <div className="store-search">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleSearch()}
-                placeholder="搜索插件..."
-                className="plugin-input"
-              />
-              <button className="plugin-btn small" onClick={handleSearch}>搜索</button>
+              <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()} placeholder={t('plugin.searchPlaceholder')} className="plugin-input" />
+              <button className="plugin-btn small" onClick={handleSearch}>{t('plugin.search')}</button>
             </div>
-
-            {loading && <div className="plugin-loading">加载中...</div>}
-
+            {loading && <div className="plugin-loading">{t('social.loading')}</div>}
             {!loading && featuredPlugins.length === 0 && (
               <div className="plugin-empty">
-                <p>暂无精选插件</p>
-                <p className="empty-hint">在 lbhub.ai 发现更多插件~</p>
+                <p>{t('plugin.featured')}</p>
+                <p className="empty-hint">{t('plugin.importHint')}</p>
               </div>
             )}
-
             {featuredPlugins.map(p => {
               const isInstalled = installedPlugins.some(ip => ip.id === p.id);
               return (
@@ -253,21 +214,15 @@ export const PluginPanel: React.FC<PluginPanelProps> = ({ visible, onClose }) =>
                       <span className="plugin-version">v{p.version}</span>
                     </div>
                     {isInstalled ? (
-                      <span className="installed-badge">已安装</span>
+                      <span className="installed-badge">{t('plugin.installed')}</span>
                     ) : (
-                      <button
-                        className="plugin-btn primary small"
-                        onClick={() => setConfirmInstall({ url: p.downloadUrl, permissions: p.permissions })}
-                        disabled={loading}
-                      >
-                        安装
-                      </button>
+                      <button className="plugin-btn primary small" onClick={() => setConfirmInstall({ url: p.downloadUrl, permissions: p.permissions })} disabled={loading}>{t('plugin.installBtn')}</button>
                     )}
                   </div>
                   <div className="plugin-card-desc">{p.description}</div>
                   <div className="plugin-card-footer">
-                    <span className="plugin-author">by {p.author}</span>
-                    <span className="plugin-downloads">📥 {p.downloads}</span>
+                    <span className="plugin-author">{t('plugin.by', { author: p.author })}</span>
+                    <span className="plugin-downloads">{t('plugin.downloads', { count: p.downloads })}</span>
                   </div>
                 </div>
               );
@@ -275,40 +230,23 @@ export const PluginPanel: React.FC<PluginPanelProps> = ({ visible, onClose }) =>
           </div>
         )}
 
-        {/* ─── Import Tab ─── */}
         {view === 'import' && (
           <div className="plugin-import">
             <div className="import-section">
-              <h4>从链接安装</h4>
-              <p className="import-hint">支持 GitHub 仓库 URL 或 zip 下载链接</p>
+              <h4>{t('plugin.import')}</h4>
+              <p className="import-hint">{t('plugin.importUrl')}</p>
               <div className="import-form">
-                <input
-                  type="text"
-                  value={importUrl}
-                  onChange={e => setImportUrl(e.target.value)}
-                  placeholder="https://github.com/user/plugin 或 .zip 链接"
-                  className="plugin-input"
-                />
-                <button
-                  className="plugin-btn primary"
-                  onClick={() => {
-                    if (!importUrl.trim()) { setError('请输入链接'); return; }
-                    setConfirmInstall({ url: importUrl.trim() });
-                  }}
-                  disabled={loading || !importUrl.trim()}
-                >
-                  {loading ? '安装中...' : '导入'}
+                <input type="text" value={importUrl} onChange={e => setImportUrl(e.target.value)} placeholder="https://github.com/user/plugin" className="plugin-input" />
+                <button className="plugin-btn primary" onClick={() => {
+                  if (!importUrl.trim()) return;
+                  setConfirmInstall({ url: importUrl.trim() });
+                }} disabled={loading || !importUrl.trim()}>
+                  {loading ? t('plugin.installing') : t('plugin.import')}
                 </button>
               </div>
             </div>
-
             <div className="import-section">
-              <h4>开发者？</h4>
-              <p className="import-hint">
-                创建插件很简单：一个 manifest.json + 一个 index.js。
-                <br />
-                上传到 GitHub 或 lbhub.ai 分享给其他龙虾主人~
-              </p>
+              <p className="import-hint">{t('plugin.importHint')}</p>
             </div>
           </div>
         )}

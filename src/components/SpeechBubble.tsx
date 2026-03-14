@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { OpenClawStatus, LevelInfo, TokenInfo } from '../types';
 import './SpeechBubble.css';
 
@@ -9,47 +10,24 @@ interface SpeechBubbleProps {
   isPanelOpen: boolean;
 }
 
-const IDLE_LINES = [
-  '好无聊啊…', '主人去哪了？', '💤 打个盹…', '有人吗？',
-  '摸鱼中~', '好安静啊', '想吃小鱼干', '🫧',
-  '等主人回来…', '发呆.jpg',
-];
-
-const ACTIVE_LINES = [
-  '又在烧钱了！', '🔥 token 在燃烧', '加油加油！', '主人好勤奋~',
-  '代码写得不错嘛', '💪 冲冲冲', 'API 嗡嗡响', '今天效率真高',
-  '钱包在哭泣…', '⚡ 全力输出中',
-];
-
-const OFFLINE_LINES = [
-  '主人？你在吗？', '😢 连接断了', '好冷…',
-  '翻肚了…', '救命啊！', '信号丢失…',
-];
-
-function getSpecialLine(levelInfo: LevelInfo, tokenInfo: TokenInfo): string | null {
+function getSpecialLine(t: (key: string) => string, levelInfo: LevelInfo, tokenInfo: TokenInfo): string | null {
   const { level } = levelInfo;
   const { daily } = tokenInfo;
 
-  if (daily > 500_000_000) return '今天烧了 5 亿 token！💸';
-  if (daily > 200_000_000) return '今天 2 亿 token 了！';
-  if (daily > 100_000_000) return '今天已经 1 亿 token 了';
-  if (daily > 50_000_000) return '今天 5000 万 token 了~';
+  if (daily > 500_000_000) return t('speech.special.tokens500m');
+  if (daily > 200_000_000) return t('speech.special.tokens200m');
+  if (daily > 100_000_000) return t('speech.special.tokens100m');
+  if (daily > 50_000_000) return t('speech.special.tokens50m');
 
-  if (level >= 9) return '我已经是传说级龙虾了 🌈';
-  if (level >= 7) return '等级好高，主人真厉害';
-  if (level >= 5) return '金冠龙虾，闪闪发光 ✨';
+  if (level >= 9) return t('speech.special.level9');
+  if (level >= 7) return t('speech.special.level7');
+  if (level >= 5) return t('speech.special.level5');
 
   return null;
 }
 
-function getRandomLine(status: OpenClawStatus): string {
-  let pool: string[];
-  switch (status) {
-    case 'active': pool = ACTIVE_LINES; break;
-    case 'error': pool = OFFLINE_LINES; break;
-    default: pool = IDLE_LINES;
-  }
-  return pool[Math.floor(Math.random() * pool.length)];
+function getRandomLine(lines: string[]): string {
+  return lines[Math.floor(Math.random() * lines.length)];
 }
 
 interface BubbleState {
@@ -65,6 +43,11 @@ export const SpeechBubble: React.FC<SpeechBubbleProps> = ({ status, levelInfo, t
   const exitRef = useRef<number | null>(null);
   const clearRef = useRef<number | null>(null);
   const lastSpecialRef = useRef<string | null>(null);
+  const { t } = useTranslation();
+
+  const idleLines = t('speech.idle', { returnObjects: true }) as string[];
+  const activeLines = t('speech.active', { returnObjects: true }) as string[];
+  const errorLines = t('speech.error', { returnObjects: true }) as string[];
 
   const clearTimers = useCallback(() => {
     if (scheduleRef.current !== null) { window.clearTimeout(scheduleRef.current); scheduleRef.current = null; }
@@ -78,6 +61,14 @@ export const SpeechBubble: React.FC<SpeechBubbleProps> = ({ status, levelInfo, t
       setBubble(null);
       return;
     }
+
+    const getPool = () => {
+      switch (status) {
+        case 'active': return activeLines;
+        case 'error': return errorLines;
+        default: return idleLines;
+      }
+    };
 
     const showBubble = (text: string) => {
       const id = Date.now();
@@ -95,12 +86,12 @@ export const SpeechBubble: React.FC<SpeechBubbleProps> = ({ status, levelInfo, t
     const scheduleNext = () => {
       const delay = 30_000 + Math.random() * 30_000;
       scheduleRef.current = window.setTimeout(() => {
-        const special = getSpecialLine(levelInfo, tokenInfo);
+        const special = getSpecialLine(t, levelInfo, tokenInfo);
         if (special && special !== lastSpecialRef.current && Math.random() < 0.3) {
           lastSpecialRef.current = special;
           showBubble(special);
         } else {
-          showBubble(getRandomLine(status));
+          showBubble(getRandomLine(getPool()));
         }
         scheduleNext();
       }, delay);
@@ -109,15 +100,14 @@ export const SpeechBubble: React.FC<SpeechBubbleProps> = ({ status, levelInfo, t
     clearTimers();
     setBubble(null);
 
-    // First bubble after 10-20 seconds
     const initialDelay = 10_000 + Math.random() * 10_000;
     scheduleRef.current = window.setTimeout(() => {
-      showBubble(getRandomLine(status));
+      showBubble(getRandomLine(getPool()));
       scheduleNext();
     }, initialDelay);
 
     return clearTimers;
-  }, [status, isPanelOpen, levelInfo, tokenInfo, clearTimers]);
+  }, [status, isPanelOpen, levelInfo, tokenInfo, clearTimers, t, idleLines, activeLines, errorLines]);
 
   if (!bubble) return null;
 

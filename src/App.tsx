@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Lobster } from './components/Lobster';
 import { StatusPanel } from './components/StatusPanel';
 import { EmojiBubble, getRandomEmoji } from './components/EmojiBubble';
@@ -16,6 +17,7 @@ function App() {
   const { status, tokenInfo } = useOpenClawStatus();
   const levelInfo = useLevelSystem();
   const { updateInfo } = useUpdateChecker();
+  const { t } = useTranslation();
   const [showPanel, setShowPanel] = useState(false);
   const [showChart, setShowChart] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
@@ -259,8 +261,8 @@ function App() {
 
       {currentAchievement && (
         <Achievement
-          title={currentAchievement.title}
-          description={currentAchievement.description}
+          title={t(currentAchievement.titleKey)}
+          description={t(currentAchievement.descKey)}
           icon={currentAchievement.icon}
           onComplete={() => setCurrentAchievement(null)}
         />

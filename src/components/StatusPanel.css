@@ -256,6 +256,24 @@
   font-size: 12px;
 }
 
+.lang-select {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 11px;
+  padding: 3px 6px;
+  cursor: pointer;
+  outline: none;
+}
+.lang-select:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+.lang-select option {
+  background: #1a1a2e;
+  color: #fff;
+}
+
 .action-row {
   display: flex;
   gap: 6px;
