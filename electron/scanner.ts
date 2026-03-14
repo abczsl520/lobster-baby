@@ -1,31 +1,44 @@
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
+import { execSync } from 'child_process';
 import { log } from './logger';
 import { readStore, writeStore } from './store';
 
 export function findOpenClaw(): string | null {
   const home = os.homedir();
   const isWin = process.platform === 'win32';
-  const possiblePaths = [
+
+  // Static known paths
+  const possiblePaths = isWin ? [
+    path.join(home, 'AppData/Roaming/npm/openclaw.cmd'),
+    path.join(home, 'AppData/Local/npm/openclaw.cmd'),
+    'C:\\nvm4w\\nodejs\\openclaw.cmd',
+    'C:\\Program Files\\nodejs\\openclaw.cmd',
+  ] : [
     '/opt/homebrew/bin/openclaw',
     '/usr/local/bin/openclaw',
     path.join(home, '.local/bin/openclaw'),
-    path.join(home, 'AppData/Roaming/npm/openclaw.cmd'),
-    path.join(home, 'AppData/Roaming/npm/openclaw'),
-    path.join(home, 'AppData/Local/npm/openclaw.cmd'),
-    isWin ? 'openclaw.cmd' : 'openclaw',
   ];
 
   for (const p of possiblePaths) {
     try {
-      if (p === 'openclaw') return 'openclaw';
       if (fs.existsSync(p)) {
         log(`Found openclaw at: ${p}`);
         return p;
       }
     } catch { /* ignore */ }
   }
+
+  // Dynamic lookup via which/where
+  try {
+    const cmd = isWin ? 'where openclaw' : 'which openclaw';
+    const result = execSync(cmd, { timeout: 3000, encoding: 'utf-8' }).trim().split('\n')[0].trim();
+    if (result) {
+      log(`Found openclaw via ${isWin ? 'where' : 'which'}: ${result}`);
+      return result;
+    }
+  } catch { /* not in PATH */ }
 
   log('OpenClaw not found in any known location');
   return null;

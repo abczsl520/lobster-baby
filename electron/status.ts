@@ -44,7 +44,8 @@ export function checkOpenClawStatus() {
 
   Promise.all([
     new Promise<{ status: string; activeSessions: number }>((resolve) => {
-      exec(`${_openclawPath} sessions --json --active 1 ${suppress}`, { timeout: 8000, env, shell: isWin ? 'cmd.exe' : undefined }, (error, stdout) => {
+      const cmd = isWin ? `"${_openclawPath}" sessions --json --active 1 ${suppress}` : `${_openclawPath} sessions --json --active 1 ${suppress}`;
+      exec(cmd, { timeout: 8000, env, shell: isWin ? 'cmd.exe' : '/bin/sh' }, (error, stdout) => {
         let status: 'active' | 'idle' | 'error' = 'error';
         let activeSessions = 0;
 
