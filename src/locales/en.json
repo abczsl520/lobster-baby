@@ -206,5 +206,37 @@
     "language": "Language",
     "chinese": "中文",
     "english": "English"
+  },
+  "remote": {
+    "title": "Remote Mode",
+    "dataSource": "Data Source",
+    "local": "Local (auto-detect)",
+    "remoteServer": "Remote (cloud server)",
+    "status": "Status",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "notConfigured": "Not configured",
+    "lastHeartbeat": "Last heartbeat",
+    "reporterVersion": "Reporter version",
+    "generateToken": "Generate Reporter Token",
+    "revokeToken": "Revoke Token",
+    "copyToken": "Copy Token",
+    "copied": "Copied!",
+    "installCommand": "Install command",
+    "installHint": "Run this command on your cloud server to install Reporter:",
+    "tokenGenerated": "Token generated",
+    "tokenRevoked": "Token revoked",
+    "offlineReasons": {
+      "openclaw_offline": "OpenClaw not running",
+      "reporter_offline": "Reporter offline",
+      "relay_unreachable": "Relay server unreachable",
+      "token_invalid": "Token invalid"
+    },
+    "cloudIcon": "☁️",
+    "remoteMode": "Remote Mode",
+    "secondsAgo": "{{seconds}}s ago",
+    "minutesAgo": "{{minutes}}m ago",
+    "hoursAgo": "{{hours}}h ago",
+    "needRegister": "Please register social features first"
   }
 }

@@ -206,5 +206,37 @@
     "language": "语言",
     "chinese": "中文",
     "english": "English"
+  },
+  "remote": {
+    "title": "远程模式",
+    "dataSource": "数据源",
+    "local": "本地（自动检测）",
+    "remoteServer": "远程（云服务器）",
+    "status": "状态",
+    "connected": "已连接",
+    "disconnected": "未连接",
+    "notConfigured": "未配置",
+    "lastHeartbeat": "最后心跳",
+    "reporterVersion": "Reporter 版本",
+    "generateToken": "生成 Reporter Token",
+    "revokeToken": "吊销 Token",
+    "copyToken": "复制 Token",
+    "copied": "已复制！",
+    "installCommand": "安装命令",
+    "installHint": "在云服务器上执行以下命令安装 Reporter：",
+    "tokenGenerated": "Token 已生成",
+    "tokenRevoked": "Token 已吊销",
+    "offlineReasons": {
+      "openclaw_offline": "OpenClaw 未运行",
+      "reporter_offline": "Reporter 离线",
+      "relay_unreachable": "中继服务器不可达",
+      "token_invalid": "Token 无效"
+    },
+    "cloudIcon": "☁️",
+    "remoteMode": "远程模式",
+    "secondsAgo": "{{seconds}}秒前",
+    "minutesAgo": "{{minutes}}分钟前",
+    "hoursAgo": "{{hours}}小时前",
+    "needRegister": "请先注册社交功能"
   }
 }
