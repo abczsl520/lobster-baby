@@ -42,8 +42,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getDailyTokens: () => ipcRenderer.invoke('get-daily-tokens'),
   getSettings: () => ipcRenderer.invoke('get-settings'),
   updateSettings: (settings: Record<string, any>) => ipcRenderer.invoke('update-settings', settings),
-  showPanel: () => ipcRenderer.invoke('show-panel'),
+  showPanel: (route?: string) => ipcRenderer.invoke('show-panel', route),
   hidePanel: () => ipcRenderer.invoke('hide-panel'),
+  closePanel: () => ipcRenderer.invoke('close-panel'),
+  onNavigatePanel: (callback: (route: string) => void) => {
+    const handler = (_event: any, route: string) => callback(route);
+    ipcRenderer.on('navigate-panel', handler);
+    return () => ipcRenderer.removeListener('navigate-panel', handler);
+  },
   quitApp: () => ipcRenderer.invoke('quit-app'),
   moveWindow: (deltaX: number, deltaY: number) => ipcRenderer.send('move-window', deltaX, deltaY),
   dragEnd: () => ipcRenderer.send('drag-end'),

@@ -24,17 +24,24 @@ function getWin(): BrowserWindow | null {
   return _mainWindow ? _mainWindow() : null;
 }
 
+// Broadcast to all windows (main + panel)
+function broadcastStatus(channel: string, data: any) {
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (!win.isDestroyed()) {
+      try { win.webContents.send(channel, data); } catch { /* closing */ }
+    }
+  }
+}
+
 // ─── Local mode (original) ───
 export function checkOpenClawStatus() {
   const win = getWin();
   if (!win || win.isDestroyed() || isCheckingStatus) return;
 
   if (!_openclawPath) {
-    try {
-      win.webContents.send('openclaw-status', {
-        status: 'error', activeSessions: 0, tokenInfo: { daily: 0, total: 0 },
-      });
-    } catch { /* ignore */ }
+    broadcastStatus('openclaw-status', {
+      status: 'error', activeSessions: 0, tokenInfo: { daily: 0, total: 0 },
+    });
     return;
   }
 
@@ -103,7 +110,7 @@ export function checkOpenClawStatus() {
       }
 
       try {
-        w.webContents.send('openclaw-status', {
+        broadcastStatus('openclaw-status', {
           status, activeSessions, tokenInfo: { daily: dailyTokens, total: totalTokens },
         });
       } catch { /* window might be closing */ }
@@ -118,19 +125,14 @@ function startRemoteStatus(socialToken: string) {
 
   remoteProvider = new RemoteStatusProvider(socialToken);
   remoteProvider.start((data: RemoteStatusData) => {
-    const win = getWin();
-    if (!win || win.isDestroyed()) return;
-
-    try {
-      win.webContents.send('openclaw-status', {
-        status: data.status,
-        activeSessions: data.activeSessions,
-        tokenInfo: { daily: data.dailyTokens, total: data.totalTokens },
-        remote: true,
-        offlineReason: data.offlineReason,
-        lastHeartbeat: data.lastHeartbeat,
-      });
-    } catch { /* window might be closing */ }
+    broadcastStatus('openclaw-status', {
+      status: data.status,
+      activeSessions: data.activeSessions,
+      tokenInfo: { daily: data.dailyTokens, total: data.totalTokens },
+      remote: true,
+      offlineReason: data.offlineReason,
+      lastHeartbeat: data.lastHeartbeat,
+    });
   });
 
   log('Remote status provider started');

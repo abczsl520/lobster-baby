@@ -13,16 +13,64 @@ import { PluginToast } from './components/PluginToast';
 import { DRAG } from './constants';
 import './App.css';
 
-function App() {
+// Detect if this is the panel window
+function getPanelRoute(): string | null {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('panel');
+}
+
+// ─── Panel Window App ───
+function PanelApp() {
+  const { status, tokenInfo } = useOpenClawStatus();
+  const levelInfo = useLevelSystem();
+  const { updateInfo } = useUpdateChecker();
+  const [initialRoute, setInitialRoute] = useState<string>(getPanelRoute() || 'status');
+
+  // Listen for navigation from main process
+  useEffect(() => {
+    const cleanup = window.electronAPI.onNavigatePanel?.((route: string) => {
+      setInitialRoute(route);
+    });
+    return () => { cleanup?.(); };
+  }, []);
+
+  const handleClose = useCallback(() => {
+    window.electronAPI.closePanel();
+  }, []);
+
+  return (
+    <div className="app panel-window">
+      <StatusPanel
+        status={status}
+        levelInfo={levelInfo}
+        tokenInfo={tokenInfo}
+        onClose={handleClose}
+        showChart={initialRoute === 'chart'}
+        onToggleChart={() => {}}
+        autoFadeEnabled={false}
+        onToggleAutoFade={() => {}}
+        updateInfo={updateInfo}
+        showAchievements={initialRoute === 'achievements'}
+        onToggleAchievements={() => {}}
+        showSocial={initialRoute === 'social'}
+        onOpenSocial={() => setInitialRoute('social')}
+        onCloseSocial={() => setInitialRoute('status')}
+        showPlugins={initialRoute === 'plugins'}
+        onOpenPlugins={() => setInitialRoute('plugins')}
+        onClosePlugins={() => setInitialRoute('status')}
+        isPanelWindow={true}
+      />
+      <PluginToast />
+    </div>
+  );
+}
+
+// ─── Main (Lobster) Window App ───
+function LobsterApp() {
   const { status, tokenInfo } = useOpenClawStatus();
   const levelInfo = useLevelSystem();
   const { updateInfo } = useUpdateChecker();
   const { t } = useTranslation();
-  const [showPanel, setShowPanel] = useState(false);
-  const [showChart, setShowChart] = useState(false);
-  const [showAchievements, setShowAchievements] = useState(false);
-  const [showSocial, setShowSocial] = useState(false);
-  const [showPlugins, setShowPlugins] = useState(false);
   const [emoji, setEmoji] = useState<string | null>(null);
   const [isDraggingState, setIsDraggingState] = useState(false);
   const [dockState, setDockState] = useState<string | null>(null);
@@ -46,12 +94,8 @@ function App() {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (rafId.current !== null) {
-        cancelAnimationFrame(rafId.current);
-      }
-      if (fadeCheckIntervalRef.current) {
-        clearInterval(fadeCheckIntervalRef.current);
-      }
+      if (rafId.current !== null) cancelAnimationFrame(rafId.current);
+      if (fadeCheckIntervalRef.current) clearInterval(fadeCheckIntervalRef.current);
     };
   }, []);
 
@@ -60,99 +104,49 @@ function App() {
     window.electronAPI.getSettings().then(settings => {
       setAutoFadeEnabled(settings.autoFadeEnabled ?? false);
     });
-    // Check remote mode
     window.electronAPI.remoteGetMode?.().then((r: any) => {
       setIsRemoteMode(r?.mode === 'remote');
     }).catch(() => {});
   }, []);
 
-  // Auto-fade after 30 seconds of no interaction (only if enabled)
+  // Auto-fade after 30 seconds of no interaction
   useEffect(() => {
-    if (!autoFadeEnabled) {
-      setIsAutoFaded(false);
-      return;
-    }
-
-    const AUTO_FADE_DELAY = 30_000; // 30 seconds
-    
+    if (!autoFadeEnabled) { setIsAutoFaded(false); return; }
+    const AUTO_FADE_DELAY = 30_000;
     fadeCheckIntervalRef.current = setInterval(() => {
-      const elapsed = Date.now() - lastInteractionRef.current;
-      if (elapsed > AUTO_FADE_DELAY && !showPanel) {
-        setIsAutoFaded(true);
-      }
-    }, 5000); // Check every 5 seconds
+      if (Date.now() - lastInteractionRef.current > AUTO_FADE_DELAY) setIsAutoFaded(true);
+    }, 5000);
+    return () => { if (fadeCheckIntervalRef.current) clearInterval(fadeCheckIntervalRef.current); };
+  }, [autoFadeEnabled]);
 
-    return () => {
-      if (fadeCheckIntervalRef.current) {
-        clearInterval(fadeCheckIntervalRef.current);
-      }
-    };
-  }, [showPanel, autoFadeEnabled]);
-
-  // Reset auto-fade on any interaction
   const resetAutoFade = useCallback(() => {
     lastInteractionRef.current = Date.now();
     setIsAutoFaded(false);
   }, []);
 
-  // Show update notification when available
   useEffect(() => {
-    if (updateInfo?.hasUpdate) {
-      setShowUpdateNotification(true);
-    }
+    if (updateInfo?.hasUpdate) setShowUpdateNotification(true);
   }, [updateInfo]);
 
-  // Check milestones when token count changes
+  // Check milestones
   useEffect(() => {
     const totalTokens = tokenInfo.total;
     if (totalTokens <= 0) return;
-
     for (const milestone of MILESTONES) {
       if (totalTokens >= milestone.tokens && !unlockedMilestones.has(milestone.id)) {
         setUnlockedMilestones(prev => new Set([...prev, milestone.id]));
-        // Only show achievement popup for newly crossed milestones
-        // (not ones already passed on startup)
         if (unlockedMilestones.size > 0 || totalTokens < milestone.tokens * 1.1) {
           setCurrentAchievement(milestone);
         }
-        break; // Show one at a time
+        break;
       }
     }
   }, [tokenInfo.total, unlockedMilestones]);
 
-  // Listen for right-click menu toggle events
+  // Listen for dock state changes
   useEffect(() => {
-    const cleanupPanel = window.electronAPI.onTogglePanel(() => {
-      setShowPanel(prev => {
-        if (!prev) window.electronAPI.showPanel();
-        else window.electronAPI.hidePanel();
-        return !prev;
-      });
-    });
-    const cleanupChart = window.electronAPI.onToggleChart(() => {
-      setShowPanel(true);
-      window.electronAPI.showPanel();
-      setShowChart(prev => !prev);
-    });
-    const cleanupAchievements = window.electronAPI.onShowAchievements(() => {
-      setShowPanel(true);
-      window.electronAPI.showPanel();
-      setShowAchievements(true);
-    });
-    const cleanupSocial = window.electronAPI.onShowSocial(() => {
-      setShowPanel(true);
-      window.electronAPI.showPanel();
-      setShowSocial(true);
-    });
-    const cleanupPlugins = window.electronAPI.onShowPlugins(() => {
-      setShowPanel(true);
-      window.electronAPI.showPanel();
-      setShowPlugins(true);
-    });
-    const cleanupDockState = window.electronAPI.onDockStateChanged((state) => {
-      setDockState(state);
-    });
-    return () => { cleanupPanel(); cleanupChart(); cleanupAchievements(); cleanupSocial(); cleanupPlugins(); cleanupDockState(); };
+    const cleanupDockState = window.electronAPI.onDockStateChanged((state) => setDockState(state));
+    return () => { cleanupDockState(); };
   }, []);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -165,26 +159,16 @@ function App() {
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     if (!dragStart.current) return;
-
     const dx = e.screenX - dragStart.current.screenX;
     const dy = e.screenY - dragStart.current.screenY;
-
     if (!isDragging.current && (Math.abs(dx) > DRAG.THRESHOLD || Math.abs(dy) > DRAG.THRESHOLD)) {
       isDragging.current = true;
       setIsDraggingState(true);
     }
-
     if (isDragging.current) {
-      // Accumulate delta
       accumulatedDelta.current.x += dx;
       accumulatedDelta.current.y += dy;
-
-      // Cancel previous frame if still pending
-      if (rafId.current !== null) {
-        cancelAnimationFrame(rafId.current);
-      }
-
-      // Batch updates: only send IPC when accumulated delta is significant
+      if (rafId.current !== null) cancelAnimationFrame(rafId.current);
       const accumulated = accumulatedDelta.current;
       if (Math.abs(accumulated.x) >= 1 || Math.abs(accumulated.y) >= 1) {
         rafId.current = requestAnimationFrame(() => {
@@ -193,37 +177,20 @@ function App() {
           rafId.current = null;
         });
       }
-
       dragStart.current = { screenX: e.screenX, screenY: e.screenY };
     }
   }, []);
 
   const handleMouseUp = useCallback(() => {
-    // Flush any remaining accumulated delta BEFORE canceling rafId
     const hasAccumulated = accumulatedDelta.current.x !== 0 || accumulatedDelta.current.y !== 0;
-    
-    if (rafId.current !== null) {
-      cancelAnimationFrame(rafId.current);
-      rafId.current = null;
-    }
-
-    // Send remaining delta if any
+    if (rafId.current !== null) { cancelAnimationFrame(rafId.current); rafId.current = null; }
     if (isDragging.current && hasAccumulated) {
       window.electronAPI.moveWindow(accumulatedDelta.current.x, accumulatedDelta.current.y);
       accumulatedDelta.current = { x: 0, y: 0 };
     }
-
-    // Notify main process drag ended
-    if (isDragging.current) {
-      window.electronAPI.dragEnd();
-    }
-
+    if (isDragging.current) window.electronAPI.dragEnd();
     dragStart.current = null;
-    
-    setTimeout(() => {
-      isDragging.current = false;
-      setIsDraggingState(false);
-    }, 50);
+    setTimeout(() => { isDragging.current = false; setIsDraggingState(false); }, 50);
   }, []);
 
   const handleClick = useCallback(() => {
@@ -231,37 +198,28 @@ function App() {
     setEmoji(getRandomEmoji(status));
   }, [status]);
 
-  const handleClosePanel = useCallback(async () => {
-    await window.electronAPI.hidePanel();
-    setShowPanel(false);
+  // Double-click opens panel
+  const handleDoubleClick = useCallback(() => {
+    window.electronAPI.showPanel('status');
   }, []);
 
   return (
     <div
-      className={`app ${showPanel ? 'panel-open' : ''} ${isDraggingState ? 'dragging' : ''} ${isAutoFaded ? 'auto-faded' : ''}`}
+      className={`app ${isDraggingState ? 'dragging' : ''} ${isAutoFaded ? 'auto-faded' : ''}`}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={() => {
         handleMouseUp();
-        // Only redock if not dragging
-        if (!isDragging.current) {
-          window.electronAPI.redock();
-        }
+        if (!isDragging.current) window.electronAPI.redock();
       }}
       onMouseEnter={() => {
         resetAutoFade();
-        // Only undock if not dragging
-        if (!isDragging.current) {
-          window.electronAPI.undock();
-        }
+        if (!isDragging.current) window.electronAPI.undock();
       }}
     >
       {showUpdateNotification && updateInfo && (
-        <UpdateNotification
-          updateInfo={updateInfo}
-          onDismiss={() => setShowUpdateNotification(false)}
-        />
+        <UpdateNotification updateInfo={updateInfo} onDismiss={() => setShowUpdateNotification(false)} />
       )}
 
       {currentAchievement && (
@@ -275,12 +233,12 @@ function App() {
 
       {emoji && <EmojiBubble emoji={emoji} onComplete={() => setEmoji(null)} />}
 
-      <div className="lobster-area">
+      <div className="lobster-area" onDoubleClick={handleDoubleClick}>
         <SpeechBubble
           status={status}
           levelInfo={levelInfo}
           tokenInfo={tokenInfo}
-          isPanelOpen={showPanel}
+          isPanelOpen={false}
           isRemote={isRemoteMode}
         />
         <Lobster
@@ -291,35 +249,15 @@ function App() {
         />
       </div>
 
-      {showPanel && (
-        <StatusPanel
-          status={status}
-          levelInfo={levelInfo}
-          tokenInfo={tokenInfo}
-          onClose={handleClosePanel}
-          showChart={showChart}
-          onToggleChart={() => setShowChart(prev => !prev)}
-          autoFadeEnabled={autoFadeEnabled}
-          onToggleAutoFade={() => {
-            const newVal = !autoFadeEnabled;
-            setAutoFadeEnabled(newVal);
-            window.electronAPI.updateSettings({ autoFadeEnabled: newVal });
-          }}
-          updateInfo={updateInfo}
-          showAchievements={showAchievements}
-          onToggleAchievements={() => setShowAchievements(prev => !prev)}
-          showSocial={showSocial}
-          onOpenSocial={() => setShowSocial(true)}
-          onCloseSocial={() => setShowSocial(false)}
-          showPlugins={showPlugins}
-          onOpenPlugins={() => setShowPlugins(true)}
-          onClosePlugins={() => setShowPlugins(false)}
-        />
-      )}
-
       <PluginToast />
     </div>
   );
+}
+
+// ─── Router ───
+function App() {
+  const panelRoute = getPanelRoute();
+  return panelRoute ? <PanelApp /> : <LobsterApp />;
 }
 
 export default App;
