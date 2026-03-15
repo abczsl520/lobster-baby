@@ -486,10 +486,31 @@ ipcMain.handle('ssh-disconnect', (_event, id: string) => {
   return { success: true };
 });
 
+// S4 FIX: Rate limit test connections (max 3 per minute)
+let testConnectionAttempts: number[] = [];
+const TEST_RATE_LIMIT = 3;
+const TEST_RATE_WINDOW = 60000; // 1 minute
+
 ipcMain.handle('ssh-test-connection', async (_event, data: {
   host: string; port: number; username: string;
   authType: 'password' | 'key'; credential: string;
 }) => {
+  // Rate limiting
+  const now = Date.now();
+  testConnectionAttempts = testConnectionAttempts.filter(t => now - t < TEST_RATE_WINDOW);
+  if (testConnectionAttempts.length >= TEST_RATE_LIMIT) {
+    return { success: false, error: 'Too many test attempts. Please wait a moment.' };
+  }
+  testConnectionAttempts.push(now);
+  
+  // Input validation
+  if (!data.host || typeof data.host !== 'string' || data.host.length > 255) {
+    return { success: false, error: 'Invalid host' };
+  }
+  if (!/^[a-zA-Z0-9._-]+$/.test(data.host)) {
+    return { success: false, error: 'Host contains invalid characters' };
+  }
+  
   // Temporary connection test without saving
   const { Client: SSHClient } = require('ssh2');
   const client = new SSHClient();
@@ -533,7 +554,10 @@ ipcMain.handle('ssh-restart-process', async (_event, serverId: string, processNa
 });
 
 ipcMain.handle('ssh-list-dir', async (_event, serverId: string, dirPath: string) => {
-  // Validate path
+  // S3 FIX: Strict path validation — single project dir only, no traversal
+  if (typeof dirPath !== 'string' || dirPath.includes('..')) {
+    return { error: 'Path traversal not allowed.' };
+  }
   if (!/^\/opt\/apps\/[a-zA-Z0-9_-]+\/?$/.test(dirPath)) {
     return { error: 'Path not allowed. Only /opt/apps/<name>/ paths are accessible.' };
   }
@@ -544,9 +568,12 @@ ipcMain.handle('ssh-list-dir', async (_event, serverId: string, dirPath: string)
 });
 
 ipcMain.handle('ssh-read-file', async (_event, serverId: string, filePath: string) => {
-  // Validate path
-  if (!/^\/opt\/apps\/[a-zA-Z0-9_\/-]+\.(js|ts|json|md|txt|yml|yaml|env|conf|cfg)$/.test(filePath)) {
-    return { error: 'File path not allowed.' };
+  // S3 FIX: Strict path validation — single subdir, no traversal, no secrets
+  if (typeof filePath !== 'string' || filePath.includes('..')) {
+    return { error: 'Path traversal not allowed.' };
+  }
+  if (!/^\/opt\/apps\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_.-]+\.(js|ts|json|md|txt|yml|yaml)$/.test(filePath)) {
+    return { error: 'File path not allowed. No .env/.conf files, single directory depth only.' };
   }
   try {
     const result = await sshManager.exec(serverId, `cat ${filePath}`);

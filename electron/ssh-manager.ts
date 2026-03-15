@@ -83,9 +83,11 @@ const SAFE_COMMANDS: Record<string, RegExp> = {
   'disk':                /^df -h$/,
   'hostname':            /^hostname$/,
   'load':                /^cat \/proc\/loadavg$/,
-  'tail-log':            /^tail -n \d{1,4} [a-zA-Z0-9_.\/~-]+\.log$/,
+  // S1 FIX: tail-log restricted to /opt/apps/ only, no path traversal (..)
+  'tail-log':            /^tail -n \d{1,4} \/opt\/apps\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_.-]+\.log$/,
   'ls-dir':              /^ls -la \/opt\/apps\/[a-zA-Z0-9_-]+\/?$/,
-  'cat-file':            /^cat \/opt\/apps\/[a-zA-Z0-9_\/-]+\.(js|ts|json|md|txt|yml|yaml|env|conf|cfg)$/,
+  // S2 FIX: cat-file NO .env/.conf/.cfg (secrets!), single subdir only, no path traversal
+  'cat-file':            /^cat \/opt\/apps\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_.-]+\.(js|ts|json|md|txt|yml|yaml)$/,
   'pm2-restart':         /^pm2 restart [a-zA-Z0-9_-]+$/,
   'pm2-stop':            /^pm2 stop [a-zA-Z0-9_-]+$/,
   'pm2-logs':            /^pm2 logs [a-zA-Z0-9_-]+ --lines \d{1,4} --nostream$/,
@@ -100,6 +102,7 @@ const FORBIDDEN_PATTERNS = [
   /sudo/i, /su\s/i,
   /passwd/i, /shadow/i, /\.ssh\//,
   /eval\s/i, /exec\s/i, /source\s/i,
+  /\.\./, // S1/S2/S3: block path traversal
 ];
 
 function isCommandAllowed(cmd: string): { allowed: boolean; level: number; reason?: string } {
@@ -132,18 +135,17 @@ function isCommandAllowed(cmd: string): { allowed: boolean; level: number; reaso
 // ─── Credential Encryption ───
 
 function encryptCredential(plaintext: string): string {
-  if (safeStorage.isEncryptionAvailable()) {
-    return safeStorage.encryptString(plaintext).toString('base64');
+  if (!safeStorage.isEncryptionAvailable()) {
+    throw new Error('System encryption unavailable — cannot safely store credentials');
   }
-  // Fallback: base64 (not ideal, but better than plaintext)
-  return Buffer.from(plaintext).toString('base64');
+  return safeStorage.encryptString(plaintext).toString('base64');
 }
 
 function decryptCredential(encrypted: string): string {
-  if (safeStorage.isEncryptionAvailable()) {
-    return safeStorage.decryptString(Buffer.from(encrypted, 'base64'));
+  if (!safeStorage.isEncryptionAvailable()) {
+    throw new Error('System encryption unavailable — cannot decrypt credentials');
   }
-  return Buffer.from(encrypted, 'base64').toString('utf-8');
+  return safeStorage.decryptString(Buffer.from(encrypted, 'base64'));
 }
 
 // ─── SSH Manager Class ───
@@ -167,6 +169,16 @@ export class SSHManager {
     if (store.sshServers.length >= 10) {
       throw new Error('Maximum 10 servers allowed');
     }
+    
+    // S6 FIX: Input validation
+    if (!server.name || server.name.length > 50) throw new Error('Server name must be 1-50 characters');
+    if (!server.host || server.host.length > 255) throw new Error('Invalid host');
+    if (!/^[a-zA-Z0-9._-]+$/.test(server.host)) throw new Error('Host contains invalid characters');
+    if (!server.username || server.username.length > 64) throw new Error('Invalid username');
+    if (!/^[a-zA-Z0-9._-]+$/.test(server.username)) throw new Error('Username contains invalid characters');
+    if (!server.port || server.port < 1 || server.port > 65535) throw new Error('Port must be 1-65535');
+    if (!credential || credential.length > 16384) throw new Error('Credential too large (max 16KB)');
+    if (server.authType !== 'password' && server.authType !== 'key') throw new Error('Invalid auth type');
     
     const newServer: SSHServer = {
       ...server,
