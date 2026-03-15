@@ -175,3 +175,10 @@ fi
 echo ""
 log "🎉 Lobster Reporter v${VERSION} 安装完成！"
 log "诊断检查: node $INSTALL_DIR/lobster-reporter.js --check"
+
+# S3 fix: warn about token in bash history
+if [ -n "$TOKEN" ]; then
+  echo ""
+  warn "安全提示：token 出现在命令历史中。建议执行："
+  echo "  history -d \$(history 1 | awk '{print \$1}')  # 删除上一条命令"
+fi
