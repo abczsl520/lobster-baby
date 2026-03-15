@@ -1,0 +1,36 @@
+#!/bin/sh
+# Pre-commit hook: block commits containing potential secrets
+# Install: cp pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+
+PATTERNS=(
+  'Zsl[0-9]{4,}'
+  'Nqf[0-9]{4,}'
+  'ghp_[A-Za-z0-9]{30,}'
+  'gho_[A-Za-z0-9]{30,}'
+  'github_pat_[A-Za-z0-9_]{30,}'
+  'sk-[A-Za-z0-9]{20,}'
+  'AKIA[A-Z0-9]{16}'
+  'tvly-[A-Za-z0-9-]{20,}'
+  'eyJhbGciOi[A-Za-z0-9_-]{50,}'
+)
+
+STAGED=$(git diff --cached --name-only)
+if [ -z "$STAGED" ]; then
+  exit 0
+fi
+
+for pattern in "${PATTERNS[@]}"; do
+  MATCH=$(git diff --cached -U0 | grep -E "^\+" | grep -vE "^\+\+\+" | grep -oE "$pattern" | head -1)
+  if [ -n "$MATCH" ]; then
+    echo ""
+    echo "🚨 BLOCKED: Potential secret detected in staged changes!"
+    echo "   Pattern: $pattern"
+    echo "   Match: ${MATCH:0:20}..."
+    echo ""
+    echo "   If this is intentional, use: git commit --no-verify"
+    echo ""
+    exit 1
+  fi
+done
+
+exit 0
