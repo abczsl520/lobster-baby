@@ -63,6 +63,21 @@ function createWindow() {
   // Logging
   mainWindow.webContents.on('did-finish-load', () => log('Page loaded'));
   mainWindow.webContents.on('did-fail-load', (_e, code, desc) => log(`Page failed: ${code} ${desc}`));
+
+  // S22: Block navigation to external URLs
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    const allowed = process.env.VITE_DEV_SERVER_URL || `file://${path.join(__dirname, '../dist/')}`;
+    if (!url.startsWith(allowed) && !url.startsWith('file://')) {
+      log(`Blocked navigation to: ${url}`);
+      event.preventDefault();
+    }
+  });
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    // External links open in default browser via shell.openExternal (already validated in IPC)
+    log(`Blocked window.open: ${url}`);
+    return { action: 'deny' };
+  });
+
   mainWindow.webContents.on('render-process-gone', (_e, details) => {
     log(`Renderer crashed: ${JSON.stringify(details)}`);
     if (details.reason !== 'clean-exit') {
@@ -245,6 +260,12 @@ ipcMain.handle('get-daily-tokens', () => readStore().dailyTokens || {});
 ipcMain.handle('get-settings', () => readStore().settings || { autoFadeEnabled: false });
 
 ipcMain.handle('update-settings', (_event, settings: Record<string, any>) => {
+  // S25: sanitize input — strip prototype pollution keys
+  if (settings && typeof settings === 'object') {
+    delete settings.__proto__;
+    delete settings.constructor;
+    delete settings.prototype;
+  }
   const store = readStore();
   store.settings = { ...store.settings, ...settings };
   writeStore(store);
