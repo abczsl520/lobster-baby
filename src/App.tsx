@@ -31,6 +31,7 @@ function App() {
   const [autoFadeEnabled, setAutoFadeEnabled] = useState(false);
   const [currentAchievement, setCurrentAchievement] = useState<Milestone | null>(null);
   const [unlockedMilestones, setUnlockedMilestones] = useState<Set<string>>(new Set());
+  const [isRemoteMode, setIsRemoteMode] = useState(false);
 
   // Drag state
   const isDragging = useRef(false);
@@ -59,6 +60,10 @@ function App() {
     window.electronAPI.getSettings().then(settings => {
       setAutoFadeEnabled(settings.autoFadeEnabled ?? false);
     });
+    // Check remote mode
+    window.electronAPI.remoteGetMode?.().then((r: any) => {
+      setIsRemoteMode(r?.mode === 'remote');
+    }).catch(() => {});
   }, []);
 
   // Auto-fade after 30 seconds of no interaction (only if enabled)
@@ -276,6 +281,7 @@ function App() {
           levelInfo={levelInfo}
           tokenInfo={tokenInfo}
           isPanelOpen={showPanel}
+          isRemote={isRemoteMode}
         />
         <Lobster
           status={status}

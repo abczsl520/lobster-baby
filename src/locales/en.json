@@ -164,7 +164,8 @@
       "level9": "I'm a legendary lobster now 🌈",
       "level7": "Such high level, owner is amazing",
       "level5": "Golden crown lobster, shining ✨"
-    }
+    },
+    "remote": ["☁️ Remote monitoring~", "Server is running!", "☁️ Signal stable", "Remote connection OK~", "Cloud guardian 🦞", "Server status OK!"]
   },
   "update": {
     "newVersion": "New version available!",
