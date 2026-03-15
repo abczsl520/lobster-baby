@@ -6,7 +6,13 @@ import * as http from 'http';
 import { app } from 'electron';
 
 const API_BASE = 'https://game.weixin-vip.cn/lobster-social/api/v1';
-const PROOF_SECRET = 'lobster-baby-proof-v1-REDACTED';
+// ⚠️ PROOF_SECRET 设计说明：
+// 这个 secret 用于 HMAC 签名注册证明（防普通篡改），但因为在客户端，
+// 逆向工程可以提取它。这是 Electron 桌面应用的固有限制。
+// 真正的安全靠服务端：设备指纹唯一性 + rate limit + 反作弊系统。
+// 混淆只是增加提取成本，不是安全边界。
+const _p = [];
+const PROOF_SECRET = String.fromCharCode(..._p);
 
 // ─── Device Fingerprint ───
 export function generateDeviceFingerprint(): string {
