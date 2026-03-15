@@ -78,6 +78,20 @@ declare global {
       remoteGetStatus: () => Promise<any>;
       remoteSwitchMode: (mode: string) => Promise<{ ok?: boolean; mode?: string; error?: string }>;
       remoteGetMode: () => Promise<{ mode: string }>;
+      // SSH Remote Control
+      sshGetServers: () => Promise<any[]>;
+      sshAddServer: (data: { name: string; host: string; port: number; username: string; authType: string; credential: string }) => Promise<any>;
+      sshRemoveServer: (id: string) => Promise<{ success: boolean }>;
+      sshConnect: (id: string) => Promise<{ success: boolean; error?: string }>;
+      sshDisconnect: (id: string) => Promise<{ success: boolean }>;
+      sshTestConnection: (data: { host: string; port: number; username: string; authType: string; credential: string }) => Promise<{ success: boolean; error?: string }>;
+      sshOpenClawStatus: (serverId: string) => Promise<any>;
+      sshProcessList: (serverId: string) => Promise<any[]>;
+      sshSystemInfo: (serverId: string) => Promise<any>;
+      sshProcessLogs: (serverId: string, processName: string, lines?: number) => Promise<{ logs?: string; error?: string }>;
+      sshRestartProcess: (serverId: string, processName: string) => Promise<{ success: boolean; error?: string }>;
+      sshListDir: (serverId: string, path: string) => Promise<{ output?: string; error?: string }>;
+      sshReadFile: (serverId: string, path: string) => Promise<{ content?: string; error?: string }>;
     };
   }
 }

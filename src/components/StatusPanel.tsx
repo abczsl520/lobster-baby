@@ -7,9 +7,10 @@ import { AchievementList } from './AchievementList';
 import { SocialPanel } from './SocialPanel';
 import { PluginPanel } from './PluginPanel';
 import { RemoteSettings } from './RemoteSettings';
+import { SSHPanel } from './SSHPanel';
 import './StatusPanel.css';
 
-const APP_VERSION = '1.9.0';
+const APP_VERSION = '1.9.1';
 
 interface StatusPanelProps {
   status: OpenClawStatus;
@@ -208,6 +209,9 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
 
           {/* ── Remote Mode Settings ── */}
           <RemoteSettings />
+
+          {/* ── SSH Remote Control ── */}
+          <SSHPanel />
 
           {/* ── Footer ── */}
           <div className="panel-footer">
