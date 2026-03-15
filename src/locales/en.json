@@ -342,6 +342,48 @@
       "test": "Test Connection",
       "save": "Save"
     },
-    "manageServers": "Manage servers"
+    "manageServers": "Manage servers",
+    "home": {
+      "dataSource": "Status Data Source",
+      "dataSourceDesc": "Where does the lobster get its status data? Auto-detect locally or sync from your cloud server",
+      "localMode": "Local",
+      "cloudMode": "Cloud Sync",
+      "reporterNeeded": "Install Reporter on your server to sync data",
+      "sshServers": "SSH Direct Access",
+      "sshDesc": "Connect directly to your servers to view status, manage processes, and read logs",
+      "noServers": "No servers added yet. Click below to get started",
+      "viewStatus": "View status",
+      "securityNote": "Passwords encrypted by system keychain · Commands filtered by whitelist · No dangerous operations"
+    },
+    "guide": {
+      "title": "📖 Remote Features Guide",
+      "s1Title": "Two Remote Modes",
+      "s1Desc": "Lobster Baby supports two ways to get your server's OpenClaw data:",
+      "localP1": "Auto-detect local OpenClaw",
+      "localP2": "No setup needed",
+      "localP3": "Best for single machine",
+      "cloudP1": "Pull data from cloud server",
+      "cloudP2": "Requires Reporter install",
+      "cloudP3": "Best for cloud server users",
+      "s2Title": "Setup Cloud Sync",
+      "s2Desc": "Three easy steps to show your cloud server status on the lobster:",
+      "s2Step1": "Switch to \"☁️ Cloud Sync\" mode",
+      "s2Step2": "Click \"Generate Reporter Token\"",
+      "s2Step3": "Run the generated install command on your server",
+      "s3Title": "SSH Direct Access",
+      "s3Desc": "After adding servers, manage them directly via SSH:",
+      "feat1": "OpenClaw Status",
+      "feat2": "PM2 Process Mgmt",
+      "feat3": "System Resources",
+      "feat4": "Live Logs",
+      "feat5": "One-click Restart",
+      "s4Title": "Security",
+      "sec1": "Passwords stored in macOS Keychain",
+      "sec2": "Only whitelisted safe commands allowed",
+      "sec3": "Blocks rm/sudo/passwd and dangerous ops",
+      "sec4": "Commands timeout after 30 seconds",
+      "sec5": "Passwords never sent to renderer process",
+      "gotIt": "Got it, let's go"
+    }
   }
 }
