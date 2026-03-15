@@ -600,16 +600,25 @@ function createPanelWindow(route?: string) {
   let panelX = display.x + Math.round((display.width - PANEL_SIZE.width) / 2);
   let panelY = display.y + Math.round((display.height - PANEL_SIZE.height) / 2);
   
-  // If main window exists, position panel to its left or right
+  // If main window exists, position panel to its left or right, bottom-aligned with lobster
   if (mainBounds) {
+    const gap = 8;
     const spaceRight = display.x + display.width - (mainBounds.x + mainBounds.width);
     const spaceLeft = mainBounds.x - display.x;
-    if (spaceRight >= PANEL_SIZE.width + 10) {
-      panelX = mainBounds.x + mainBounds.width + 10;
-      panelY = Math.max(display.y, mainBounds.y + mainBounds.height - PANEL_SIZE.height);
-    } else if (spaceLeft >= PANEL_SIZE.width + 10) {
-      panelX = mainBounds.x - PANEL_SIZE.width - 10;
-      panelY = Math.max(display.y, mainBounds.y + mainBounds.height - PANEL_SIZE.height);
+    
+    // Bottom-align with lobster window
+    const idealY = mainBounds.y + mainBounds.height - PANEL_SIZE.height;
+    
+    if (spaceRight >= PANEL_SIZE.width + gap) {
+      panelX = mainBounds.x + mainBounds.width + gap;
+      panelY = idealY;
+    } else if (spaceLeft >= PANEL_SIZE.width + gap) {
+      panelX = mainBounds.x - PANEL_SIZE.width - gap;
+      panelY = idealY;
+    } else {
+      // Not enough space on sides — position above lobster, centered
+      panelX = mainBounds.x + Math.round((mainBounds.width - PANEL_SIZE.width) / 2);
+      panelY = mainBounds.y - PANEL_SIZE.height - gap;
     }
   }
   
