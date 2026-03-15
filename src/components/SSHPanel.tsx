@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import './SSHPanel.css';
 
 interface SSHServer {
@@ -37,7 +38,13 @@ interface SystemInfo {
 
 type Tab = 'servers' | 'status' | 'processes' | 'system' | 'logs';
 
-export const SSHPanel: React.FC = () => {
+interface SSHPanelProps {
+  visible: boolean;
+  onClose: () => void;
+}
+
+export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
+  const { t } = useTranslation();
   const [servers, setServers] = useState<SSHServer[]>([]);
   const [activeServer, setActiveServer] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('servers');
@@ -53,23 +60,24 @@ export const SSHPanel: React.FC = () => {
   const [selectedProcess, setSelectedProcess] = useState<string>('');
   const [loading, setLoading] = useState(false);
   
-  // Refresh timer
   const refreshRef = useRef<NodeJS.Timeout | null>(null);
 
   const loadServers = useCallback(async () => {
-    const result = await window.electronAPI.sshGetServers();
-    setServers(result);
+    try {
+      const result = await window.electronAPI.sshGetServers();
+      setServers(result);
+    } catch {}
   }, []);
 
   useEffect(() => {
-    loadServers();
+    if (visible) loadServers();
     return () => { if (refreshRef.current) clearInterval(refreshRef.current); };
-  }, [loadServers]);
+  }, [visible, loadServers]);
 
   // Auto-refresh when connected
   useEffect(() => {
     if (refreshRef.current) clearInterval(refreshRef.current);
-    if (activeServer) {
+    if (activeServer && visible) {
       const refresh = async () => {
         if (tab === 'status') await loadOpenClawStatus();
         else if (tab === 'processes') await loadProcesses();
@@ -78,19 +86,23 @@ export const SSHPanel: React.FC = () => {
       refreshRef.current = setInterval(refresh, 15000);
     }
     return () => { if (refreshRef.current) clearInterval(refreshRef.current); };
-  }, [activeServer, tab]);
+  }, [activeServer, tab, visible]);
 
   const handleConnect = async (serverId: string) => {
     setConnecting(serverId);
     setError(null);
-    const result = await window.electronAPI.sshConnect(serverId);
-    if (result.success) {
-      setActiveServer(serverId);
-      setTab('status');
-      await loadServers();
-      await loadOpenClawStatus();
-    } else {
-      setError(result.error || 'Connection failed');
+    try {
+      const result = await window.electronAPI.sshConnect(serverId);
+      if (result.success) {
+        setActiveServer(serverId);
+        setTab('status');
+        await loadServers();
+        await loadOpenClawStatus();
+      } else {
+        setError(result.error || t('ssh.connectFailed'));
+      }
+    } catch (e: any) {
+      setError(e.message);
     }
     setConnecting(null);
   };
@@ -119,43 +131,55 @@ export const SSHPanel: React.FC = () => {
   const loadOpenClawStatus = async () => {
     if (!activeServer) return;
     setLoading(true);
-    const result = await window.electronAPI.sshOpenClawStatus(activeServer);
-    setOpenclawStatus(result);
+    try {
+      const result = await window.electronAPI.sshOpenClawStatus(activeServer);
+      setOpenclawStatus(result);
+    } catch {}
     setLoading(false);
   };
 
   const loadProcesses = async () => {
     if (!activeServer) return;
     setLoading(true);
-    const result = await window.electronAPI.sshProcessList(activeServer);
-    setProcesses(result);
+    try {
+      const result = await window.electronAPI.sshProcessList(activeServer);
+      setProcesses(result);
+    } catch {}
     setLoading(false);
   };
 
   const loadSystemInfo = async () => {
     if (!activeServer) return;
     setLoading(true);
-    const result = await window.electronAPI.sshSystemInfo(activeServer);
-    setSystemInfo(result);
+    try {
+      const result = await window.electronAPI.sshSystemInfo(activeServer);
+      setSystemInfo(result);
+    } catch {}
     setLoading(false);
   };
 
   const loadLogs = async (processName: string) => {
     if (!activeServer) return;
     setLoading(true);
-    const result = await window.electronAPI.sshProcessLogs(activeServer, processName, 100);
-    setLogs(result.logs || result.error || '');
+    try {
+      const result = await window.electronAPI.sshProcessLogs(activeServer, processName, 100);
+      setLogs(result.logs || result.error || '');
+    } catch {}
     setLoading(false);
   };
 
   const handleRestart = async (processName: string) => {
-    if (!activeServer || !confirm(`Restart ${processName}?`)) return;
+    if (!activeServer) return;
     setLoading(true);
-    const result = await window.electronAPI.sshRestartProcess(activeServer, processName);
-    if (result.success) {
-      setTimeout(loadProcesses, 2000);
-    } else {
-      setError(result.error || 'Restart failed');
+    try {
+      const result = await window.electronAPI.sshRestartProcess(activeServer, processName);
+      if (result.success) {
+        setTimeout(loadProcesses, 2000);
+      } else {
+        setError(result.error || t('ssh.restartFailed'));
+      }
+    } catch (e: any) {
+      setError(e.message);
     }
     setLoading(false);
   };
@@ -167,12 +191,17 @@ export const SSHPanel: React.FC = () => {
     else if (newTab === 'system') await loadSystemInfo();
   };
 
+  if (!visible) return null;
+
   const activeServerObj = servers.find(s => s.id === activeServer);
+  const connectedCount = servers.filter(s => s.isConnected).length;
 
   return (
     <div className="ssh-panel">
+      {/* Header with back button */}
       <div className="ssh-header">
-        <span className="ssh-title">🖥️ Remote Control</span>
+        <button className="ssh-back-btn" onClick={onClose}>←</button>
+        <span className="ssh-title">🖥️ {t('ssh.title')}</span>
         {activeServerObj && (
           <span className="ssh-connected-badge">
             🟢 {activeServerObj.name}
@@ -180,43 +209,84 @@ export const SSHPanel: React.FC = () => {
         )}
       </div>
 
-      {/* Tab bar — only show when connected */}
+      {/* Tab bar — show when connected */}
       {activeServer && (
         <div className="ssh-tabs">
-          {(['status', 'processes', 'system', 'logs', 'servers'] as Tab[]).map(t => (
+          {(['status', 'processes', 'system', 'logs', 'servers'] as Tab[]).map(tabName => (
             <button
-              key={t}
-              className={`ssh-tab ${tab === t ? 'active' : ''}`}
-              onClick={() => handleTabChange(t)}
+              key={tabName}
+              className={`ssh-tab ${tab === tabName ? 'active' : ''}`}
+              onClick={() => handleTabChange(tabName)}
             >
-              {t === 'status' && '📊'}
-              {t === 'processes' && '⚙️'}
-              {t === 'system' && '💻'}
-              {t === 'logs' && '📜'}
-              {t === 'servers' && '🔌'}
-              {' '}{t.charAt(0).toUpperCase() + t.slice(1)}
+              {tabName === 'status' && '📊'}
+              {tabName === 'processes' && '⚙️'}
+              {tabName === 'system' && '💻'}
+              {tabName === 'logs' && '📜'}
+              {tabName === 'servers' && '🔌'}
+              {' '}{t(`ssh.tab.${tabName}`)}
             </button>
           ))}
         </div>
       )}
 
-      {error && <div className="ssh-error">{error} <button onClick={() => setError(null)}>✕</button></div>}
+      {error && (
+        <div className="ssh-error">
+          {error}
+          <button onClick={() => setError(null)}>✕</button>
+        </div>
+      )}
 
-      {/* Server list */}
-      {tab === 'servers' && (
+      {/* ── Welcome / Empty State ── */}
+      {tab === 'servers' && servers.length === 0 && !showAddForm && (
+        <div className="ssh-welcome">
+          <div className="ssh-welcome-icon">🖥️</div>
+          <div className="ssh-welcome-title">{t('ssh.welcome.title')}</div>
+          <div className="ssh-welcome-desc">{t('ssh.welcome.desc')}</div>
+          <div className="ssh-welcome-features">
+            <div className="ssh-welcome-feature">
+              <span>📊</span> {t('ssh.welcome.feature1')}
+            </div>
+            <div className="ssh-welcome-feature">
+              <span>⚙️</span> {t('ssh.welcome.feature2')}
+            </div>
+            <div className="ssh-welcome-feature">
+              <span>💻</span> {t('ssh.welcome.feature3')}
+            </div>
+            <div className="ssh-welcome-feature">
+              <span>📜</span> {t('ssh.welcome.feature4')}
+            </div>
+          </div>
+          <button className="ssh-btn primary" onClick={() => setShowAddForm(true)}>
+            + {t('ssh.addServer')}
+          </button>
+          <div className="ssh-welcome-hint">{t('ssh.welcome.hint')}</div>
+        </div>
+      )}
+
+      {/* ── Server list ── */}
+      {tab === 'servers' && (servers.length > 0 || showAddForm) && (
         <div className="ssh-server-list">
+          {servers.length > 0 && (
+            <div className="ssh-server-summary">
+              {t('ssh.serverCount', { total: servers.length, connected: connectedCount })}
+            </div>
+          )}
+
           {servers.map(s => (
             <div key={s.id} className={`ssh-server-card ${s.isConnected ? 'connected' : ''}`}>
               <div className="ssh-server-info">
                 <div className="ssh-server-name">
-                  {s.isConnected ? '🟢' : '⚫'} {s.name}
+                  {s.isConnected ? '🟢' : (s.lastStatus === 'error' ? '🔴' : '⚫')} {s.name}
                 </div>
                 <div className="ssh-server-host">{s.username}@{s.host}:{s.port}</div>
+                {s.lastConnected && !s.isConnected && (
+                  <div className="ssh-server-last">{t('ssh.lastConnected')}: {new Date(s.lastConnected).toLocaleString()}</div>
+                )}
               </div>
               <div className="ssh-server-actions">
                 {s.isConnected ? (
                   <button className="ssh-btn danger-sm" onClick={() => handleDisconnect(s.id)}>
-                    Disconnect
+                    {t('ssh.disconnect')}
                   </button>
                 ) : (
                   <button 
@@ -224,23 +294,17 @@ export const SSHPanel: React.FC = () => {
                     onClick={() => handleConnect(s.id)}
                     disabled={connecting === s.id}
                   >
-                    {connecting === s.id ? '...' : 'Connect'}
+                    {connecting === s.id ? '⏳' : t('ssh.connect')}
                   </button>
                 )}
-                <button className="ssh-btn text-sm" onClick={() => handleRemove(s.id)}>🗑️</button>
+                <button className="ssh-btn text-sm" onClick={() => handleRemove(s.id)} title={t('ssh.remove')}>🗑️</button>
               </div>
             </div>
           ))}
 
-          {servers.length === 0 && !showAddForm && (
-            <div className="ssh-empty">
-              No servers configured yet
-            </div>
-          )}
-
           {!showAddForm ? (
             <button className="ssh-btn primary" onClick={() => setShowAddForm(true)}>
-              + Add Server
+              + {t('ssh.addServer')}
             </button>
           ) : (
             <AddServerForm
@@ -258,53 +322,63 @@ export const SSHPanel: React.FC = () => {
         </div>
       )}
 
-      {/* OpenClaw Status */}
+      {/* ── OpenClaw Status ── */}
       {tab === 'status' && activeServer && (
         <div className="ssh-status-view">
-          {loading && <div className="ssh-loading">Loading...</div>}
+          <div className="ssh-section-hint">{t('ssh.statusHint')}</div>
+          {loading && <div className="ssh-loading">{t('ssh.loading')}</div>}
           {openclawStatus && (
             <>
               <div className="ssh-status-card">
                 <div className="ssh-status-row">
-                  <span>Status</span>
-                  <span className={`ssh-status-badge ${openclawStatus.status === 'active' ? 'active' : 'inactive'}`}>
-                    {openclawStatus.status || 'unknown'}
+                  <span>{t('ssh.field.status')}</span>
+                  <span className={`ssh-status-badge ${openclawStatus.status === 'active' ? 'active' : (openclawStatus.status === 'openclaw-not-found' ? 'notfound' : 'inactive')}`}>
+                    {openclawStatus.status === 'openclaw-not-found' ? t('ssh.notInstalled') : (openclawStatus.status || 'unknown')}
                   </span>
                 </div>
                 {openclawStatus.activeSessions !== undefined && (
                   <div className="ssh-status-row">
-                    <span>Sessions</span>
+                    <span>{t('ssh.field.sessions')}</span>
                     <span>{openclawStatus.activeSessions}</span>
                   </div>
                 )}
                 {openclawStatus.totalTokens !== undefined && (
                   <div className="ssh-status-row">
-                    <span>Total Tokens</span>
+                    <span>{t('ssh.field.tokens')}</span>
                     <span>{(openclawStatus.totalTokens / 1e6).toFixed(1)}M</span>
                   </div>
                 )}
                 {openclawStatus.uptime && (
                   <div className="ssh-status-row">
-                    <span>Uptime</span>
+                    <span>{t('ssh.field.uptime')}</span>
                     <span>{openclawStatus.uptime}</span>
                   </div>
                 )}
               </div>
               {openclawStatus.error && (
-                <div className="ssh-error-inline">{openclawStatus.error}</div>
+                <div className="ssh-error-inline">⚠️ {openclawStatus.error}</div>
               )}
             </>
           )}
           <button className="ssh-btn refresh" onClick={loadOpenClawStatus} disabled={loading}>
-            🔄 Refresh
+            🔄 {t('ssh.refresh')}
           </button>
         </div>
       )}
 
-      {/* Process list */}
+      {/* ── Process list ── */}
       {tab === 'processes' && activeServer && (
         <div className="ssh-process-view">
-          {loading && <div className="ssh-loading">Loading...</div>}
+          <div className="ssh-section-hint">{t('ssh.processHint')}</div>
+          {loading && <div className="ssh-loading">{t('ssh.loading')}</div>}
+          {processes.length > 0 && (
+            <div className="ssh-process-summary">
+              {t('ssh.processCount', { 
+                total: processes.length, 
+                online: processes.filter(p => p.status === 'online').length 
+              })}
+            </div>
+          )}
           {processes.map(p => (
             <div key={p.name} className={`ssh-process-card ${p.status}`}>
               <div className="ssh-process-info">
@@ -316,51 +390,52 @@ export const SSHPanel: React.FC = () => {
                 </div>
               </div>
               <div className="ssh-process-actions">
-                <button className="ssh-btn text-sm" onClick={() => { setSelectedProcess(p.name); setTab('logs'); loadLogs(p.name); }}>
+                <button className="ssh-btn text-sm" onClick={() => { setSelectedProcess(p.name); handleTabChange('logs'); loadLogs(p.name); }} title={t('ssh.viewLogs')}>
                   📜
                 </button>
-                <button className="ssh-btn warning-sm" onClick={() => handleRestart(p.name)}>
+                <button className="ssh-btn warning-sm" onClick={() => handleRestart(p.name)} title={t('ssh.restart')}>
                   🔄
                 </button>
               </div>
             </div>
           ))}
           {processes.length === 0 && !loading && (
-            <div className="ssh-empty">No PM2 processes found</div>
+            <div className="ssh-empty">{t('ssh.noProcesses')}</div>
           )}
           <button className="ssh-btn refresh" onClick={loadProcesses} disabled={loading}>
-            🔄 Refresh
+            🔄 {t('ssh.refresh')}
           </button>
         </div>
       )}
 
-      {/* System info */}
+      {/* ── System info ── */}
       {tab === 'system' && activeServer && (
         <div className="ssh-system-view">
-          {loading && <div className="ssh-loading">Loading...</div>}
+          <div className="ssh-section-hint">{t('ssh.systemHint')}</div>
+          {loading && <div className="ssh-loading">{t('ssh.loading')}</div>}
           {systemInfo && (
             <div className="ssh-system-card">
               <div className="ssh-status-row">
-                <span>🏠 Hostname</span>
+                <span>🏠 {t('ssh.field.hostname')}</span>
                 <span>{systemInfo.hostname}</span>
               </div>
               <div className="ssh-status-row">
-                <span>⏱️ Uptime</span>
+                <span>⏱️ {t('ssh.field.uptime')}</span>
                 <span>{systemInfo.uptime}</span>
               </div>
               <div className="ssh-status-row">
-                <span>📊 Load</span>
+                <span>📊 {t('ssh.field.load')}</span>
                 <span>{systemInfo.loadAvg}</span>
               </div>
               <div className="ssh-meter-row">
-                <span>🧠 Memory</span>
+                <span>🧠 {t('ssh.field.memory')}</span>
                 <div className="ssh-meter">
                   <div className="ssh-meter-fill" style={{ width: `${systemInfo.memPercent}%`, background: systemInfo.memPercent > 80 ? '#e74c3c' : '#3498db' }} />
                 </div>
                 <span>{systemInfo.memUsed}/{systemInfo.memTotal} ({systemInfo.memPercent}%)</span>
               </div>
               <div className="ssh-meter-row">
-                <span>💾 Disk</span>
+                <span>💾 {t('ssh.field.disk')}</span>
                 <div className="ssh-meter">
                   <div className="ssh-meter-fill" style={{ width: `${systemInfo.diskPercent}%`, background: systemInfo.diskPercent > 85 ? '#e74c3c' : '#2ecc71' }} />
                 </div>
@@ -369,30 +444,31 @@ export const SSHPanel: React.FC = () => {
             </div>
           )}
           <button className="ssh-btn refresh" onClick={loadSystemInfo} disabled={loading}>
-            🔄 Refresh
+            🔄 {t('ssh.refresh')}
           </button>
         </div>
       )}
 
-      {/* Logs */}
+      {/* ── Logs ── */}
       {tab === 'logs' && activeServer && (
         <div className="ssh-logs-view">
+          <div className="ssh-section-hint">{t('ssh.logsHint')}</div>
           <div className="ssh-logs-header">
             <select
               value={selectedProcess}
               onChange={(e) => { setSelectedProcess(e.target.value); if (e.target.value) loadLogs(e.target.value); }}
               className="ssh-select"
             >
-              <option value="">Select process...</option>
+              <option value="">{t('ssh.selectProcess')}</option>
               {processes.map(p => (
-                <option key={p.name} value={p.name}>{p.name}</option>
+                <option key={p.name} value={p.name}>{p.status === 'online' ? '🟢' : '🔴'} {p.name}</option>
               ))}
             </select>
             <button className="ssh-btn refresh-sm" onClick={() => selectedProcess && loadLogs(selectedProcess)} disabled={loading || !selectedProcess}>
               🔄
             </button>
           </div>
-          <pre className="ssh-logs-content">{logs || 'Select a process to view logs'}</pre>
+          <pre className="ssh-logs-content">{logs || t('ssh.selectProcessHint')}</pre>
         </div>
       )}
     </div>
@@ -405,6 +481,7 @@ const AddServerForm: React.FC<{
   onAdd: (data: any) => Promise<void>;
   onCancel: () => void;
 }> = ({ onAdd, onCancel }) => {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [host, setHost] = useState('');
   const [port, setPort] = useState(22);
@@ -418,8 +495,12 @@ const AddServerForm: React.FC<{
   const handleTest = async () => {
     setTesting(true);
     setTestResult(null);
-    const result = await window.electronAPI.sshTestConnection({ host, port, username, authType, credential });
-    setTestResult(result.success ? '✅ Connected!' : `❌ ${result.error}`);
+    try {
+      const result = await window.electronAPI.sshTestConnection({ host, port, username, authType, credential });
+      setTestResult(result.success ? `✅ ${t('ssh.testSuccess')}` : `❌ ${result.error}`);
+    } catch (e: any) {
+      setTestResult(`❌ ${e.message}`);
+    }
     setTesting(false);
   };
 
@@ -432,43 +513,43 @@ const AddServerForm: React.FC<{
 
   return (
     <div className="ssh-add-form">
-      <div className="ssh-form-title">Add Server</div>
+      <div className="ssh-form-title">{t('ssh.addServer')}</div>
       
-      <label>Name</label>
-      <input value={name} onChange={e => setName(e.target.value)} placeholder="My Cloud Server" />
+      <label>{t('ssh.form.name')}</label>
+      <input value={name} onChange={e => setName(e.target.value)} placeholder={t('ssh.form.namePlaceholder')} />
       
-      <label>Host</label>
+      <label>{t('ssh.form.host')}</label>
       <input value={host} onChange={e => setHost(e.target.value)} placeholder="192.168.1.100" />
       
       <div className="ssh-form-row">
         <div>
-          <label>Port</label>
+          <label>{t('ssh.form.port')}</label>
           <input type="number" value={port} onChange={e => setPort(parseInt(e.target.value) || 22)} />
         </div>
         <div>
-          <label>Username</label>
+          <label>{t('ssh.form.username')}</label>
           <input value={username} onChange={e => setUsername(e.target.value)} />
         </div>
       </div>
       
-      <label>Auth Type</label>
+      <label>{t('ssh.form.authType')}</label>
       <div className="ssh-auth-toggle">
         <button className={authType === 'password' ? 'active' : ''} onClick={() => setAuthType('password')}>
-          🔑 Password
+          🔑 {t('ssh.form.password')}
         </button>
         <button className={authType === 'key' ? 'active' : ''} onClick={() => setAuthType('key')}>
-          🔐 SSH Key
+          🔐 {t('ssh.form.sshKey')}
         </button>
       </div>
       
-      <label>{authType === 'password' ? 'Password' : 'Private Key (paste content)'}</label>
+      <label>{authType === 'password' ? t('ssh.form.password') : t('ssh.form.privateKey')}</label>
       {authType === 'password' ? (
         <input type="password" value={credential} onChange={e => setCredential(e.target.value)} />
       ) : (
         <textarea
           value={credential}
           onChange={e => setCredential(e.target.value)}
-          placeholder="-----BEGIN OPENSSH PRIVATE KEY-----\n..."
+          placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;..."
           rows={4}
         />
       )}
@@ -476,12 +557,12 @@ const AddServerForm: React.FC<{
       {testResult && <div className="ssh-test-result">{testResult}</div>}
       
       <div className="ssh-form-actions">
-        <button className="ssh-btn secondary" onClick={onCancel}>Cancel</button>
+        <button className="ssh-btn secondary" onClick={onCancel}>{t('ssh.form.cancel')}</button>
         <button className="ssh-btn secondary" onClick={handleTest} disabled={testing || !host || !username || !credential}>
-          {testing ? 'Testing...' : 'Test Connection'}
+          {testing ? '⏳' : t('ssh.form.test')}
         </button>
         <button className="ssh-btn primary" onClick={handleSubmit} disabled={saving || !name || !host || !username || !credential}>
-          {saving ? 'Saving...' : 'Save'}
+          {saving ? '⏳' : t('ssh.form.save')}
         </button>
       </div>
     </div>

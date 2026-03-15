@@ -13,7 +13,8 @@
     "pinToTop": "📌 Pin",
     "unpinFromTop": "📌 Unpin",
     "quit": "🚪 Quit",
-    "upToDate": "✓ Up to date"
+    "upToDate": "✓ Up to date",
+    "remote": "Remote"
   },
   "milestone": {
     "firstMillion": "First Million",
@@ -153,9 +154,38 @@
     "statsPKs": "⚔️ {{count}} PKs"
   },
   "speech": {
-    "idle": ["So bored...", "Where's my owner?", "💤 Napping...", "Anyone there?", "Slacking off~", "So quiet...", "Want some fish snacks", "🫧", "Waiting for owner...", "Spacing out.jpg"],
-    "active": ["Burning tokens again!", "🔥 Tokens on fire", "Go go go!", "Owner's so diligent~", "Nice code!", "💪 Full speed", "APIs buzzing", "Super productive today", "Wallet is crying...", "⚡ Max output"],
-    "error": ["Owner? Are you there?", "😢 Connection lost", "So cold...", "Belly up...", "Help!", "Signal lost..."],
+    "idle": [
+      "So bored...",
+      "Where's my owner?",
+      "💤 Napping...",
+      "Anyone there?",
+      "Slacking off~",
+      "So quiet...",
+      "Want some fish snacks",
+      "🫧",
+      "Waiting for owner...",
+      "Spacing out.jpg"
+    ],
+    "active": [
+      "Burning tokens again!",
+      "🔥 Tokens on fire",
+      "Go go go!",
+      "Owner's so diligent~",
+      "Nice code!",
+      "💪 Full speed",
+      "APIs buzzing",
+      "Super productive today",
+      "Wallet is crying...",
+      "⚡ Max output"
+    ],
+    "error": [
+      "Owner? Are you there?",
+      "😢 Connection lost",
+      "So cold...",
+      "Belly up...",
+      "Help!",
+      "Signal lost..."
+    ],
     "special": {
       "tokens500m": "500M tokens burned today! 💸",
       "tokens200m": "200M tokens today!",
@@ -165,7 +195,14 @@
       "level7": "Such high level, owner is amazing",
       "level5": "Golden crown lobster, shining ✨"
     },
-    "remote": ["☁️ Remote monitoring~", "Server is running!", "☁️ Signal stable", "Remote connection OK~", "Cloud guardian 🦞", "Server status OK!"]
+    "remote": [
+      "☁️ Remote monitoring~",
+      "Server is running!",
+      "☁️ Signal stable",
+      "Remote connection OK~",
+      "Cloud guardian 🦞",
+      "Server status OK!"
+    ]
   },
   "update": {
     "newVersion": "New version available!",
@@ -239,5 +276,70 @@
     "minutesAgo": "{{minutes}}m ago",
     "hoursAgo": "{{hours}}h ago",
     "needRegister": "Please register social features first"
+  },
+  "ssh": {
+    "title": "Remote Control",
+    "welcome": {
+      "title": "Manage Your Servers Remotely",
+      "desc": "Securely connect via SSH to monitor server status, manage processes, and view logs",
+      "feature1": "OpenClaw Status",
+      "feature2": "PM2 Process Manager",
+      "feature3": "System Resources",
+      "feature4": "Live Log Viewer",
+      "hint": "🔒 Credentials encrypted with system keychain. All commands filtered through security whitelist."
+    },
+    "tab": {
+      "status": "Status",
+      "processes": "Procs",
+      "system": "System",
+      "logs": "Logs",
+      "servers": "Servers"
+    },
+    "addServer": "Add Server",
+    "connect": "Connect",
+    "disconnect": "Disconnect",
+    "remove": "Remove",
+    "refresh": "Refresh",
+    "loading": "Loading...",
+    "connectFailed": "Connection failed",
+    "restartFailed": "Restart failed",
+    "testSuccess": "Connected!",
+    "notInstalled": "OpenClaw not installed",
+    "noProcesses": "No PM2 processes found",
+    "serverCount": "{{total}} servers, {{connected}} connected",
+    "processCount": "{{total}} processes, {{online}} online",
+    "lastConnected": "Last connected",
+    "viewLogs": "View logs",
+    "restart": "Restart",
+    "selectProcess": "Select process...",
+    "selectProcessHint": "↑ Select a process to view its logs",
+    "statusHint": "View OpenClaw status on the remote server",
+    "processHint": "Manage PM2 processes. Click 🔄 to restart.",
+    "systemHint": "Server CPU / Memory / Disk usage",
+    "logsHint": "View real-time process log output",
+    "field": {
+      "status": "Status",
+      "sessions": "Sessions",
+      "tokens": "Total Tokens",
+      "uptime": "Uptime",
+      "hostname": "Hostname",
+      "load": "Load",
+      "memory": "Memory",
+      "disk": "Disk"
+    },
+    "form": {
+      "name": "Name",
+      "namePlaceholder": "My Cloud Server",
+      "host": "Host",
+      "port": "Port",
+      "username": "Username",
+      "authType": "Auth Type",
+      "password": "Password",
+      "sshKey": "SSH Key",
+      "privateKey": "Private Key (paste content)",
+      "cancel": "Cancel",
+      "test": "Test Connection",
+      "save": "Save"
+    }
   }
 }

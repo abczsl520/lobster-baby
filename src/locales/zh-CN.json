@@ -13,7 +13,8 @@
     "pinToTop": "📌 置顶",
     "unpinFromTop": "📌 取消置顶",
     "quit": "🚪 退出",
-    "upToDate": "✓ 最新"
+    "upToDate": "✓ 最新",
+    "remote": "远程"
   },
   "milestone": {
     "firstMillion": "百万起步",
@@ -153,9 +154,38 @@
     "statsPKs": "⚔️ {{count}} 场PK"
   },
   "speech": {
-    "idle": ["好无聊啊…", "主人去哪了？", "💤 打个盹…", "有人吗？", "摸鱼中~", "好安静啊", "想吃小鱼干", "🫧", "等主人回来…", "发呆.jpg"],
-    "active": ["又在烧钱了！", "🔥 token 在燃烧", "加油加油！", "主人好勤奋~", "代码写得不错嘛", "💪 冲冲冲", "API 嗡嗡响", "今天效率真高", "钱包在哭泣…", "⚡ 全力输出中"],
-    "error": ["主人？你在吗？", "😢 连接断了", "好冷…", "翻肚了…", "救命啊！", "信号丢失…"],
+    "idle": [
+      "好无聊啊…",
+      "主人去哪了？",
+      "💤 打个盹…",
+      "有人吗？",
+      "摸鱼中~",
+      "好安静啊",
+      "想吃小鱼干",
+      "🫧",
+      "等主人回来…",
+      "发呆.jpg"
+    ],
+    "active": [
+      "又在烧钱了！",
+      "🔥 token 在燃烧",
+      "加油加油！",
+      "主人好勤奋~",
+      "代码写得不错嘛",
+      "💪 冲冲冲",
+      "API 嗡嗡响",
+      "今天效率真高",
+      "钱包在哭泣…",
+      "⚡ 全力输出中"
+    ],
+    "error": [
+      "主人？你在吗？",
+      "😢 连接断了",
+      "好冷…",
+      "翻肚了…",
+      "救命啊！",
+      "信号丢失…"
+    ],
     "special": {
       "tokens500m": "今天烧了 5 亿 token！💸",
       "tokens200m": "今天 2 亿 token 了！",
@@ -165,7 +195,14 @@
       "level7": "等级好高，主人真厉害",
       "level5": "金冠龙虾，闪闪发光 ✨"
     },
-    "remote": ["☁️ 远程监控中~", "服务器在跑呢！", "☁️ 信号稳定", "远程连接正常~", "云端守护中 🦞", "服务器状态 OK！"]
+    "remote": [
+      "☁️ 远程监控中~",
+      "服务器在跑呢！",
+      "☁️ 信号稳定",
+      "远程连接正常~",
+      "云端守护中 🦞",
+      "服务器状态 OK！"
+    ]
   },
   "update": {
     "newVersion": "新版本可用！",
@@ -239,5 +276,70 @@
     "minutesAgo": "{{minutes}}分钟前",
     "hoursAgo": "{{hours}}小时前",
     "needRegister": "请先注册社交功能"
+  },
+  "ssh": {
+    "title": "远程控制",
+    "welcome": {
+      "title": "远程管理你的服务器",
+      "desc": "通过 SSH 安全连接，随时查看服务器状态、管理进程、查看日志",
+      "feature1": "OpenClaw 运行状态",
+      "feature2": "PM2 进程管理",
+      "feature3": "系统资源监控",
+      "feature4": "实时日志查看",
+      "hint": "🔒 凭证使用系统钥匙串加密存储，所有命令经过安全白名单过滤"
+    },
+    "tab": {
+      "status": "状态",
+      "processes": "进程",
+      "system": "系统",
+      "logs": "日志",
+      "servers": "服务器"
+    },
+    "addServer": "添加服务器",
+    "connect": "连接",
+    "disconnect": "断开",
+    "remove": "删除",
+    "refresh": "刷新",
+    "loading": "加载中...",
+    "connectFailed": "连接失败",
+    "restartFailed": "重启失败",
+    "testSuccess": "连接成功！",
+    "notInstalled": "未安装 OpenClaw",
+    "noProcesses": "未找到 PM2 进程",
+    "serverCount": "共 {{total}} 台服务器，{{connected}} 台已连接",
+    "processCount": "共 {{total}} 个进程，{{online}} 个运行中",
+    "lastConnected": "上次连接",
+    "viewLogs": "查看日志",
+    "restart": "重启",
+    "selectProcess": "选择进程...",
+    "selectProcessHint": "↑ 选择一个进程查看日志",
+    "statusHint": "查看远程服务器上的 OpenClaw 运行情况",
+    "processHint": "管理 PM2 进程，点击 🔄 可重启",
+    "systemHint": "服务器 CPU / 内存 / 磁盘使用情况",
+    "logsHint": "查看进程的实时日志输出",
+    "field": {
+      "status": "状态",
+      "sessions": "会话数",
+      "tokens": "Token 总量",
+      "uptime": "运行时间",
+      "hostname": "主机名",
+      "load": "负载",
+      "memory": "内存",
+      "disk": "磁盘"
+    },
+    "form": {
+      "name": "名称",
+      "namePlaceholder": "我的云服务器",
+      "host": "主机地址",
+      "port": "端口",
+      "username": "用户名",
+      "authType": "认证方式",
+      "password": "密码",
+      "sshKey": "SSH 密钥",
+      "privateKey": "私钥（粘贴内容）",
+      "cancel": "取消",
+      "test": "测试连接",
+      "save": "保存"
+    }
   }
 }

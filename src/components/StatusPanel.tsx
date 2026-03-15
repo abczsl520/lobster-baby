@@ -10,7 +10,7 @@ import { RemoteSettings } from './RemoteSettings';
 import { SSHPanel } from './SSHPanel';
 import './StatusPanel.css';
 
-const APP_VERSION = '1.9.1';
+const APP_VERSION = '1.9.2';
 
 interface StatusPanelProps {
   status: OpenClawStatus;
@@ -45,6 +45,7 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
   const [internalShowAchievements, setInternalShowAchievements] = useState(false);
   const [internalShowSocial, setInternalShowSocial] = useState(false);
   const [internalShowPlugins, setInternalShowPlugins] = useState(false);
+  const [showSSH, setShowSSH] = useState(false);
   const [statusMode, setStatusMode] = useState<string>('local');
   const { t, i18n } = useTranslation();
 
@@ -63,7 +64,7 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
   const closePlugins = onClosePlugins ?? (() => setInternalShowPlugins(false));
   const openPlugins = onOpenPlugins ?? (() => setInternalShowPlugins(true));
 
-    const statusColor: Record<OpenClawStatus, string> = {
+  const statusColor: Record<OpenClawStatus, string> = {
     active: '#00e676',
     idle: '#ffc107',
     error: '#ff5252',
@@ -78,6 +79,7 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
   const tokensToNextLevel = levelInfo.nextLevelTokens - levelInfo.currentTokens;
   const progressPercent = Math.min(100, levelInfo.progress);
 
+  // Full-screen sub-panels
   if (showPlugins) {
     return (
       <div className="status-panel">
@@ -88,6 +90,14 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
 
   if (showSocial) {
     return <SocialPanel visible={true} onClose={closeSocial} />;
+  }
+
+  if (showSSH) {
+    return (
+      <div className="status-panel" onClick={(e) => e.stopPropagation()}>
+        <SSHPanel visible={true} onClose={() => setShowSSH(false)} />
+      </div>
+    );
   }
 
   return (
@@ -146,7 +156,7 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
             </div>
           </div>
 
-          {/* ── Feature Entries ── */}
+          {/* ── Feature Entries (2×3 grid) ── */}
           <div className="feature-grid">
             <button className="feature-card" onClick={toggleChart}>
               <span className="feature-icon">{showChart ? '📊' : '📈'}</span>
@@ -163,6 +173,10 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
             <button className="feature-card" onClick={openPlugins}>
               <span className="feature-icon">🧩</span>
               <span className="feature-label">{t('status.plugins')}</span>
+            </button>
+            <button className="feature-card" onClick={() => setShowSSH(true)}>
+              <span className="feature-icon">🖥️</span>
+              <span className="feature-label">{t('status.remote')}</span>
             </button>
           </div>
 
@@ -209,9 +223,6 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
 
           {/* ── Remote Mode Settings ── */}
           <RemoteSettings />
-
-          {/* ── SSH Remote Control ── */}
-          <SSHPanel />
 
           {/* ── Footer ── */}
           <div className="panel-footer">
