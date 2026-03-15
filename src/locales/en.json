@@ -293,7 +293,8 @@
       "processes": "Procs",
       "system": "System",
       "logs": "Logs",
-      "servers": "Servers"
+      "servers": "Servers",
+      "overview": "Overview"
     },
     "addServer": "Add Server",
     "connect": "Connect",
@@ -340,6 +341,7 @@
       "cancel": "Cancel",
       "test": "Test Connection",
       "save": "Save"
-    }
+    },
+    "manageServers": "Manage servers"
   }
 }

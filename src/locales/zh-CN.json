@@ -293,7 +293,8 @@
       "processes": "进程",
       "system": "系统",
       "logs": "日志",
-      "servers": "服务器"
+      "servers": "服务器",
+      "overview": "总览"
     },
     "addServer": "添加服务器",
     "connect": "连接",
@@ -340,6 +341,7 @@
       "cancel": "取消",
       "test": "测试连接",
       "save": "保存"
-    }
+    },
+    "manageServers": "管理服务器"
   }
 }

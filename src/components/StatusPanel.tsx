@@ -6,7 +6,6 @@ import { TokenChart } from './TokenChart';
 import { AchievementList } from './AchievementList';
 import { SocialPanel } from './SocialPanel';
 import { PluginPanel } from './PluginPanel';
-import { RemoteSettings } from './RemoteSettings';
 import { SSHPanel } from './SSHPanel';
 import './StatusPanel.css';
 
@@ -222,9 +221,6 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
               </button>
             </div>
           </div>
-
-          {/* ── Remote Mode Settings ── */}
-          <RemoteSettings />
 
           {/* ── Footer ── */}
           <div className="panel-footer">
