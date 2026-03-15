@@ -342,6 +342,48 @@
       "test": "测试连接",
       "save": "保存"
     },
-    "manageServers": "管理服务器"
+    "manageServers": "管理服务器",
+    "home": {
+      "dataSource": "龙虾状态数据源",
+      "dataSourceDesc": "龙虾显示的运行数据来自哪里？本地自动检测，或从你的云服务器同步",
+      "localMode": "本地检测",
+      "cloudMode": "云端同步",
+      "reporterNeeded": "需要在服务器安装 Reporter 才能同步数据",
+      "sshServers": "SSH 直连管理",
+      "sshDesc": "直接连接你的服务器，查看状态、管理进程、查看日志",
+      "noServers": "还没添加服务器，点击下方按钮开始",
+      "viewStatus": "查看状态",
+      "securityNote": "密码用系统钥匙串加密 · 命令经白名单过滤 · 不执行危险操作"
+    },
+    "guide": {
+      "title": "📖 远程功能使用教程",
+      "s1Title": "两种远程模式",
+      "s1Desc": "龙虾宝宝支持两种方式获取你服务器上 OpenClaw 的运行数据：",
+      "localP1": "自动检测本机 OpenClaw",
+      "localP2": "无需配置，开箱即用",
+      "localP3": "适合单机使用",
+      "cloudP1": "从云服务器拉取数据",
+      "cloudP2": "需安装 Reporter 上报",
+      "cloudP3": "适合有云服务器的用户",
+      "s2Title": "配置云端同步",
+      "s2Desc": "只需 3 步，让龙虾实时显示你云服务器的状态：",
+      "s2Step1": "切换到「☁️ 云端同步」模式",
+      "s2Step2": "点击「生成 Reporter Token」",
+      "s2Step3": "在你的服务器上执行生成的安装命令",
+      "s3Title": "SSH 直连管理",
+      "s3Desc": "添加服务器后，可以通过 SSH 直接查看和管理：",
+      "feat1": "OpenClaw 状态",
+      "feat2": "PM2 进程管理",
+      "feat3": "系统资源监控",
+      "feat4": "实时日志",
+      "feat5": "一键重启进程",
+      "s4Title": "安全设计",
+      "sec1": "密码使用 macOS 钥匙串加密存储",
+      "sec2": "只能执行白名单内的安全命令",
+      "sec3": "禁止 rm/sudo/passwd 等危险操作",
+      "sec4": "命令超时 30 秒自动终止",
+      "sec5": "密码永远不会发送到渲染进程",
+      "gotIt": "我知道了，开始使用"
+    }
   }
 }

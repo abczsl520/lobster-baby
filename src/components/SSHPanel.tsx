@@ -43,7 +43,7 @@ interface RemoteInfo {
   reporterVersion: string | null;
 }
 
-type Tab = 'overview' | 'servers' | 'status' | 'processes' | 'system' | 'logs';
+type Tab = 'home' | 'status' | 'processes' | 'system' | 'logs' | 'servers' | 'guide';
 
 interface SSHPanelProps {
   visible: boolean;
@@ -54,102 +54,83 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
   const { t } = useTranslation();
   const [servers, setServers] = useState<SSHServer[]>([]);
   const [activeServer, setActiveServer] = useState<string | null>(null);
-  const [tab, setTab] = useState<Tab>('overview');
+  const [tab, setTab] = useState<Tab>('home');
   const [showAddForm, setShowAddForm] = useState(false);
   const [connecting, setConnecting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Remote mode state
   const [remoteMode, setRemoteMode] = useState<'local' | 'remote'>('local');
   const [remoteInfo, setRemoteInfo] = useState<RemoteInfo | null>(null);
   const [generatedToken, setGeneratedToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [remoteLoading, setRemoteLoading] = useState(false);
-  
-  // Status data
+
+  // SSH data
   const [openclawStatus, setOpenclawStatus] = useState<any>(null);
   const [processes, setProcesses] = useState<ProcessInfo[]>([]);
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null);
   const [logs, setLogs] = useState<string>('');
   const [selectedProcess, setSelectedProcess] = useState<string>('');
   const [loading, setLoading] = useState(false);
-  
+
   const refreshRef = useRef<NodeJS.Timeout | null>(null);
 
+  // ── Data loaders ──
   const loadServers = useCallback(async () => {
-    try {
-      const result = await window.electronAPI.sshGetServers();
-      setServers(result);
-    } catch {}
+    try { setServers(await window.electronAPI.sshGetServers()); } catch {}
   }, []);
-
-  useEffect(() => {
-    if (visible) {
-      loadServers();
-      loadRemoteMode();
-      loadRemoteInfo();
-    }
-    return () => { if (refreshRef.current) clearInterval(refreshRef.current); };
-  }, [visible, loadServers]);
 
   const loadRemoteMode = async () => {
     try {
-      const result = await window.electronAPI.remoteGetMode();
-      if (result.mode === 'local' || result.mode === 'remote') setRemoteMode(result.mode);
+      const r = await window.electronAPI.remoteGetMode();
+      if (r.mode === 'local' || r.mode === 'remote') setRemoteMode(r.mode);
     } catch {}
   };
 
   const loadRemoteInfo = async () => {
     try {
-      const result = await window.electronAPI.remoteGetInfo();
-      if (!result.error) setRemoteInfo(result);
+      const r = await window.electronAPI.remoteGetInfo();
+      if (!r.error) setRemoteInfo(r);
     } catch {}
   };
 
-  const handleModeSwitch = async (newMode: 'local' | 'remote') => {
-    setError(null);
-    if (newMode === 'remote') {
-      const local = await window.electronAPI.socialGetLocal();
-      if (!local.hasToken) { setError(t('remote.needRegister')); return; }
-    }
-    const result = await window.electronAPI.remoteSwitchMode(newMode);
-    if (result.error) { setError(result.error); return; }
-    setRemoteMode(newMode);
+  const loadOpenClawStatus = async () => {
+    if (!activeServer) return;
+    setLoading(true);
+    try { setOpenclawStatus(await window.electronAPI.sshOpenClawStatus(activeServer)); } catch {}
+    setLoading(false);
   };
 
-  const handleGenerateToken = async () => {
-    setRemoteLoading(true); setError(null);
+  const loadProcesses = async () => {
+    if (!activeServer) return;
+    setLoading(true);
+    try { setProcesses(await window.electronAPI.sshProcessList(activeServer)); } catch {}
+    setLoading(false);
+  };
+
+  const loadSystemInfo = async () => {
+    if (!activeServer) return;
+    setLoading(true);
+    try { setSystemInfo(await window.electronAPI.sshSystemInfo(activeServer)); } catch {}
+    setLoading(false);
+  };
+
+  const loadLogs = async (processName: string) => {
+    if (!activeServer) return;
+    setLoading(true);
     try {
-      const result = await window.electronAPI.remoteGenerateToken();
-      if (result.error) { setError(result.error); return; }
-      setGeneratedToken(result.token || null);
-      await loadRemoteInfo();
-    } catch (e: any) { setError(e.message); }
-    finally { setRemoteLoading(false); }
+      const r = await window.electronAPI.sshProcessLogs(activeServer, processName, 100);
+      setLogs(r.logs || r.error || '');
+    } catch {}
+    setLoading(false);
   };
 
-  const handleRevokeToken = async () => {
-    setRemoteLoading(true); setError(null);
-    try {
-      const result = await window.electronAPI.remoteRevokeToken();
-      if (result.error) { setError(result.error); return; }
-      setGeneratedToken(null); setRemoteInfo(null); setRemoteMode('local');
-      await loadRemoteInfo();
-    } catch (e: any) { setError(e.message); }
-    finally { setRemoteLoading(false); }
-  };
-
-  const handleCopyToken = async (text: string) => {
-    try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch {}
-  };
-
-  const formatTimeAgo = (isoStr: string | null) => {
-    if (!isoStr) return '-';
-    const diff = Date.now() - new Date(isoStr).getTime();
-    if (diff < 60_000) return `${Math.floor(diff / 1000)}s ago`;
-    if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
-    return `${Math.floor(diff / 3_600_000)}h ago`;
-  };
+  // ── Init ──
+  useEffect(() => {
+    if (visible) { loadServers(); loadRemoteMode(); loadRemoteInfo(); }
+    return () => { if (refreshRef.current) clearInterval(refreshRef.current); };
+  }, [visible, loadServers]);
 
   // Auto-refresh when connected
   useEffect(() => {
@@ -165,99 +146,79 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
     return () => { if (refreshRef.current) clearInterval(refreshRef.current); };
   }, [activeServer, tab, visible]);
 
-  const handleConnect = async (serverId: string) => {
-    setConnecting(serverId);
+  // ── Remote mode handlers ──
+  const handleModeSwitch = async (newMode: 'local' | 'remote') => {
     setError(null);
-    try {
-      const result = await window.electronAPI.sshConnect(serverId);
-      if (result.success) {
-        setActiveServer(serverId);
-        setTab('status');
-        await loadServers();
-        await loadOpenClawStatus();
-      } else {
-        setError(result.error || t('ssh.connectFailed'));
-      }
-    } catch (e: any) {
-      setError(e.message);
+    if (newMode === 'remote') {
+      const local = await window.electronAPI.socialGetLocal();
+      if (!local.hasToken) { setError(t('remote.needRegister')); return; }
     }
+    const r = await window.electronAPI.remoteSwitchMode(newMode);
+    if (r.error) { setError(r.error); return; }
+    setRemoteMode(newMode);
+  };
+
+  const handleGenerateToken = async () => {
+    setRemoteLoading(true); setError(null);
+    try {
+      const r = await window.electronAPI.remoteGenerateToken();
+      if (r.error) { setError(r.error); return; }
+      setGeneratedToken(r.token || null);
+      await loadRemoteInfo();
+    } catch (e: any) { setError(e.message); }
+    finally { setRemoteLoading(false); }
+  };
+
+  const handleRevokeToken = async () => {
+    setRemoteLoading(true); setError(null);
+    try {
+      const r = await window.electronAPI.remoteRevokeToken();
+      if (r.error) { setError(r.error); return; }
+      setGeneratedToken(null); setRemoteInfo(null); setRemoteMode('local');
+    } catch (e: any) { setError(e.message); }
+    finally { setRemoteLoading(false); }
+  };
+
+  const handleCopy = async (text: string) => {
+    try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch {}
+  };
+
+  // ── SSH handlers ──
+  const handleConnect = async (serverId: string) => {
+    setConnecting(serverId); setError(null);
+    try {
+      const r = await window.electronAPI.sshConnect(serverId);
+      if (r.success) {
+        setActiveServer(serverId); setTab('status');
+        await loadServers(); await loadOpenClawStatus();
+      } else { setError(r.error || t('ssh.connectFailed')); }
+    } catch (e: any) { setError(e.message); }
     setConnecting(null);
   };
 
   const handleDisconnect = async (serverId: string) => {
     await window.electronAPI.sshDisconnect(serverId);
     if (activeServer === serverId) {
-      setActiveServer(null);
-      setTab('servers');
-      setOpenclawStatus(null);
-      setProcesses([]);
-      setSystemInfo(null);
+      setActiveServer(null); setTab('home');
+      setOpenclawStatus(null); setProcesses([]); setSystemInfo(null);
     }
     await loadServers();
   };
 
   const handleRemove = async (serverId: string) => {
     await window.electronAPI.sshRemoveServer(serverId);
-    if (activeServer === serverId) {
-      setActiveServer(null);
-      setTab('servers');
-    }
+    if (activeServer === serverId) { setActiveServer(null); setTab('home'); }
     await loadServers();
-  };
-
-  const loadOpenClawStatus = async () => {
-    if (!activeServer) return;
-    setLoading(true);
-    try {
-      const result = await window.electronAPI.sshOpenClawStatus(activeServer);
-      setOpenclawStatus(result);
-    } catch {}
-    setLoading(false);
-  };
-
-  const loadProcesses = async () => {
-    if (!activeServer) return;
-    setLoading(true);
-    try {
-      const result = await window.electronAPI.sshProcessList(activeServer);
-      setProcesses(result);
-    } catch {}
-    setLoading(false);
-  };
-
-  const loadSystemInfo = async () => {
-    if (!activeServer) return;
-    setLoading(true);
-    try {
-      const result = await window.electronAPI.sshSystemInfo(activeServer);
-      setSystemInfo(result);
-    } catch {}
-    setLoading(false);
-  };
-
-  const loadLogs = async (processName: string) => {
-    if (!activeServer) return;
-    setLoading(true);
-    try {
-      const result = await window.electronAPI.sshProcessLogs(activeServer, processName, 100);
-      setLogs(result.logs || result.error || '');
-    } catch {}
-    setLoading(false);
   };
 
   const handleRestart = async (processName: string) => {
     if (!activeServer) return;
     setLoading(true);
     try {
-      const result = await window.electronAPI.sshRestartProcess(activeServer, processName);
-      if (result.success) {
-        setTimeout(loadProcesses, 2000);
-      } else {
-        setError(result.error || t('ssh.restartFailed'));
-      }
-    } catch (e: any) {
-      setError(e.message);
-    }
+      const r = await window.electronAPI.sshRestartProcess(activeServer, processName);
+      if (r.success) setTimeout(loadProcesses, 2000);
+      else setError(r.error || t('ssh.restartFailed'));
+    } catch (e: any) { setError(e.message); }
     setLoading(false);
   };
 
@@ -268,6 +229,14 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
     else if (newTab === 'system') await loadSystemInfo();
   };
 
+  const formatTimeAgo = (isoStr: string | null) => {
+    if (!isoStr) return '-';
+    const diff = Date.now() - new Date(isoStr).getTime();
+    if (diff < 60_000) return `${Math.floor(diff / 1000)}s`;
+    if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m`;
+    return `${Math.floor(diff / 3_600_000)}h`;
+  };
+
   if (!visible) return null;
 
   const activeServerObj = servers.find(s => s.id === activeServer);
@@ -275,48 +244,42 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
 
   return (
     <div className="ssh-panel">
-      {/* Header with back button */}
+      {/* ── Header ── */}
       <div className="ssh-header">
         <button className="ssh-back-btn" onClick={onClose}>←</button>
         <span className="ssh-title">🖥️ {t('ssh.title')}</span>
         {activeServerObj && (
-          <span className="ssh-connected-badge">
-            🟢 {activeServerObj.name}
-          </span>
+          <span className="ssh-connected-badge">🟢 {activeServerObj.name}</span>
         )}
+        <button
+          className={`ssh-guide-btn ${tab === 'guide' ? 'active' : ''}`}
+          onClick={() => setTab(tab === 'guide' ? 'home' : 'guide')}
+          title={t('ssh.guide.title')}
+        >❓</button>
       </div>
 
-      {/* Tab bar — show when connected */}
-      {activeServer && (
-        <div className="ssh-tabs">
-          {(['status', 'processes', 'system', 'logs', 'servers'] as Tab[]).map(tabName => (
-            <button
-              key={tabName}
-              className={`ssh-tab ${tab === tabName ? 'active' : ''}`}
-              onClick={() => handleTabChange(tabName)}
-            >
-              {tabName === 'status' && '📊'}
-              {tabName === 'processes' && '⚙️'}
-              {tabName === 'system' && '💻'}
-              {tabName === 'logs' && '📜'}
-              {tabName === 'servers' && '🔌'}
-              {' '}{t(`ssh.tab.${tabName}`)}
+      {/* ── Tab Navigation ── */}
+      <div className="ssh-tabs">
+        <button className={`ssh-tab ${tab === 'home' ? 'active' : ''}`} onClick={() => setTab('home')}>
+          🏠
+        </button>
+        {activeServer && (
+          <>
+            <button className={`ssh-tab ${tab === 'status' ? 'active' : ''}`} onClick={() => handleTabChange('status')}>
+              📊 {t('ssh.tab.status')}
             </button>
-          ))}
-        </div>
-      )}
-
-      {/* Tab bar when not connected */}
-      {!activeServer && (
-        <div className="ssh-tabs">
-          <button className={`ssh-tab ${tab === 'overview' ? 'active' : ''}`} onClick={() => setTab('overview')}>
-            🏠 {t('ssh.tab.overview')}
-          </button>
-          <button className={`ssh-tab ${tab === 'servers' ? 'active' : ''}`} onClick={() => setTab('servers')}>
-            🔌 {t('ssh.tab.servers')}
-          </button>
-        </div>
-      )}
+            <button className={`ssh-tab ${tab === 'processes' ? 'active' : ''}`} onClick={() => handleTabChange('processes')}>
+              ⚙️ {t('ssh.tab.processes')}
+            </button>
+            <button className={`ssh-tab ${tab === 'system' ? 'active' : ''}`} onClick={() => handleTabChange('system')}>
+              💻 {t('ssh.tab.system')}
+            </button>
+            <button className={`ssh-tab ${tab === 'logs' ? 'active' : ''}`} onClick={() => handleTabChange('logs')}>
+              📜 {t('ssh.tab.logs')}
+            </button>
+          </>
+        )}
+      </div>
 
       {error && (
         <div className="ssh-error">
@@ -325,177 +288,235 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
         </div>
       )}
 
-      {/* ── Overview — Remote Mode + Quick Access ── */}
-      {tab === 'overview' && (
-        <div className="ssh-overview">
-          {/* Remote Mode Section */}
-          <div className="ssh-section-card">
-            <div className="ssh-section-title">☁️ {t('remote.title')}</div>
-            <div className="ssh-mode-selector">
-              <button 
-                className={`ssh-mode-btn ${remoteMode === 'local' ? 'active' : ''}`}
+      {/* ━━━━━━━━ HOME TAB ━━━━━━━━ */}
+      {tab === 'home' && (
+        <div className="ssh-home">
+
+          {/* ── Section 1: 数据源 ── */}
+          <div className="ssh-card">
+            <div className="ssh-card-header">
+              <span className="ssh-card-title">{t('ssh.home.dataSource')}</span>
+              <span className="ssh-card-badge">{remoteMode === 'remote' ? '☁️' : '🏠'}</span>
+            </div>
+            <div className="ssh-card-desc">{t('ssh.home.dataSourceDesc')}</div>
+            <div className="ssh-toggle-group">
+              <button
+                className={`ssh-toggle-btn ${remoteMode === 'local' ? 'active' : ''}`}
                 onClick={() => handleModeSwitch('local')}
               >
-                🏠 {t('remote.local')}
+                🏠 {t('ssh.home.localMode')}
               </button>
-              <button 
-                className={`ssh-mode-btn ${remoteMode === 'remote' ? 'active' : ''}`}
+              <button
+                className={`ssh-toggle-btn ${remoteMode === 'remote' ? 'active' : ''}`}
                 onClick={() => handleModeSwitch('remote')}
               >
-                ☁️ {t('remote.remoteServer')}
+                ☁️ {t('ssh.home.cloudMode')}
               </button>
             </div>
 
-            {remoteInfo?.hasReporterToken && (
-              <div className="ssh-remote-status">
-                <span className={remoteInfo.lastHeartbeat ? 'online' : 'offline'}>
-                  {remoteInfo.lastHeartbeat ? '🟢 ' + t('remote.connected') : '🔴 ' + t('remote.disconnected')}
-                </span>
-                {remoteInfo.lastHeartbeat && (
-                  <span className="ssh-remote-time">{formatTimeAgo(remoteInfo.lastHeartbeat)}</span>
+            {/* Reporter 状态 */}
+            {remoteMode === 'remote' && (
+              <div className="ssh-reporter-box">
+                {remoteInfo?.hasReporterToken ? (
+                  <div className="ssh-reporter-status">
+                    <span className={remoteInfo.lastHeartbeat ? 'dot-online' : 'dot-offline'} />
+                    <span>{remoteInfo.lastHeartbeat ? t('remote.connected') : t('remote.disconnected')}</span>
+                    {remoteInfo.lastHeartbeat && (
+                      <span className="ssh-time-ago">{formatTimeAgo(remoteInfo.lastHeartbeat)}</span>
+                    )}
+                    {remoteInfo.reporterVersion && (
+                      <span className="ssh-reporter-ver">v{remoteInfo.reporterVersion}</span>
+                    )}
+                    <button className="ssh-link-btn danger" onClick={handleRevokeToken} disabled={remoteLoading}>
+                      {t('remote.revokeToken')}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="ssh-reporter-setup">
+                    <p>{t('ssh.home.reporterNeeded')}</p>
+                    <button className="ssh-btn primary-sm" onClick={handleGenerateToken} disabled={remoteLoading}>
+                      {remoteLoading ? '...' : t('remote.generateToken')}
+                    </button>
+                  </div>
                 )}
-              </div>
-            )}
-
-            <div className="ssh-remote-actions">
-              {!remoteInfo?.hasReporterToken ? (
-                <button className="ssh-btn primary-sm" onClick={handleGenerateToken} disabled={remoteLoading}>
-                  {remoteLoading ? '...' : t('remote.generateToken')}
-                </button>
-              ) : (
-                <button className="ssh-btn danger-sm" onClick={handleRevokeToken} disabled={remoteLoading}>
-                  {remoteLoading ? '...' : t('remote.revokeToken')}
-                </button>
-              )}
-            </div>
-
-            {generatedToken && (
-              <div className="ssh-token-block">
-                <div className="ssh-token-hint">{t('remote.installHint')}</div>
-                <code className="ssh-token-cmd">
-                  curl -sSL https://lbhub.ai/reporter/install.sh | bash -s -- --token {generatedToken}
-                </code>
-                <button className="ssh-btn text-sm" onClick={() => handleCopyToken(`curl -sSL https://lbhub.ai/reporter/install.sh | bash -s -- --token ${generatedToken}`)}>
-                  {copied ? '✅' : '📋'} {copied ? t('remote.copied') : t('remote.copyToken')}
-                </button>
+                {generatedToken && (
+                  <div className="ssh-token-block">
+                    <div className="ssh-token-label">{t('remote.installHint')}</div>
+                    <code className="ssh-token-cmd">
+                      curl -sSL https://lbhub.ai/reporter/install.sh | bash -s -- --token {generatedToken}
+                    </code>
+                    <button className="ssh-link-btn" onClick={() => handleCopy(`curl -sSL https://lbhub.ai/reporter/install.sh | bash -s -- --token ${generatedToken}`)}>
+                      {copied ? '✅ ' + t('remote.copied') : '📋 ' + t('remote.copyToken')}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
 
-          {/* SSH Quick Access */}
-          <div className="ssh-section-card">
-            <div className="ssh-section-title">🖥️ SSH {t('ssh.tab.servers')}</div>
+          {/* ── Section 2: SSH 服务器 ── */}
+          <div className="ssh-card">
+            <div className="ssh-card-header">
+              <span className="ssh-card-title">{t('ssh.home.sshServers')}</span>
+              <span className="ssh-card-badge">{servers.length > 0 ? `${connectedCount}/${servers.length}` : '0'}</span>
+            </div>
+            <div className="ssh-card-desc">{t('ssh.home.sshDesc')}</div>
+
             {servers.length > 0 ? (
-              <>
+              <div className="ssh-server-quick-list">
                 {servers.map(s => (
-                  <div key={s.id} className="ssh-quick-server" onClick={() => s.isConnected ? (setActiveServer(s.id), setTab('status')) : handleConnect(s.id)}>
-                    <span>{s.isConnected ? '🟢' : '⚫'} {s.name}</span>
-                    <span className="ssh-quick-host">{s.host}</span>
+                  <div key={s.id} className={`ssh-server-row ${s.isConnected ? 'connected' : ''}`}>
+                    <div className="ssh-server-row-info">
+                      <span className="ssh-server-dot">{s.isConnected ? '🟢' : (s.lastStatus === 'error' ? '🔴' : '⚫')}</span>
+                      <div>
+                        <div className="ssh-server-row-name">{s.name}</div>
+                        <div className="ssh-server-row-host">{s.username}@{s.host}</div>
+                      </div>
+                    </div>
+                    <div className="ssh-server-row-actions">
+                      {s.isConnected ? (
+                        <>
+                          <button className="ssh-link-btn" onClick={() => { setActiveServer(s.id); handleTabChange('status'); }}>
+                            {t('ssh.home.viewStatus')} →
+                          </button>
+                          <button className="ssh-link-btn danger" onClick={() => handleDisconnect(s.id)}>
+                            {t('ssh.disconnect')}
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          className="ssh-btn primary-sm"
+                          onClick={() => handleConnect(s.id)}
+                          disabled={connecting === s.id}
+                        >
+                          {connecting === s.id ? '⏳' : t('ssh.connect')}
+                        </button>
+                      )}
+                      <button className="ssh-icon-btn" onClick={() => handleRemove(s.id)} title={t('ssh.remove')}>🗑️</button>
+                    </div>
                   </div>
                 ))}
-                <button className="ssh-btn text-sm" onClick={() => setTab('servers')}>
-                  {t('ssh.manageServers')} →
-                </button>
-              </>
-            ) : (
-              <div className="ssh-overview-empty">
-                <p>{t('ssh.welcome.desc')}</p>
-                <button className="ssh-btn primary-sm" onClick={() => { setTab('servers'); setShowAddForm(true); }}>
-                  + {t('ssh.addServer')}
-                </button>
               </div>
+            ) : (
+              <div className="ssh-empty-hint">{t('ssh.home.noServers')}</div>
+            )}
+
+            {!showAddForm ? (
+              <button className="ssh-btn outline" onClick={() => setShowAddForm(true)}>
+                + {t('ssh.addServer')}
+              </button>
+            ) : (
+              <AddServerForm
+                onAdd={async (data) => {
+                  const r = await window.electronAPI.sshAddServer(data);
+                  if (r.error) setError(r.error);
+                  else { setShowAddForm(false); await loadServers(); }
+                }}
+                onCancel={() => setShowAddForm(false)}
+              />
             )}
           </div>
+
+          {/* ── Security note ── */}
+          <div className="ssh-security-note">
+            🔒 {t('ssh.home.securityNote')}
+          </div>
         </div>
       )}
 
-      {/* ── Welcome / Empty State ── */}
-      {tab === 'servers' && servers.length === 0 && !showAddForm && (
-        <div className="ssh-welcome">
-          <div className="ssh-welcome-icon">🖥️</div>
-          <div className="ssh-welcome-title">{t('ssh.welcome.title')}</div>
-          <div className="ssh-welcome-desc">{t('ssh.welcome.desc')}</div>
-          <div className="ssh-welcome-features">
-            <div className="ssh-welcome-feature">
-              <span>📊</span> {t('ssh.welcome.feature1')}
-            </div>
-            <div className="ssh-welcome-feature">
-              <span>⚙️</span> {t('ssh.welcome.feature2')}
-            </div>
-            <div className="ssh-welcome-feature">
-              <span>💻</span> {t('ssh.welcome.feature3')}
-            </div>
-            <div className="ssh-welcome-feature">
-              <span>📜</span> {t('ssh.welcome.feature4')}
+      {/* ━━━━━━━━ GUIDE TAB ━━━━━━━━ */}
+      {tab === 'guide' && (
+        <div className="ssh-guide">
+          <div className="ssh-guide-title">{t('ssh.guide.title')}</div>
+
+          {/* Guide 1: Data source */}
+          <div className="ssh-guide-section">
+            <div className="ssh-guide-num">1</div>
+            <div className="ssh-guide-content">
+              <div className="ssh-guide-heading">{t('ssh.guide.s1Title')}</div>
+              <p>{t('ssh.guide.s1Desc')}</p>
+              <div className="ssh-guide-comparison">
+                <div className="ssh-guide-col">
+                  <strong>🏠 {t('ssh.home.localMode')}</strong>
+                  <ul>
+                    <li>{t('ssh.guide.localP1')}</li>
+                    <li>{t('ssh.guide.localP2')}</li>
+                    <li>{t('ssh.guide.localP3')}</li>
+                  </ul>
+                </div>
+                <div className="ssh-guide-col">
+                  <strong>☁️ {t('ssh.home.cloudMode')}</strong>
+                  <ul>
+                    <li>{t('ssh.guide.cloudP1')}</li>
+                    <li>{t('ssh.guide.cloudP2')}</li>
+                    <li>{t('ssh.guide.cloudP3')}</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
-          <button className="ssh-btn primary" onClick={() => setShowAddForm(true)}>
-            + {t('ssh.addServer')}
-          </button>
-          <div className="ssh-welcome-hint">{t('ssh.welcome.hint')}</div>
-        </div>
-      )}
 
-      {/* ── Server list ── */}
-      {tab === 'servers' && (servers.length > 0 || showAddForm) && (
-        <div className="ssh-server-list">
-          {servers.length > 0 && (
-            <div className="ssh-server-summary">
-              {t('ssh.serverCount', { total: servers.length, connected: connectedCount })}
-            </div>
-          )}
-
-          {servers.map(s => (
-            <div key={s.id} className={`ssh-server-card ${s.isConnected ? 'connected' : ''}`}>
-              <div className="ssh-server-info">
-                <div className="ssh-server-name">
-                  {s.isConnected ? '🟢' : (s.lastStatus === 'error' ? '🔴' : '⚫')} {s.name}
+          {/* Guide 2: Cloud Reporter */}
+          <div className="ssh-guide-section">
+            <div className="ssh-guide-num">2</div>
+            <div className="ssh-guide-content">
+              <div className="ssh-guide-heading">{t('ssh.guide.s2Title')}</div>
+              <p>{t('ssh.guide.s2Desc')}</p>
+              <div className="ssh-guide-steps">
+                <div className="ssh-guide-step">
+                  <span className="ssh-step-num">①</span>
+                  <span>{t('ssh.guide.s2Step1')}</span>
                 </div>
-                <div className="ssh-server-host">{s.username}@{s.host}:{s.port}</div>
-                {s.lastConnected && !s.isConnected && (
-                  <div className="ssh-server-last">{t('ssh.lastConnected')}: {new Date(s.lastConnected).toLocaleString()}</div>
-                )}
-              </div>
-              <div className="ssh-server-actions">
-                {s.isConnected ? (
-                  <button className="ssh-btn danger-sm" onClick={() => handleDisconnect(s.id)}>
-                    {t('ssh.disconnect')}
-                  </button>
-                ) : (
-                  <button 
-                    className="ssh-btn primary-sm" 
-                    onClick={() => handleConnect(s.id)}
-                    disabled={connecting === s.id}
-                  >
-                    {connecting === s.id ? '⏳' : t('ssh.connect')}
-                  </button>
-                )}
-                <button className="ssh-btn text-sm" onClick={() => handleRemove(s.id)} title={t('ssh.remove')}>🗑️</button>
+                <div className="ssh-guide-step">
+                  <span className="ssh-step-num">②</span>
+                  <span>{t('ssh.guide.s2Step2')}</span>
+                </div>
+                <div className="ssh-guide-step">
+                  <span className="ssh-step-num">③</span>
+                  <span>{t('ssh.guide.s2Step3')}</span>
+                </div>
               </div>
             </div>
-          ))}
+          </div>
 
-          {!showAddForm ? (
-            <button className="ssh-btn primary" onClick={() => setShowAddForm(true)}>
-              + {t('ssh.addServer')}
-            </button>
-          ) : (
-            <AddServerForm
-              onAdd={async (data) => {
-                const result = await window.electronAPI.sshAddServer(data);
-                if (result.error) setError(result.error);
-                else {
-                  setShowAddForm(false);
-                  await loadServers();
-                }
-              }}
-              onCancel={() => setShowAddForm(false)}
-            />
-          )}
+          {/* Guide 3: SSH Direct */}
+          <div className="ssh-guide-section">
+            <div className="ssh-guide-num">3</div>
+            <div className="ssh-guide-content">
+              <div className="ssh-guide-heading">{t('ssh.guide.s3Title')}</div>
+              <p>{t('ssh.guide.s3Desc')}</p>
+              <div className="ssh-guide-features">
+                <span>📊 {t('ssh.guide.feat1')}</span>
+                <span>⚙️ {t('ssh.guide.feat2')}</span>
+                <span>💻 {t('ssh.guide.feat3')}</span>
+                <span>📜 {t('ssh.guide.feat4')}</span>
+                <span>🔄 {t('ssh.guide.feat5')}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Guide 4: Security */}
+          <div className="ssh-guide-section">
+            <div className="ssh-guide-num">🔒</div>
+            <div className="ssh-guide-content">
+              <div className="ssh-guide-heading">{t('ssh.guide.s4Title')}</div>
+              <ul className="ssh-guide-security-list">
+                <li>{t('ssh.guide.sec1')}</li>
+                <li>{t('ssh.guide.sec2')}</li>
+                <li>{t('ssh.guide.sec3')}</li>
+                <li>{t('ssh.guide.sec4')}</li>
+                <li>{t('ssh.guide.sec5')}</li>
+              </ul>
+            </div>
+          </div>
+
+          <button className="ssh-btn primary" onClick={() => setTab('home')}>
+            {t('ssh.guide.gotIt')}
+          </button>
         </div>
       )}
 
-      {/* ── OpenClaw Status ── */}
+      {/* ━━━━━━━━ STATUS TAB ━━━━━━━━ */}
       {tab === 'status' && activeServer && (
         <div className="ssh-status-view">
           <div className="ssh-section-hint">{t('ssh.statusHint')}</div>
@@ -528,9 +549,7 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
                   </div>
                 )}
               </div>
-              {openclawStatus.error && (
-                <div className="ssh-error-inline">⚠️ {openclawStatus.error}</div>
-              )}
+              {openclawStatus.error && <div className="ssh-error-inline">⚠️ {openclawStatus.error}</div>}
             </>
           )}
           <button className="ssh-btn refresh" onClick={loadOpenClawStatus} disabled={loading}>
@@ -539,17 +558,14 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
         </div>
       )}
 
-      {/* ── Process list ── */}
+      {/* ━━━━━━━━ PROCESSES TAB ━━━━━━━━ */}
       {tab === 'processes' && activeServer && (
         <div className="ssh-process-view">
           <div className="ssh-section-hint">{t('ssh.processHint')}</div>
           {loading && <div className="ssh-loading">{t('ssh.loading')}</div>}
           {processes.length > 0 && (
             <div className="ssh-process-summary">
-              {t('ssh.processCount', { 
-                total: processes.length, 
-                online: processes.filter(p => p.status === 'online').length 
-              })}
+              {t('ssh.processCount', { total: processes.length, online: processes.filter(p => p.status === 'online').length })}
             </div>
           )}
           {processes.map(p => (
@@ -563,25 +579,17 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
                 </div>
               </div>
               <div className="ssh-process-actions">
-                <button className="ssh-btn text-sm" onClick={() => { setSelectedProcess(p.name); handleTabChange('logs'); loadLogs(p.name); }} title={t('ssh.viewLogs')}>
-                  📜
-                </button>
-                <button className="ssh-btn warning-sm" onClick={() => handleRestart(p.name)} title={t('ssh.restart')}>
-                  🔄
-                </button>
+                <button className="ssh-icon-btn" onClick={() => { setSelectedProcess(p.name); handleTabChange('logs'); loadLogs(p.name); }} title={t('ssh.viewLogs')}>📜</button>
+                <button className="ssh-icon-btn" onClick={() => handleRestart(p.name)} title={t('ssh.restart')}>🔄</button>
               </div>
             </div>
           ))}
-          {processes.length === 0 && !loading && (
-            <div className="ssh-empty">{t('ssh.noProcesses')}</div>
-          )}
-          <button className="ssh-btn refresh" onClick={loadProcesses} disabled={loading}>
-            🔄 {t('ssh.refresh')}
-          </button>
+          {processes.length === 0 && !loading && <div className="ssh-empty">{t('ssh.noProcesses')}</div>}
+          <button className="ssh-btn refresh" onClick={loadProcesses} disabled={loading}>🔄 {t('ssh.refresh')}</button>
         </div>
       )}
 
-      {/* ── System info ── */}
+      {/* ━━━━━━━━ SYSTEM TAB ━━━━━━━━ */}
       {tab === 'system' && activeServer && (
         <div className="ssh-system-view">
           <div className="ssh-section-hint">{t('ssh.systemHint')}</div>
@@ -616,13 +624,11 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
               </div>
             </div>
           )}
-          <button className="ssh-btn refresh" onClick={loadSystemInfo} disabled={loading}>
-            🔄 {t('ssh.refresh')}
-          </button>
+          <button className="ssh-btn refresh" onClick={loadSystemInfo} disabled={loading}>🔄 {t('ssh.refresh')}</button>
         </div>
       )}
 
-      {/* ── Logs ── */}
+      {/* ━━━━━━━━ LOGS TAB ━━━━━━━━ */}
       {tab === 'logs' && activeServer && (
         <div className="ssh-logs-view">
           <div className="ssh-section-hint">{t('ssh.logsHint')}</div>
@@ -637,9 +643,7 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
                 <option key={p.name} value={p.name}>{p.status === 'online' ? '🟢' : '🔴'} {p.name}</option>
               ))}
             </select>
-            <button className="ssh-btn refresh-sm" onClick={() => selectedProcess && loadLogs(selectedProcess)} disabled={loading || !selectedProcess}>
-              🔄
-            </button>
+            <button className="ssh-btn refresh-sm" onClick={() => selectedProcess && loadLogs(selectedProcess)} disabled={loading || !selectedProcess}>🔄</button>
           </div>
           <pre className="ssh-logs-content">{logs || t('ssh.selectProcessHint')}</pre>
         </div>
@@ -649,7 +653,6 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
 };
 
 // ─── Add Server Form ───
-
 const AddServerForm: React.FC<{
   onAdd: (data: any) => Promise<void>;
   onCancel: () => void;
@@ -666,14 +669,11 @@ const AddServerForm: React.FC<{
   const [saving, setSaving] = useState(false);
 
   const handleTest = async () => {
-    setTesting(true);
-    setTestResult(null);
+    setTesting(true); setTestResult(null);
     try {
-      const result = await window.electronAPI.sshTestConnection({ host, port, username, authType, credential });
-      setTestResult(result.success ? `✅ ${t('ssh.testSuccess')}` : `❌ ${result.error}`);
-    } catch (e: any) {
-      setTestResult(`❌ ${e.message}`);
-    }
+      const r = await window.electronAPI.sshTestConnection({ host, port, username, authType, credential });
+      setTestResult(r.success ? `✅ ${t('ssh.testSuccess')}` : `❌ ${r.error}`);
+    } catch (e: any) { setTestResult(`❌ ${e.message}`); }
     setTesting(false);
   };
 
@@ -687,13 +687,10 @@ const AddServerForm: React.FC<{
   return (
     <div className="ssh-add-form">
       <div className="ssh-form-title">{t('ssh.addServer')}</div>
-      
       <label>{t('ssh.form.name')}</label>
       <input value={name} onChange={e => setName(e.target.value)} placeholder={t('ssh.form.namePlaceholder')} />
-      
       <label>{t('ssh.form.host')}</label>
       <input value={host} onChange={e => setHost(e.target.value)} placeholder="192.168.1.100" />
-      
       <div className="ssh-form-row">
         <div>
           <label>{t('ssh.form.port')}</label>
@@ -704,7 +701,6 @@ const AddServerForm: React.FC<{
           <input value={username} onChange={e => setUsername(e.target.value)} />
         </div>
       </div>
-      
       <label>{t('ssh.form.authType')}</label>
       <div className="ssh-auth-toggle">
         <button className={authType === 'password' ? 'active' : ''} onClick={() => setAuthType('password')}>
@@ -714,21 +710,13 @@ const AddServerForm: React.FC<{
           🔐 {t('ssh.form.sshKey')}
         </button>
       </div>
-      
       <label>{authType === 'password' ? t('ssh.form.password') : t('ssh.form.privateKey')}</label>
       {authType === 'password' ? (
         <input type="password" value={credential} onChange={e => setCredential(e.target.value)} />
       ) : (
-        <textarea
-          value={credential}
-          onChange={e => setCredential(e.target.value)}
-          placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;..."
-          rows={4}
-        />
+        <textarea value={credential} onChange={e => setCredential(e.target.value)} placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;..." rows={4} />
       )}
-      
       {testResult && <div className="ssh-test-result">{testResult}</div>}
-      
       <div className="ssh-form-actions">
         <button className="ssh-btn secondary" onClick={onCancel}>{t('ssh.form.cancel')}</button>
         <button className="ssh-btn secondary" onClick={handleTest} disabled={testing || !host || !username || !credential}>
