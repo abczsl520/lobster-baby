@@ -7,6 +7,7 @@ import { scanRealTokenUsage } from './scanner';
 let isCheckingStatus = false;
 let lastStatusPayload = '';
 let statusCheckInterval: NodeJS.Timeout | null = null;
+let consecutiveFailures = 0;
 
 let _openclawPath: string | null = null;
 let _mainWindow: (() => BrowserWindow | null) | null = null;
@@ -42,29 +43,67 @@ export function checkOpenClawStatus() {
   };
   const suppress = isWin ? '2>NUL' : '2>/dev/null';
 
+  // Normal: --log-level silent for clean JSON
+  // After 3 consecutive failures: run once without silent to capture diagnostics
+  const useSilent = consecutiveFailures < 3;
+  const logLevel = useSilent ? '--log-level silent ' : '';
+
   Promise.all([
     new Promise<{ status: string; activeSessions: number }>((resolve) => {
       const cmd = isWin
-        ? `"${_openclawPath}" --log-level silent sessions --json --active 1 ${suppress}`
-        : `${_openclawPath} --log-level silent sessions --json --active 1 ${suppress}`;
+        ? `"${_openclawPath}" ${logLevel}sessions --json --active 1 ${suppress}`
+        : `${_openclawPath} ${logLevel}sessions --json --active 1 ${suppress}`;
       exec(cmd, { timeout: 8000, env, shell: isWin ? 'cmd.exe' : '/bin/sh' }, (error, stdout) => {
         let status: 'active' | 'idle' | 'error' = 'error';
         let activeSessions = 0;
 
-        if (!error && stdout) {
+        if (stdout) {
+          // Try parsing stdout as JSON; if polluted, extract JSON block
+          let jsonStr = stdout.trim();
           try {
-            const data = JSON.parse(stdout);
+            const data = JSON.parse(jsonStr);
             const sessions = data.sessions || [];
             activeSessions = sessions.length;
             const hasRecentActivity = sessions.some((s: any) => s.ageMs < 60000);
             status = hasRecentActivity ? 'active' : 'idle';
+            consecutiveFailures = 0;
             log(`OpenClaw status: ${status}, sessions: ${activeSessions}`);
-          } catch (e) {
-            log(`Failed to parse OpenClaw output: ${e}`);
-            status = 'error';
+          } catch {
+            // Fallback: extract JSON block from polluted output (diagnostic mode)
+            const start = jsonStr.indexOf('{');
+            const end = jsonStr.lastIndexOf('}');
+            if (start >= 0 && end > start) {
+              try {
+                const data = JSON.parse(jsonStr.slice(start, end + 1));
+                const sessions = data.sessions || [];
+                activeSessions = sessions.length;
+                const hasRecentActivity = sessions.some((s: any) => s.ageMs < 60000);
+                status = hasRecentActivity ? 'active' : 'idle';
+                consecutiveFailures = 0;
+                log(`OpenClaw status: ${status}, sessions: ${activeSessions} (extracted)`);
+              } catch (e2) {
+                consecutiveFailures++;
+                log(`Failed to parse OpenClaw output (attempt ${consecutiveFailures}): ${e2}`);
+                if (!useSilent) {
+                  // This was the diagnostic run — log full output for debugging
+                  log(`Diagnostic stdout: ${stdout.slice(0, 500)}`);
+                  consecutiveFailures = 0; // Reset to go back to silent mode
+                }
+              }
+            } else {
+              consecutiveFailures++;
+              if (!useSilent) {
+                log(`Diagnostic stdout (no JSON found): ${stdout.slice(0, 500)}`);
+                consecutiveFailures = 0;
+              }
+            }
           }
         } else if (error) {
+          consecutiveFailures++;
           log(`OpenClaw command error: ${error.message}`);
+          if (!useSilent) {
+            consecutiveFailures = 0;
+          }
         }
 
         resolve({ status, activeSessions });
