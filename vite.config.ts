@@ -13,7 +13,7 @@ export default defineConfig({
           build: {
             outDir: 'dist-electron',
             rollupOptions: {
-              external: ['electron', 'path', 'fs', 'child_process', 'url'],
+              external: ['electron', 'path', 'fs', 'child_process', 'url', 'ssh2'],
               output: {
                 format: 'cjs',
                 entryFileNames: 'main.cjs',

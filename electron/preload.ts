@@ -90,4 +90,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
   remoteGetStatus: () => ipcRenderer.invoke('remote-get-status'),
   remoteSwitchMode: (mode: string) => ipcRenderer.invoke('remote-switch-mode', mode),
   remoteGetMode: () => ipcRenderer.invoke('remote-get-mode'),
+  // SSH Remote Control
+  sshGetServers: () => ipcRenderer.invoke('ssh-get-servers'),
+  sshAddServer: (data: { name: string; host: string; port: number; username: string; authType: string; credential: string }) => ipcRenderer.invoke('ssh-add-server', data),
+  sshRemoveServer: (id: string) => ipcRenderer.invoke('ssh-remove-server', id),
+  sshConnect: (id: string) => ipcRenderer.invoke('ssh-connect', id),
+  sshDisconnect: (id: string) => ipcRenderer.invoke('ssh-disconnect', id),
+  sshTestConnection: (data: { host: string; port: number; username: string; authType: string; credential: string }) => ipcRenderer.invoke('ssh-test-connection', data),
+  sshOpenClawStatus: (serverId: string) => ipcRenderer.invoke('ssh-openclaw-status', serverId),
+  sshProcessList: (serverId: string) => ipcRenderer.invoke('ssh-process-list', serverId),
+  sshSystemInfo: (serverId: string) => ipcRenderer.invoke('ssh-system-info', serverId),
+  sshProcessLogs: (serverId: string, processName: string, lines?: number) => ipcRenderer.invoke('ssh-process-logs', serverId, processName, lines),
+  sshRestartProcess: (serverId: string, processName: string) => ipcRenderer.invoke('ssh-restart-process', serverId, processName),
+  sshListDir: (serverId: string, path: string) => ipcRenderer.invoke('ssh-list-dir', serverId, path),
+  sshReadFile: (serverId: string, path: string) => ipcRenderer.invoke('ssh-read-file', serverId, path),
 });
