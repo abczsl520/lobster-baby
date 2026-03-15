@@ -6,6 +6,7 @@ import { TokenChart } from './TokenChart';
 import { AchievementList } from './AchievementList';
 import { SocialPanel } from './SocialPanel';
 import { PluginPanel } from './PluginPanel';
+import { RemoteSettings } from './RemoteSettings';
 import './StatusPanel.css';
 
 const APP_VERSION = '1.9.0';
@@ -43,7 +44,13 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
   const [internalShowAchievements, setInternalShowAchievements] = useState(false);
   const [internalShowSocial, setInternalShowSocial] = useState(false);
   const [internalShowPlugins, setInternalShowPlugins] = useState(false);
+  const [statusMode, setStatusMode] = useState<string>('local');
   const { t, i18n } = useTranslation();
+
+  // Check remote mode on mount
+  React.useEffect(() => {
+    window.electronAPI.remoteGetMode?.().then((r: any) => setStatusMode(r?.mode || 'local')).catch(() => {});
+  }, []);
   const showChart = externalShowChart !== undefined ? externalShowChart : internalShowChart;
   const toggleChart = onToggleChart ?? (() => setInternalShowChart(!internalShowChart));
   const showAchievements = externalShowAchievements !== undefined ? externalShowAchievements : internalShowAchievements;
@@ -87,7 +94,7 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
       {/* Header */}
       <div className="status-panel-header">
         <div className="header-left">
-          <h3>🦞 Lv.{levelInfo.level}</h3>
+          <h3>{statusMode === 'remote' ? '☁️' : '🦞'} Lv.{levelInfo.level}</h3>
           <span className="header-status" style={{ color: statusColor[status] }}>
             {statusDot[status]}
           </span>
@@ -198,6 +205,9 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
               </button>
             </div>
           </div>
+
+          {/* ── Remote Mode Settings ── */}
+          <RemoteSettings />
 
           {/* ── Footer ── */}
           <div className="panel-footer">

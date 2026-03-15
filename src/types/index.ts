@@ -71,6 +71,13 @@ declare global {
       pluginMenuClick: (menuId: string) => Promise<void>;
       onShowPlugins: (callback: () => void) => () => void;
       onPluginToast: (callback: (data: { message: string; duration: number }) => void) => () => void;
+      // Remote status
+      remoteGenerateToken: () => Promise<{ token?: string; lobsterId?: string; error?: string }>;
+      remoteRevokeToken: () => Promise<{ ok?: boolean; error?: string }>;
+      remoteGetInfo: () => Promise<{ hasReporterToken: boolean; tokenIssuedAt: string | null; lastHeartbeat: string | null; reporterVersion: string | null; error?: string }>;
+      remoteGetStatus: () => Promise<any>;
+      remoteSwitchMode: (mode: string) => Promise<{ ok?: boolean; mode?: string; error?: string }>;
+      remoteGetMode: () => Promise<{ mode: string }>;
     };
   }
 }
