@@ -693,7 +693,7 @@ ipcMain.handle('notify-level-up', (_event, level: number) => {
 });
 
 // ─── Auto Update Check ───
-const APP_VERSION = '1.9.3';
+const APP_VERSION = app.getVersion();
 let updateCheckInterval: NodeJS.Timeout | null = null;
 
 function fetchJSON(url: string): Promise<any> {

@@ -9,7 +9,7 @@ import { PluginPanel } from './PluginPanel';
 import { SSHPanel } from './SSHPanel';
 import './StatusPanel.css';
 
-const APP_VERSION = '1.9.3';
+const APP_VERSION = __APP_VERSION__;
 
 interface StatusPanelProps {
   status: OpenClawStatus;
