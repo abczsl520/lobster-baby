@@ -418,3 +418,122 @@
 
 .ssh-form-actions .ssh-btn { flex: 1; }
 .ssh-form-actions .ssh-btn.primary { width: auto; margin-top: 0; }
+
+/* ─── Overview ─── */
+.ssh-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.ssh-section-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.ssh-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ff6b6b;
+  margin-bottom: 10px;
+}
+
+.ssh-mode-selector {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.ssh-mode-btn {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ssh-mode-btn.active {
+  background: rgba(255, 107, 107, 0.15);
+  border-color: rgba(255, 107, 107, 0.3);
+  color: #ff6b6b;
+}
+
+.ssh-mode-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.ssh-remote-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 12px;
+}
+
+.ssh-remote-status .online { color: #00e676; }
+.ssh-remote-status .offline { color: #ff5252; }
+.ssh-remote-time { color: rgba(255, 255, 255, 0.4); font-size: 11px; }
+
+.ssh-remote-actions {
+  margin-top: 6px;
+}
+
+.ssh-token-block {
+  margin-top: 8px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+}
+
+.ssh-token-hint {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: 6px;
+}
+
+.ssh-token-cmd {
+  display: block;
+  font-size: 10px;
+  color: #00e676;
+  word-break: break-all;
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.ssh-quick-server {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s;
+}
+
+.ssh-quick-server:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.ssh-quick-host {
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 11px;
+}
+
+.ssh-overview-empty {
+  text-align: center;
+  padding: 10px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.ssh-overview-empty p {
+  margin-bottom: 10px;
+}
