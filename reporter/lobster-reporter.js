@@ -27,7 +27,14 @@ function loadConfig() {
     console.error('❌ 未配置。请运行: lobster-reporter --setup');
     process.exit(1);
   }
-  const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
+  let config;
+  try {
+    config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
+  } catch (e) {
+    console.error(`❌ 配置文件格式错误 (${CONFIG_PATH}): ${e.message}`);
+    console.error('   请删除后重新配置: rm ~/.lobster-reporter.json && lobster-reporter --setup');
+    process.exit(1);
+  }
   if (!config.token) {
     console.error('❌ 配置缺少 token。请运行: lobster-reporter --setup');
     process.exit(1);
