@@ -83,4 +83,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('plugin-toast', handler);
     return () => ipcRenderer.removeListener('plugin-toast', handler);
   },
+  // Remote status features
+  remoteGenerateToken: () => ipcRenderer.invoke('remote-generate-token'),
+  remoteRevokeToken: () => ipcRenderer.invoke('remote-revoke-token'),
+  remoteGetInfo: () => ipcRenderer.invoke('remote-get-info'),
+  remoteGetStatus: () => ipcRenderer.invoke('remote-get-status'),
+  remoteSwitchMode: (mode: string) => ipcRenderer.invoke('remote-switch-mode', mode),
+  remoteGetMode: () => ipcRenderer.invoke('remote-get-mode'),
 });

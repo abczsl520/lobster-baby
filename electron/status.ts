@@ -3,6 +3,7 @@ import { exec } from 'child_process';
 import { log } from './logger';
 import { readStore, writeStore } from './store';
 import { scanRealTokenUsage } from './scanner';
+import { RemoteStatusProvider, RemoteStatusData } from './remote-status';
 
 let isCheckingStatus = false;
 let lastStatusPayload = '';
@@ -10,6 +11,9 @@ let statusCheckInterval: NodeJS.Timeout | null = null;
 
 let _openclawPath: string | null = null;
 let _mainWindow: (() => BrowserWindow | null) | null = null;
+
+// Remote mode
+let remoteProvider: RemoteStatusProvider | null = null;
 
 export function initStatus(openclawPath: string | null, mainWindowGetter: () => BrowserWindow | null) {
   _openclawPath = openclawPath;
@@ -20,6 +24,7 @@ function getWin(): BrowserWindow | null {
   return _mainWindow ? _mainWindow() : null;
 }
 
+// ─── Local mode (original) ───
 export function checkOpenClawStatus() {
   const win = getWin();
   if (!win || win.isDestroyed() || isCheckingStatus) return;
@@ -107,11 +112,72 @@ export function checkOpenClawStatus() {
     .finally(() => { isCheckingStatus = false; });
 }
 
+// ─── Remote mode ───
+function startRemoteStatus(socialToken: string) {
+  if (remoteProvider) remoteProvider.stop();
+
+  remoteProvider = new RemoteStatusProvider(socialToken);
+  remoteProvider.start((data: RemoteStatusData) => {
+    const win = getWin();
+    if (!win || win.isDestroyed()) return;
+
+    try {
+      win.webContents.send('openclaw-status', {
+        status: data.status,
+        activeSessions: data.activeSessions,
+        tokenInfo: { daily: data.dailyTokens, total: data.totalTokens },
+        remote: true,
+        offlineReason: data.offlineReason,
+        lastHeartbeat: data.lastHeartbeat,
+      });
+    } catch { /* window might be closing */ }
+  });
+
+  log('Remote status provider started');
+}
+
+function stopRemoteStatus() {
+  if (remoteProvider) {
+    remoteProvider.stop();
+    remoteProvider = null;
+  }
+}
+
+// ─── Mode-aware start/stop ───
 export function startStatusCheck() {
-  checkOpenClawStatus();
-  statusCheckInterval = setInterval(checkOpenClawStatus, 5000);
+  const store = readStore();
+  const mode = store.settings?.statusMode || 'local';
+
+  if (mode === 'remote' && store.socialToken) {
+    startRemoteStatus(store.socialToken);
+  } else {
+    checkOpenClawStatus();
+    statusCheckInterval = setInterval(checkOpenClawStatus, 5000);
+  }
 }
 
 export function stopStatusCheck() {
   if (statusCheckInterval) { clearInterval(statusCheckInterval); statusCheckInterval = null; }
+  stopRemoteStatus();
+}
+
+// ─── Runtime mode switch ───
+export function switchStatusMode(mode: 'local' | 'remote') {
+  stopStatusCheck();
+  const store = readStore();
+  store.settings = { ...store.settings, statusMode: mode };
+  writeStore(store);
+
+  if (mode === 'remote' && store.socialToken) {
+    startRemoteStatus(store.socialToken);
+  } else {
+    checkOpenClawStatus();
+    statusCheckInterval = setInterval(checkOpenClawStatus, 5000);
+  }
+
+  log(`Status mode switched to: ${mode}`);
+}
+
+export function getStatusMode(): string {
+  return readStore().settings?.statusMode || 'local';
 }
