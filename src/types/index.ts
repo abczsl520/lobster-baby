@@ -38,8 +38,10 @@ declare global {
       getDailyTokens: () => Promise<Record<string, number>>;
       getSettings: () => Promise<{ autoFadeEnabled: boolean }>;
       updateSettings: (settings: Record<string, any>) => Promise<any>;
-      showPanel: () => Promise<void>;
+      showPanel: (route?: string) => Promise<void>;
       hidePanel: () => Promise<void>;
+      closePanel: () => Promise<void>;
+      onNavigatePanel: (callback: (route: string) => void) => () => void;
       quitApp: () => Promise<void>;
       moveWindow: (deltaX: number, deltaY: number) => void;
       dragEnd: () => void;

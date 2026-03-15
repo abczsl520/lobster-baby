@@ -18,14 +18,16 @@ log('=== Lobster Baby starting ===');
 const openclawPath = findOpenClaw();
 
 let mainWindow: BrowserWindow | null = null;
+let panelWindow: BrowserWindow | null = null;
 let savePositionTimeout: NodeJS.Timeout | null = null;
 
 const SNAP_DISTANCE = 15;
 const NORMAL_SIZE = { width: 200, height: 250 };
-const PANEL_SIZE = { width: 320, height: 680 };
+const PANEL_SIZE = { width: 340, height: 700 };
 
 // Provide mainWindow getter to modules
 const getMainWindow = () => mainWindow;
+const getPanelWindow = () => panelWindow;
 
 function clampToScreen(x: number, y: number, w: number, h: number) {
   const display = screen.getDisplayNearestPoint({ x, y }).workArea;
@@ -158,15 +160,15 @@ function createWindow() {
     const menu = Menu.buildFromTemplate([
       { label: isOnTop ? t('menu.unpin') : t('menu.pin'), click: () => { mainWindow?.setAlwaysOnTop(!isOnTop); updateTrayMenu(); } },
       { type: 'separator' },
-      { label: t('menu.status'), click: () => mainWindow?.webContents.send('toggle-panel') },
-      { label: t('menu.community'), click: () => mainWindow?.webContents.send('show-social') },
-      { label: t('menu.plugins'), click: () => mainWindow?.webContents.send('show-plugins') },
+      { label: t('menu.status'), click: () => createPanelWindow('status') },
+      { label: t('menu.community'), click: () => createPanelWindow('social') },
+      { label: t('menu.plugins'), click: () => createPanelWindow('plugins') },
       { type: 'separator' },
-      { label: t('menu.trends'), click: () => mainWindow?.webContents.send('toggle-chart') },
-      { label: t('menu.achievements'), click: () => mainWindow?.webContents.send('show-achievements') },
+      { label: t('menu.trends'), click: () => createPanelWindow('chart') },
+      { label: t('menu.achievements'), click: () => createPanelWindow('achievements') },
       ...pluginSubMenu,
       { type: 'separator' },
-      { label: t('menu.reload'), click: () => mainWindow?.reload() },
+      { label: t('menu.reload'), click: () => { mainWindow?.reload(); if (panelWindow && !panelWindow.isDestroyed()) panelWindow.reload(); } },
       { label: t('menu.dataDir'), click: () => shell.openPath(app.getPath('userData')) },
       { type: 'separator' },
       { label: t('menu.quit'), click: () => app.quit() },
@@ -581,29 +583,96 @@ ipcMain.handle('ssh-read-file', async (_event, serverId: string, filePath: strin
   } catch (err: any) { return { error: err.message }; }
 });
 
-// ─── Panel resize ───
-ipcMain.handle('show-panel', () => {
-  if (!mainWindow || mainWindow.isDestroyed()) return;
-  dock.setIsPanelResizing(true);
-  const bounds = mainWindow.getBounds();
-  mainWindow.setBounds(clampToScreen(
-    bounds.x - (PANEL_SIZE.width - NORMAL_SIZE.width) / 2,
-    bounds.y - (PANEL_SIZE.height - NORMAL_SIZE.height),
-    PANEL_SIZE.width, PANEL_SIZE.height
-  ));
-  setTimeout(() => dock.setIsPanelResizing(false), 100);
+// ─── Panel Window ───
+function createPanelWindow(route?: string) {
+  if (panelWindow && !panelWindow.isDestroyed()) {
+    panelWindow.focus();
+    if (route) panelWindow.webContents.send('navigate-panel', route);
+    return;
+  }
+
+  // Position panel near main window
+  const mainBounds = mainWindow?.getBounds();
+  const display = mainBounds 
+    ? screen.getDisplayNearestPoint({ x: mainBounds.x, y: mainBounds.y }).workArea
+    : screen.getPrimaryDisplay().workArea;
+  
+  let panelX = display.x + Math.round((display.width - PANEL_SIZE.width) / 2);
+  let panelY = display.y + Math.round((display.height - PANEL_SIZE.height) / 2);
+  
+  // If main window exists, position panel to its left or right
+  if (mainBounds) {
+    const spaceRight = display.x + display.width - (mainBounds.x + mainBounds.width);
+    const spaceLeft = mainBounds.x - display.x;
+    if (spaceRight >= PANEL_SIZE.width + 10) {
+      panelX = mainBounds.x + mainBounds.width + 10;
+      panelY = Math.max(display.y, mainBounds.y + mainBounds.height - PANEL_SIZE.height);
+    } else if (spaceLeft >= PANEL_SIZE.width + 10) {
+      panelX = mainBounds.x - PANEL_SIZE.width - 10;
+      panelY = Math.max(display.y, mainBounds.y + mainBounds.height - PANEL_SIZE.height);
+    }
+  }
+  
+  // Clamp
+  panelX = Math.max(display.x, Math.min(panelX, display.x + display.width - PANEL_SIZE.width));
+  panelY = Math.max(display.y, Math.min(panelY, display.y + display.height - PANEL_SIZE.height));
+
+  panelWindow = new BrowserWindow({
+    width: PANEL_SIZE.width, height: PANEL_SIZE.height,
+    x: panelX, y: panelY,
+    frame: false, transparent: true,
+    resizable: false, alwaysOnTop: true,
+    skipTaskbar: true, hasShadow: true,
+    backgroundColor: '#00000000',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.cjs'),
+      contextIsolation: true, nodeIntegration: false,
+      backgroundThrottling: false,
+    },
+  });
+
+  const panelRoute = route || 'status';
+  if (process.env.VITE_DEV_SERVER_URL) {
+    panelWindow.loadURL(`${process.env.VITE_DEV_SERVER_URL}?panel=${panelRoute}`);
+  } else {
+    panelWindow.loadFile(path.join(__dirname, '../dist/index.html'), { search: `panel=${panelRoute}` });
+  }
+
+  // S22: Block navigation to external URLs
+  panelWindow.webContents.on('will-navigate', (event, url) => {
+    const allowed = process.env.VITE_DEV_SERVER_URL || `file://${path.join(__dirname, '../dist/')}`;
+    if (!url.startsWith(allowed) && !url.startsWith('file://')) {
+      log(`Panel: Blocked navigation to: ${url}`);
+      event.preventDefault();
+    }
+  });
+  panelWindow.webContents.setWindowOpenHandler(({ url }) => {
+    log(`Panel: Blocked window.open: ${url}`);
+    return { action: 'deny' };
+  });
+
+  panelWindow.on('closed', () => { panelWindow = null; });
+  
+  log(`Panel window created (route: ${panelRoute})`);
+}
+
+function closePanelWindow() {
+  if (panelWindow && !panelWindow.isDestroyed()) {
+    panelWindow.close();
+    panelWindow = null;
+  }
+}
+
+ipcMain.handle('show-panel', (_event, route?: string) => {
+  createPanelWindow(route);
 });
 
 ipcMain.handle('hide-panel', () => {
-  if (!mainWindow || mainWindow.isDestroyed()) return;
-  dock.setIsPanelResizing(true);
-  const bounds = mainWindow.getBounds();
-  mainWindow.setBounds(clampToScreen(
-    bounds.x + (PANEL_SIZE.width - NORMAL_SIZE.width) / 2,
-    bounds.y + (PANEL_SIZE.height - NORMAL_SIZE.height),
-    NORMAL_SIZE.width, NORMAL_SIZE.height
-  ));
-  setTimeout(() => dock.setIsPanelResizing(false), 100);
+  closePanelWindow();
+});
+
+ipcMain.handle('close-panel', () => {
+  closePanelWindow();
 });
 
 ipcMain.handle('quit-app', () => app.quit());
@@ -746,6 +815,7 @@ app.on('window-all-closed', () => { stopStatusCheck(); if (process.platform !== 
 app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 app.on('before-quit', () => {
   stopStatusCheck();
+  closePanelWindow();
   sshManager.disconnectAll();
   plugins.shutdownPlugins().catch(() => {});
   if (updateCheckInterval) clearInterval(updateCheckInterval);

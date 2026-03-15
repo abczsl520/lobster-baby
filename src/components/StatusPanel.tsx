@@ -10,7 +10,7 @@ import { RemoteSettings } from './RemoteSettings';
 import { SSHPanel } from './SSHPanel';
 import './StatusPanel.css';
 
-const APP_VERSION = '1.9.2';
+const APP_VERSION = '1.9.3';
 
 interface StatusPanelProps {
   status: OpenClawStatus;
@@ -30,6 +30,7 @@ interface StatusPanelProps {
   showPlugins?: boolean;
   onOpenPlugins?: () => void;
   onClosePlugins?: () => void;
+  isPanelWindow?: boolean;
 }
 
 export const StatusPanel: React.FC<StatusPanelProps> = ({
@@ -40,6 +41,7 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
   showAchievements: externalShowAchievements, onToggleAchievements,
   showSocial: externalShowSocial, onCloseSocial, onOpenSocial,
   showPlugins: externalShowPlugins, onOpenPlugins, onClosePlugins,
+  isPanelWindow: _isPanelWindow = false,
 }) => {
   const [internalShowChart, setInternalShowChart] = useState(false);
   const [internalShowAchievements, setInternalShowAchievements] = useState(false);

@@ -51,6 +51,35 @@ body {
   justify-content: flex-start;
 }
 
+/* Panel window mode — full screen panel, no lobster */
+.app.panel-window {
+  width: 100vw;
+  height: 100vh;
+  background: rgba(10, 10, 20, 0.95);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.app.panel-window .status-panel {
+  height: 100vh;
+  max-height: 100vh;
+  border-radius: 0;
+}
+
+/* Draggable title bar area for panel window */
+.panel-window-titlebar {
+  -webkit-app-region: drag;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 8px;
+}
+
+.panel-window-titlebar .close-btn {
+  -webkit-app-region: no-drag;
+}
+
 .lobster-area {
   display: flex;
   align-items: center;
