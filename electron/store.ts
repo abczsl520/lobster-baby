@@ -18,5 +18,5 @@ export function readStore(): Record<string, any> {
 
 export function writeStore(data: Record<string, any>) {
   storeCache = data;
-  fs.writeFileSync(storePath, JSON.stringify(data, null, 2));
+  fs.writeFileSync(storePath, JSON.stringify(data, null, 2), { mode: 0o600 });
 }

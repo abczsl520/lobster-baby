@@ -88,9 +88,10 @@ const SAFE_COMMANDS: Record<string, RegExp> = {
   'ls-dir':              /^ls -la \/opt\/apps\/[a-zA-Z0-9_-]+\/?$/,
   // S2 FIX: cat-file NO .env/.conf/.cfg (secrets!), single subdir only, no path traversal
   'cat-file':            /^cat \/opt\/apps\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_.-]+\.(js|ts|json|md|txt|yml|yaml)$/,
-  'pm2-restart':         /^pm2 restart [a-zA-Z0-9_-]+$/,
-  'pm2-stop':            /^pm2 stop [a-zA-Z0-9_-]+$/,
-  'pm2-logs':            /^pm2 logs [a-zA-Z0-9_-]+ --lines \d{1,4} --nostream$/,
+  // S9 FIX: process name max 50 chars
+  'pm2-restart':         /^pm2 restart [a-zA-Z0-9_-]{1,50}$/,
+  'pm2-stop':            /^pm2 stop [a-zA-Z0-9_-]{1,50}$/,
+  'pm2-logs':            /^pm2 logs [a-zA-Z0-9_-]{1,50} --lines \d{1,4} --nostream$/,
 };
 
 // Dangerous patterns — always rejected
@@ -103,6 +104,7 @@ const FORBIDDEN_PATTERNS = [
   /passwd/i, /shadow/i, /\.ssh\//,
   /eval\s/i, /exec\s/i, /source\s/i,
   /\.\./, // S1/S2/S3: block path traversal
+  /\.env/i, // S8: block any .env files (even .env.json, .env.backup)
 ];
 
 function isCommandAllowed(cmd: string): { allowed: boolean; level: number; reason?: string } {
