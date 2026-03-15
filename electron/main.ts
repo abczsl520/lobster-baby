@@ -453,7 +453,8 @@ ipcMain.handle('hide-panel', () => {
 
 ipcMain.handle('quit-app', () => app.quit());
 ipcMain.handle('open-external', async (_event, url: string) => {
-  if (typeof url !== 'string' || !url.startsWith('http')) return;
+  // S18 fix: strict protocol check
+  if (typeof url !== 'string' || !(url.startsWith('https://') || url.startsWith('http://'))) return;
   await shell.openExternal(url);
 });
 

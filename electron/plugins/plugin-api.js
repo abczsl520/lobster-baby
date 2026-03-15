@@ -38,6 +38,22 @@ const BLOCKED_COMMANDS = [
     /chmod\s+777\s+\//i,
     /curl.*\|\s*(ba)?sh/i, // curl | sh
     /wget.*\|\s*(ba)?sh/i,
+    // S19 fix: expanded blocklist
+    /\bshutdown\b/i,
+    /\breboot\b/i,
+    /\bpasswd\b/i,
+    /\bchown\s+root/i,
+    /\biptables\b/i,
+    /\bnc\s+.*-e\b/i, // reverse shell
+    /\bpython[23]?\s+-c\b/i, // python code exec
+    /\bnode\s+-e\b/i, // node code exec
+    /\bperl\s+-e\b/i, // perl code exec
+    /\bruby\s+-e\b/i, // ruby code exec
+    /\bsudo\b/i, // privilege escalation
+    /\bsu\s+-?\s/i, // switch user
+    />\s*\/etc\//i, // write to /etc
+    /\bkill\s+-9\s+1\b/, // kill init
+    /\bsystemctl\b/i, // service control
 ];
 function isCommandSafe(cmd) {
     return !BLOCKED_COMMANDS.some(pattern => pattern.test(cmd));
@@ -101,7 +117,13 @@ export function createPluginAPI(pluginId, pluginDir, permissions, configDir) {
                 }
                 log(`Plugin [${pluginId}] exec: ${cmd}`);
                 return new Promise((resolve) => {
-                    exec(cmd, { timeout: 30000, maxBuffer: 1024 * 1024 }, (error, stdout, stderr) => {
+                    // S20 fix: restrict shell environment for plugins
+                    exec(cmd, {
+                        timeout: 30000,
+                        maxBuffer: 1024 * 1024,
+                        env: { ...process.env, PATH: process.env.PATH }, // inherit PATH only
+                        cwd: pluginDir, // jail to plugin directory
+                    }, (error, stdout, stderr) => {
                         resolve({
                             code: error ? error.code ?? 1 : 0,
                             stdout: stdout.slice(0, 10000), // Cap output size

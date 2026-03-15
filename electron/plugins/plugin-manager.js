@@ -180,6 +180,20 @@ function downloadFile(url, destPath) {
             reject(new Error('Only HTTPS downloads are allowed'));
             return;
         }
+        // S17 fix: block private/internal hostnames
+        const isPrivateUrl = (u) => {
+            try {
+                const hostname = new URL(u).hostname;
+                return /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|0\.0\.0\.0|\[::1\])/i.test(hostname);
+            }
+            catch {
+                return true;
+            }
+        };
+        if (isPrivateUrl(url)) {
+            reject(new Error('downloads from private networks blocked'));
+            return;
+        }
         const request = (targetUrl, redirects = 0) => {
             if (redirects > 5) {
                 reject(new Error('too many redirects'));
@@ -187,6 +201,10 @@ function downloadFile(url, destPath) {
             }
             if (!targetUrl.startsWith('https://')) {
                 reject(new Error('redirect to non-HTTPS blocked'));
+                return;
+            }
+            if (isPrivateUrl(targetUrl)) {
+                reject(new Error('redirect to private network blocked'));
                 return;
             }
             https.get(targetUrl, { headers: { 'User-Agent': 'LobsterBaby-PluginManager' }, timeout: 30000 }, (res) => {
