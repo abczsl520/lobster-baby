@@ -126,50 +126,7 @@
 }
 
 /* Toggle group */
-.ssh-toggle-group {
-  display: flex;
-  gap: 4px;
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 6px;
-  padding: 2px;
-}
-
-.ssh-toggle-btn {
-  flex: 1;
-  padding: 6px 8px;
-  border-radius: 5px;
-  border: none;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.4);
-  font-size: 11px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.ssh-toggle-btn.active {
-  background: rgba(255, 107, 107, 0.2);
-  color: #ff6b6b;
-  font-weight: 500;
-}
-
-.ssh-toggle-btn:hover:not(.active) {
-  color: rgba(255, 255, 255, 0.6);
-}
-
-/* Reporter box */
-.ssh-reporter-box {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.ssh-reporter-status {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  font-size: 11px;
-}
+/* Reporter box - removed (unused) */
 
 .dot-online, .dot-offline {
   width: 6px;
