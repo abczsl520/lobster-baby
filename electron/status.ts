@@ -1,8 +1,7 @@
 import { BrowserWindow } from 'electron';
 import { exec } from 'child_process';
 import { log } from './logger';
-import { readStore, writeStore } from './store';
-import { scanRealTokenUsage } from './scanner';
+import { scanRealTokenUsage, getTodayTokens } from './scanner';
 
 let isCheckingStatus = false;
 let lastStatusPayload = '';
@@ -85,23 +84,12 @@ export function checkOpenClawStatus() {
       const w = getWin();
       if (!w || w.isDestroyed()) return;
 
-      const store = readStore();
-      const today = new Date().toISOString().slice(0, 10);
       const totalTokens = realTokens;
-
-      if (store.lastDate !== today) {
-        store.dailyTokensBaseline = totalTokens;
-        store.lastDate = today;
-      }
-      if (!store.dailyTokensBaseline) store.dailyTokensBaseline = totalTokens;
-
-      const dailyTokens = Math.max(0, totalTokens - (store.dailyTokensBaseline || 0));
+      const dailyTokens = getTodayTokens();
 
       const newPayload = JSON.stringify({ status, totalTokens, dailyTokens });
       if (newPayload !== lastStatusPayload) {
         lastStatusPayload = newPayload;
-        store.totalTokens = totalTokens;
-        writeStore(store);
       }
 
       try {

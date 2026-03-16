@@ -9,7 +9,6 @@ export function findOpenClaw(): string | null {
   const home = os.homedir();
   const isWin = process.platform === 'win32';
 
-  // Static known paths
   const possiblePaths = isWin ? [
     path.join(home, 'AppData/Roaming/npm/openclaw.cmd'),
     path.join(home, 'AppData/Local/npm/openclaw.cmd'),
@@ -30,7 +29,6 @@ export function findOpenClaw(): string | null {
     } catch { /* ignore */ }
   }
 
-  // Dynamic lookup via which/where
   try {
     const cmd = isWin ? 'where openclaw' : 'which openclaw';
     const result = execSync(cmd, { timeout: 3000, encoding: 'utf-8' }).trim().split('\n')[0].trim();
@@ -51,7 +49,7 @@ export function findOpenClawSessionDir(): string | null {
     path.join(home, '.config/openclaw/agents/main/sessions'),
     path.join(home, 'AppData/Local/openclaw/agents/main/sessions'),
     path.join(home, 'AppData/Roaming/openclaw/agents/main/sessions'),
-    path.join(home, '.openclaw/workspace'),  // fallback: check if workspace exists to find root
+    path.join(home, '.openclaw/workspace'),
   ];
   for (const dir of candidates) {
     try {
@@ -61,7 +59,7 @@ export function findOpenClawSessionDir(): string | null {
   return null;
 }
 
-// Incremental scan state
+// ─── Incremental token scan with per-file cache ───
 let scanTotal = 0;
 let scanFileCache: Map<string, { mtime: number; tokens: number }> = new Map();
 let lastScanTime = 0;
@@ -83,6 +81,7 @@ export function scanRealTokenUsage(): number {
   try {
     const files = fs.readdirSync(sessionDir).filter(f => f.endsWith('.jsonl'));
 
+    // Remove deleted files from cache
     for (const [cachedFile] of scanFileCache) {
       if (!files.includes(cachedFile)) {
         const entry = scanFileCache.get(cachedFile)!;
@@ -94,9 +93,7 @@ export function scanRealTokenUsage(): number {
     for (const file of files) {
       const fullPath = path.join(sessionDir, file);
       let mtime: number;
-      try {
-        mtime = fs.statSync(fullPath).mtimeMs;
-      } catch { continue; }
+      try { mtime = fs.statSync(fullPath).mtimeMs; } catch { continue; }
 
       const cached = scanFileCache.get(file);
       if (cached && cached.mtime === mtime) continue;
@@ -119,9 +116,7 @@ export function scanRealTokenUsage(): number {
         }
       } catch { continue; }
 
-      if (cached) {
-        scanTotal -= cached.tokens;
-      }
+      if (cached) scanTotal -= cached.tokens;
       scanTotal += fileTokens;
       scanFileCache.set(file, { mtime, tokens: fileTokens });
     }
@@ -133,35 +128,102 @@ export function scanRealTokenUsage(): number {
   lastScanTime = now;
   scanInitialized = true;
 
-  trackDailyTokens(scanTotal);
-
   log(`Token scan: ${scanTotal.toLocaleString()} total API tokens (${scanFileCache.size} files)`);
   return scanTotal;
 }
 
-function trackDailyTokens(currentTotal: number) {
-  const store = readStore();
-  const today = new Date().toISOString().split('T')[0];
+// ─── Precise daily token calculation (timestamp-based) ───
+// Cache: { date => tokens } computed from session files
+let dailyTokensCache: Record<string, number> = {};
+let lastDailyScanTime = 0;
+const DAILY_SCAN_CACHE_MS = 60_000; // Rescan at most once per minute
 
-  if (!store.dailyTokens) store.dailyTokens = {};
-  if (!store.lastTotalTokens) {
-    store.lastTotalTokens = currentTotal;
-    writeStore(store);
-    return;
+/**
+ * Scan session files and compute per-day token usage based on message timestamps.
+ * Returns a Record<date, tokens> for the last N days (default 30).
+ * This is the source of truth for the chart — no more delta tracking.
+ */
+export function scanDailyTokens(days: number = 30): Record<string, number> {
+  const now = Date.now();
+  if (now - lastDailyScanTime < DAILY_SCAN_CACHE_MS && Object.keys(dailyTokensCache).length > 0) {
+    return dailyTokensCache;
   }
 
-  const delta = currentTotal - store.lastTotalTokens;
-  if (delta > 0) {
-    store.dailyTokens[today] = (store.dailyTokens[today] || 0) + delta;
-    store.lastTotalTokens = currentTotal;
+  const sessionDir = findOpenClawSessionDir();
+  if (!sessionDir) return dailyTokensCache;
 
-    const dates = Object.keys(store.dailyTokens).sort();
-    if (dates.length > 30) {
-      for (let i = 0; i < dates.length - 30; i++) {
-        delete store.dailyTokens[dates[i]];
-      }
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+
+  const result: Record<string, number> = {};
+
+  try {
+    const files = fs.readdirSync(sessionDir).filter(f => f.endsWith('.jsonl'));
+
+    for (const file of files) {
+      const fullPath = path.join(sessionDir, file);
+      
+      // Skip files not modified in the last N days (optimization)
+      try {
+        const mtime = fs.statSync(fullPath).mtime;
+        if (mtime.toISOString().slice(0, 10) < cutoffStr) continue;
+      } catch { continue; }
+
+      try {
+        const content = fs.readFileSync(fullPath, 'utf-8');
+        for (const line of content.split('\n')) {
+          if (!line.includes('"usage"')) continue;
+          try {
+            const obj = JSON.parse(line);
+            const usage = obj?.message?.usage;
+            if (!usage) continue;
+
+            const tokens = (usage.input || 0)
+              + (usage.output || 0)
+              + (usage.cacheRead || 0)
+              + (usage.cacheWrite || 0);
+            if (tokens === 0) continue;
+
+            // Extract date from timestamp
+            const ts = obj?.timestamp || obj?.message?.created_at || obj?.created_at;
+            let date: string;
+            if (ts && typeof ts === 'string' && ts.length >= 10) {
+              date = ts.slice(0, 10);
+            } else {
+              // Fallback: use file mtime (less accurate but better than nothing)
+              date = fs.statSync(fullPath).mtime.toISOString().slice(0, 10);
+            }
+
+            if (date >= cutoffStr) {
+              result[date] = (result[date] || 0) + tokens;
+            }
+          } catch { /* skip */ }
+        }
+      } catch { /* skip unreadable files */ }
     }
-
-    writeStore(store);
+  } catch (e) {
+    log(`Daily token scan error: ${e}`);
+    return dailyTokensCache;
   }
+
+  dailyTokensCache = result;
+  lastDailyScanTime = now;
+
+  // Also persist to store for offline access
+  const store = readStore();
+  store.dailyTokens = result;
+  writeStore(store);
+
+  log(`Daily token scan: ${Object.keys(result).length} days, today=${(result[new Date().toISOString().slice(0, 10)] || 0).toLocaleString()}`);
+  return result;
+}
+
+/**
+ * Get today's token usage (precise, timestamp-based).
+ */
+export function getTodayTokens(): number {
+  const daily = scanDailyTokens(7); // Only need recent days for today
+  const today = new Date().toISOString().slice(0, 10);
+  return daily[today] || 0;
 }

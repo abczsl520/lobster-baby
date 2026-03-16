@@ -440,25 +440,25 @@ export class SSHManager {
   async getRemoteTokens(serverId: string): Promise<{ total: number; daily: number; error?: string }> {
     try {
       const today = new Date().toISOString().slice(0, 10);
-      // Use node for speed — it's guaranteed to exist on OpenClaw servers
+      // Timestamp-based daily calculation — same logic as local scanner
       const script = `node -e "
 const fs=require('fs'),p=require('path');
 const d=p.join(require('os').homedir(),'.openclaw/agents/main/sessions');
 if(!fs.existsSync(d)){console.log(JSON.stringify({total:0,daily:0}));process.exit(0)}
 let total=0,daily=0;const today='${today}';
 for(const f of fs.readdirSync(d).filter(x=>x.endsWith('.jsonl'))){
-  const fp=p.join(d,f);let ft=0;
+  const fp=p.join(d,f);
   try{
-    const lines=fs.readFileSync(fp,'utf-8').split('\\\\n');
-    for(const l of lines){
+    for(const l of fs.readFileSync(fp,'utf-8').split('\\\\n')){
       if(!l.includes('usage'))continue;
       try{const o=JSON.parse(l),u=o?.message?.usage;
-        if(u)ft+=(u.input||0)+(u.output||0)+(u.cacheRead||0)+(u.cacheWrite||0);
+        if(!u)continue;
+        const t=(u.input||0)+(u.output||0)+(u.cacheRead||0)+(u.cacheWrite||0);
+        total+=t;
+        const ts=o?.timestamp||o?.message?.created_at||o?.created_at||'';
+        if(ts.startsWith(today))daily+=t;
       }catch{}
     }
-    total+=ft;
-    const mt=fs.statSync(fp).mtime.toISOString().slice(0,10);
-    if(mt===today)daily+=ft;
   }catch{}
 }
 console.log(JSON.stringify({total,daily}));
