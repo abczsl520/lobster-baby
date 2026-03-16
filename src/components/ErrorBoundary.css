@@ -102,6 +102,22 @@
   color: white;
 }
 
+.error-auto-retry {
+  font-size: 12px;
+  color: #ffc107;
+  background: rgba(255, 193, 7, 0.1);
+  padding: 6px 10px;
+  border-radius: 6px;
+  text-align: center;
+  margin: 8px 0;
+  animation: pulse-retry 1s ease-in-out infinite;
+}
+
+@keyframes pulse-retry {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
 .error-hint {
   font-size: 10px;
   color: rgba(255, 255, 255, 0.3);
