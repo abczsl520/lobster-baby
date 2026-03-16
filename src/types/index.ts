@@ -79,6 +79,7 @@ declare global {
       // Remote status
       // SSH Remote Control
       sshGetServers: () => Promise<any[]>;
+      sshBatchStatus: () => Promise<Record<string, any>>;
       sshAddServer: (data: { name: string; host: string; port: number; username: string; authType: string; credential: string }) => Promise<any>;
       sshRemoveServer: (id: string) => Promise<{ success: boolean }>;
       sshConnect: (id: string) => Promise<{ success: boolean; error?: string }>;
