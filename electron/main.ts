@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain, screen, Menu, shell, globalShortcut } from 'electron';
 import path from 'path';
 import https from 'https';
-import { log, logError, logWarn, logDebug } from './logger';
+import { log, logError, logWarn, logDebug, logSessionSummary } from './logger';
 import { readStore, writeStore } from './store';
 import { findOpenClaw, scanRealTokenUsage } from './scanner';
 import * as dock from './dock';
@@ -398,6 +398,7 @@ if (app.isPackaged) {
 app.on('window-all-closed', () => { stopStatusCheck(); if (process.platform !== 'darwin') app.quit(); });
 app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 app.on('before-quit', () => {
+  logSessionSummary();
   stopStatusCheck();
   closePanelWindow();
   sshManager.disconnectAll();
