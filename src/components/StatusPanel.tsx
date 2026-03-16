@@ -316,6 +316,14 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
                 {t('status.quit')}
               </button>
             </div>
+            <div className="action-row">
+              <button className="action-btn" onClick={() => window.electronAPI.backupData()}>
+                💾 {t('settings.backup')}
+              </button>
+              <button className="action-btn" onClick={() => window.electronAPI.restoreData()}>
+                📂 {t('settings.restore')}
+              </button>
+            </div>
           </div>
 
           {/* ── Footer ── */}

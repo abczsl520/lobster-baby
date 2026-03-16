@@ -41,6 +41,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getLevelData: () => ipcRenderer.invoke('get-level-data'),
   getDailyTokens: () => ipcRenderer.invoke('get-daily-tokens'),
   exportTokenCSV: () => ipcRenderer.invoke('export-token-csv'),
+  backupData: () => ipcRenderer.invoke('backup-data'),
+  restoreData: () => ipcRenderer.invoke('restore-data'),
   getSettings: () => ipcRenderer.invoke('get-settings'),
   updateSettings: (settings: Record<string, any>) => ipcRenderer.invoke('update-settings', settings),
   showPanel: (route?: string) => ipcRenderer.invoke('show-panel', route),

@@ -37,6 +37,8 @@ declare global {
       getLevelData: () => Promise<{ totalTokens: number }>;
       getDailyTokens: () => Promise<Record<string, number>>;
       exportTokenCSV: () => Promise<{ success: boolean; path?: string }>;
+      backupData: () => Promise<{ success: boolean }>;
+      restoreData: () => Promise<{ success: boolean; error?: string }>;
       getSettings: () => Promise<{ autoFadeEnabled: boolean; idleOpacity?: number }>;
       updateSettings: (settings: Record<string, any>) => Promise<any>;
       showPanel: (route?: string) => Promise<void>;

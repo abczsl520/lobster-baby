@@ -88,4 +88,58 @@ export function registerSettingsIPC(getMainWindow: () => BrowserWindow | null) {
     writeStore(store);
     return enabled;
   });
+
+  // ─── Backup / Restore ───
+  ipcMain.handle('backup-data', async () => {
+    const { dialog } = await import('electron');
+    const fs = await import('fs');
+    const path = await import('path');
+    const userData = app.getPath('userData');
+    const store = readStore();
+    const backup = {
+      version: 1,
+      date: new Date().toISOString(),
+      store,
+      plugins: {} as Record<string, any>,
+    };
+    // Include plugin configs
+    const configDir = path.join(userData, 'plugin-configs');
+    try {
+      if (fs.existsSync(configDir)) {
+        for (const file of fs.readdirSync(configDir)) {
+          if (file.endsWith('.json')) {
+            backup.plugins[file] = JSON.parse(fs.readFileSync(path.join(configDir, file), 'utf-8'));
+          }
+        }
+      }
+    } catch { /* ok */ }
+    const { filePath } = await dialog.showSaveDialog({
+      defaultPath: `lobster-backup-${new Date().toISOString().slice(0, 10)}.json`,
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+    });
+    if (filePath) {
+      fs.writeFileSync(filePath, JSON.stringify(backup, null, 2));
+      return { success: true };
+    }
+    return { success: false };
+  });
+
+  ipcMain.handle('restore-data', async () => {
+    const { dialog } = await import('electron');
+    const fs = await import('fs');
+    const { filePaths } = await dialog.showOpenDialog({
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+      properties: ['openFile'],
+    });
+    if (!filePaths || filePaths.length === 0) return { success: false };
+    try {
+      const raw = JSON.parse(fs.readFileSync(filePaths[0], 'utf-8'));
+      if (!raw.version || !raw.store) return { success: false, error: 'Invalid backup file' };
+      writeStore(raw.store);
+      log('Data restored from backup');
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e.message };
+    }
+  });
 }
