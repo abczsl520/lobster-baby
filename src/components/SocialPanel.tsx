@@ -33,6 +33,10 @@ export const SocialPanel: React.FC<SocialPanelProps> = ({ visible, onClose }) =>
 
   useEffect(() => {
     if (visible) { loadLocal(); loadStats(); }
+    // Auto-refresh stats every 30s when visible
+    if (!visible) return;
+    const interval = setInterval(loadStats, 30000);
+    return () => clearInterval(interval);
   }, [visible, loadLocal]);
 
   useEffect(() => {
@@ -368,9 +372,9 @@ export const SocialPanel: React.FC<SocialPanelProps> = ({ visible, onClose }) =>
         )}
         {stats && (
           <div className="social-stats-bar">
-            <span>{t('social.statsLobsters', { count: stats.total_users })}</span>
-            <span>{t('social.statsActive', { count: stats.active_24h })}</span>
-            <span>{t('social.statsPKs', { count: stats.total_pks })}</span>
+            <span>🦞 {stats.total_users}</span>
+            <span>🟢 {stats.active_24h}</span>
+            <span>⚔️ {stats.total_pks}</span>
           </div>
         )}
       </div>
