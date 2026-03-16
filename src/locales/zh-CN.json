@@ -295,7 +295,8 @@
     "language": "语言",
     "chinese": "中文",
     "english": "English",
-    "autoStart": "开机启动"
+    "autoStart": "开机启动",
+    "idleOpacity": "待机透明度"
   },
   "remote": {
     "title": "远程模式",

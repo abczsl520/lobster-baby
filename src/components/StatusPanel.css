@@ -282,6 +282,40 @@
 }
 
 .lang-select {
+
+.opacity-slider {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.opacity-slider input[type="range"] {
+  width: 80px;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  outline: none;
+}
+
+.opacity-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ff6b6b;
+  cursor: pointer;
+}
+
+.opacity-value {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
+  min-width: 28px;
+}
+
+
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 6px;
