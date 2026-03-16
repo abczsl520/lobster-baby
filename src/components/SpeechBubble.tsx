@@ -15,14 +15,23 @@ function getSpecialLine(t: (key: string) => string, levelInfo: LevelInfo, tokenI
   const { level } = levelInfo;
   const { daily } = tokenInfo;
 
+  // Token-based specials (highest priority)
   if (daily > 500_000_000) return t('speech.special.tokens500m');
   if (daily > 200_000_000) return t('speech.special.tokens200m');
   if (daily > 100_000_000) return t('speech.special.tokens100m');
   if (daily > 50_000_000) return t('speech.special.tokens50m');
 
+  // Level-based specials
   if (level >= 9) return t('speech.special.level9');
   if (level >= 7) return t('speech.special.level7');
   if (level >= 5) return t('speech.special.level5');
+
+  // Time-based specials (lower priority, random chance)
+  const hour = new Date().getHours();
+  const day = new Date().getDay();
+  if (hour >= 5 && hour < 8 && Math.random() < 0.4) return t('speech.special.morning');
+  if (hour >= 23 || hour < 3) return t('speech.special.night');
+  if ((day === 0 || day === 6) && Math.random() < 0.3) return t('speech.special.weekend');
 
   return null;
 }
