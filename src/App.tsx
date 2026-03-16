@@ -109,6 +109,9 @@ function LobsterApp() {
         document.documentElement.style.setProperty('--idle-opacity', String(settings.idleOpacity / 100));
       }
     }).catch(() => {});
+    // Load saved theme
+    const savedTheme = localStorage.getItem('lobster-theme');
+    if (savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
   }, []);
 
   // Auto-fade after 30 seconds of no interaction
