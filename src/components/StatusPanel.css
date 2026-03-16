@@ -378,6 +378,16 @@
   color: rgba(255, 255, 255, 0.2);
 }
 
+.shortcut-hint {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  font-family: system-ui;
+}
+
 .update-pill {
   padding: 3px 10px;
   background: rgba(0, 230, 118, 0.12);

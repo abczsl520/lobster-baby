@@ -273,6 +273,7 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
           {/* ── Footer ── */}
           <div className="panel-footer">
             <span className="version-text">v{APP_VERSION}</span>
+            <span className="shortcut-hint">⌘⇧L</span>
             {updateInfo?.hasUpdate ? (
               <button
                 className="update-pill"
