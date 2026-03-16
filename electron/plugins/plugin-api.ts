@@ -70,6 +70,15 @@ export function createPluginAPI(
 ): PluginAPI {
   const hasPermission = (p: PluginPermission) => permissions.includes(p);
 
+  // Rate limiting: max 60 shell execs per minute, max 120 fetches per minute
+  const rateLimits = { shell: { count: 0, resetAt: 0 }, fetch: { count: 0, resetAt: 0 } };
+  function checkRateLimit(type: 'shell' | 'fetch', max: number): boolean {
+    const now = Date.now();
+    if (now > rateLimits[type].resetAt) { rateLimits[type] = { count: 0, resetAt: now + 60_000 }; }
+    rateLimits[type].count++;
+    return rateLimits[type].count <= max;
+  }
+
   // Plugin-specific config file
   const configFile = path.join(configDir, `${pluginId}.json`);
   let pluginConfig: Record<string, any> = {};
@@ -118,6 +127,9 @@ export function createPluginAPI(
       exec(cmd: string): Promise<{ code: number; stdout: string; stderr: string }> {
         if (!hasPermission('shell')) {
           return Promise.reject(new Error('shell permission required'));
+        }
+        if (!checkRateLimit('shell', 60)) {
+          return Promise.reject(new Error('rate limit exceeded: max 60 commands/min'));
         }
         if (!isCommandSafe(cmd)) {
           log(`Plugin [${pluginId}] BLOCKED dangerous command: ${cmd}`);
@@ -174,6 +186,9 @@ export function createPluginAPI(
     fetch(url: string, options?: { method?: string; headers?: Record<string, string>; body?: string }): Promise<{ status: number; body: string }> {
       if (!hasPermission('network')) {
         return Promise.reject(new Error('network permission required'));
+      }
+      if (!checkRateLimit('fetch', 120)) {
+        return Promise.reject(new Error('rate limit exceeded: max 120 requests/min'));
       }
       // Block private IPs
       if (/^https?:\/\/(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/i.test(url)) {
