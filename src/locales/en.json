@@ -283,7 +283,8 @@
     "chinese": "中文",
     "english": "English",
     "autoStart": "Start on login",
-    "idleOpacity": "Idle opacity"
+    "idleOpacity": "Idle opacity",
+    "theme": "Theme"
   },
   "ssh": {
     "title": "Remote Control",
@@ -399,5 +400,12 @@
     "yesterday": "Yesterday",
     "peak": "Peak",
     "vsLastWeek": "vs last week"
+  },
+  "theme": {
+    "lobsterRed": "Lobster Red",
+    "oceanBlue": "Ocean Blue",
+    "forestGreen": "Forest Green",
+    "sunsetPurple": "Sunset Purple",
+    "goldenLuxe": "Golden Luxe"
   }
 }

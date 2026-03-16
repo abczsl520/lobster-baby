@@ -283,7 +283,8 @@
     "chinese": "中文",
     "english": "English",
     "autoStart": "开机启动",
-    "idleOpacity": "待机透明度"
+    "idleOpacity": "待机透明度",
+    "theme": "主题"
   },
   "ssh": {
     "title": "远程控制",
@@ -399,5 +400,12 @@
     "yesterday": "昨天",
     "peak": "峰值",
     "vsLastWeek": "环比"
+  },
+  "theme": {
+    "lobsterRed": "龙虾红",
+    "oceanBlue": "海洋蓝",
+    "forestGreen": "森林绿",
+    "sunsetPurple": "日落紫",
+    "goldenLuxe": "尊贵金"
   }
 }

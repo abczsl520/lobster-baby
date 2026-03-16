@@ -1,0 +1,116 @@
+/* ─── Theme System ─── */
+
+/* Default: Lobster Red (dark) */
+:root, [data-theme="lobster-red"] {
+  --theme-bg: rgba(15, 15, 25, 0.96);
+  --theme-border: rgba(255, 77, 77, 0.2);
+  --theme-glow: rgba(255, 77, 77, 0.08);
+  --theme-accent: #ff6b6b;
+  --theme-accent-dim: rgba(255, 77, 77, 0.2);
+  --theme-accent-hover: rgba(255, 77, 77, 0.4);
+  --theme-text: rgba(255, 255, 255, 0.85);
+  --theme-text-dim: rgba(255, 255, 255, 0.5);
+  --theme-text-muted: rgba(255, 255, 255, 0.3);
+  --theme-card-bg: rgba(255, 255, 255, 0.04);
+  --theme-card-border: rgba(255, 255, 255, 0.06);
+  --theme-success: #00e676;
+  --theme-warning: #ffc107;
+  --theme-error: #ff5252;
+  --theme-scrollbar: rgba(255, 77, 77, 0.2);
+  --theme-scrollbar-hover: rgba(255, 77, 77, 0.4);
+  --theme-toggle-bg: rgba(255, 255, 255, 0.1);
+  --theme-btn-bg: rgba(255, 255, 255, 0.08);
+  --theme-btn-hover: rgba(255, 255, 255, 0.15);
+}
+
+/* Ocean Blue */
+[data-theme="ocean-blue"] {
+  --theme-bg: rgba(10, 15, 30, 0.96);
+  --theme-border: rgba(66, 165, 245, 0.2);
+  --theme-glow: rgba(66, 165, 245, 0.08);
+  --theme-accent: #42a5f5;
+  --theme-accent-dim: rgba(66, 165, 245, 0.2);
+  --theme-accent-hover: rgba(66, 165, 245, 0.4);
+  --theme-text: rgba(255, 255, 255, 0.85);
+  --theme-text-dim: rgba(255, 255, 255, 0.5);
+  --theme-text-muted: rgba(255, 255, 255, 0.3);
+  --theme-card-bg: rgba(255, 255, 255, 0.04);
+  --theme-card-border: rgba(255, 255, 255, 0.06);
+  --theme-success: #00e676;
+  --theme-warning: #ffc107;
+  --theme-error: #ff5252;
+  --theme-scrollbar: rgba(66, 165, 245, 0.2);
+  --theme-scrollbar-hover: rgba(66, 165, 245, 0.4);
+  --theme-toggle-bg: rgba(255, 255, 255, 0.1);
+  --theme-btn-bg: rgba(255, 255, 255, 0.08);
+  --theme-btn-hover: rgba(255, 255, 255, 0.15);
+}
+
+/* Forest Green */
+[data-theme="forest-green"] {
+  --theme-bg: rgba(10, 25, 15, 0.96);
+  --theme-border: rgba(76, 175, 80, 0.2);
+  --theme-glow: rgba(76, 175, 80, 0.08);
+  --theme-accent: #66bb6a;
+  --theme-accent-dim: rgba(76, 175, 80, 0.2);
+  --theme-accent-hover: rgba(76, 175, 80, 0.4);
+  --theme-text: rgba(255, 255, 255, 0.85);
+  --theme-text-dim: rgba(255, 255, 255, 0.5);
+  --theme-text-muted: rgba(255, 255, 255, 0.3);
+  --theme-card-bg: rgba(255, 255, 255, 0.04);
+  --theme-card-border: rgba(255, 255, 255, 0.06);
+  --theme-success: #00e676;
+  --theme-warning: #ffc107;
+  --theme-error: #ff5252;
+  --theme-scrollbar: rgba(76, 175, 80, 0.2);
+  --theme-scrollbar-hover: rgba(76, 175, 80, 0.4);
+  --theme-toggle-bg: rgba(255, 255, 255, 0.1);
+  --theme-btn-bg: rgba(255, 255, 255, 0.08);
+  --theme-btn-hover: rgba(255, 255, 255, 0.15);
+}
+
+/* Sunset Purple */
+[data-theme="sunset-purple"] {
+  --theme-bg: rgba(20, 10, 30, 0.96);
+  --theme-border: rgba(171, 71, 188, 0.2);
+  --theme-glow: rgba(171, 71, 188, 0.08);
+  --theme-accent: #ce93d8;
+  --theme-accent-dim: rgba(171, 71, 188, 0.2);
+  --theme-accent-hover: rgba(171, 71, 188, 0.4);
+  --theme-text: rgba(255, 255, 255, 0.85);
+  --theme-text-dim: rgba(255, 255, 255, 0.5);
+  --theme-text-muted: rgba(255, 255, 255, 0.3);
+  --theme-card-bg: rgba(255, 255, 255, 0.04);
+  --theme-card-border: rgba(255, 255, 255, 0.06);
+  --theme-success: #00e676;
+  --theme-warning: #ffc107;
+  --theme-error: #ff5252;
+  --theme-scrollbar: rgba(171, 71, 188, 0.2);
+  --theme-scrollbar-hover: rgba(171, 71, 188, 0.4);
+  --theme-toggle-bg: rgba(255, 255, 255, 0.1);
+  --theme-btn-bg: rgba(255, 255, 255, 0.08);
+  --theme-btn-hover: rgba(255, 255, 255, 0.15);
+}
+
+/* Golden Luxe */
+[data-theme="golden-luxe"] {
+  --theme-bg: rgba(20, 18, 10, 0.96);
+  --theme-border: rgba(255, 193, 7, 0.2);
+  --theme-glow: rgba(255, 193, 7, 0.08);
+  --theme-accent: #ffd54f;
+  --theme-accent-dim: rgba(255, 193, 7, 0.2);
+  --theme-accent-hover: rgba(255, 193, 7, 0.4);
+  --theme-text: rgba(255, 255, 255, 0.85);
+  --theme-text-dim: rgba(255, 255, 255, 0.5);
+  --theme-text-muted: rgba(255, 255, 255, 0.3);
+  --theme-card-bg: rgba(255, 255, 255, 0.04);
+  --theme-card-border: rgba(255, 255, 255, 0.06);
+  --theme-success: #00e676;
+  --theme-warning: #ffc107;
+  --theme-error: #ff5252;
+  --theme-scrollbar: rgba(255, 193, 7, 0.2);
+  --theme-scrollbar-hover: rgba(255, 193, 7, 0.4);
+  --theme-toggle-bg: rgba(255, 255, 255, 0.1);
+  --theme-btn-bg: rgba(255, 255, 255, 0.08);
+  --theme-btn-hover: rgba(255, 255, 255, 0.15);
+}

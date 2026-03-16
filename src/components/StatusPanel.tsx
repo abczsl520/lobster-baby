@@ -290,6 +290,24 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
                 <option value="en">{t('settings.english')}</option>
               </select>
             </div>
+            <div className="setting-row">
+              <span className="setting-label">{t('settings.theme')}</span>
+              <select
+                className="lang-select"
+                value={localStorage.getItem('lobster-theme') || 'lobster-red'}
+                onChange={(e) => {
+                  const theme = e.target.value;
+                  localStorage.setItem('lobster-theme', theme);
+                  document.documentElement.setAttribute('data-theme', theme);
+                }}
+              >
+                <option value="lobster-red">🦞 {t('theme.lobsterRed')}</option>
+                <option value="ocean-blue">🌊 {t('theme.oceanBlue')}</option>
+                <option value="forest-green">🌲 {t('theme.forestGreen')}</option>
+                <option value="sunset-purple">🌅 {t('theme.sunsetPurple')}</option>
+                <option value="golden-luxe">✨ {t('theme.goldenLuxe')}</option>
+              </select>
+            </div>
             <div className="action-row">
               <button className="action-btn" onClick={() => window.electronAPI.toggleAlwaysOnTop()}>
                 {t('status.pinToTop')}
