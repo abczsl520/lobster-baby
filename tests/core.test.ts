@@ -225,3 +225,130 @@ describe('Token Usage Parsing', () => {
     expect(parseUsageLine(line, '2026-03-14')?.date).toBe('2026-03-16');
   });
 });
+
+// ─── Achievement Milestone Tests ───
+
+const MILESTONES = [
+  { id: 'first-million', tokens: 1_000_000 },
+  { id: 'ten-million', tokens: 10_000_000 },
+  { id: 'fifty-million', tokens: 50_000_000 },
+  { id: 'hundred-million', tokens: 100_000_000 },
+  { id: 'five-hundred-million', tokens: 500_000_000 },
+  { id: 'one-billion', tokens: 1_000_000_000 },
+  { id: 'two-billion', tokens: 2_000_000_000 },
+  { id: 'five-billion', tokens: 5_000_000_000 },
+  { id: 'ten-billion', tokens: 10_000_000_000 },
+  { id: 'twenty-billion', tokens: 20_000_000_000 },
+  { id: 'fifty-billion', tokens: 50_000_000_000 },
+  { id: 'hundred-billion', tokens: 100_000_000_000 },
+];
+
+function checkMilestones(totalTokens: number, earned: Set<string>): string[] {
+  const newMilestones: string[] = [];
+  for (const m of MILESTONES) {
+    if (totalTokens >= m.tokens && !earned.has(m.id)) {
+      newMilestones.push(m.id);
+    }
+  }
+  return newMilestones;
+}
+
+describe('Achievement Milestones', () => {
+  it('no achievements at 0 tokens', () => {
+    expect(checkMilestones(0, new Set())).toEqual([]);
+  });
+
+  it('first million at exactly 1M', () => {
+    expect(checkMilestones(1_000_000, new Set())).toEqual(['first-million']);
+  });
+
+  it('multiple milestones at 100M', () => {
+    const result = checkMilestones(100_000_000, new Set());
+    expect(result).toContain('first-million');
+    expect(result).toContain('ten-million');
+    expect(result).toContain('fifty-million');
+    expect(result).toContain('hundred-million');
+    expect(result.length).toBe(4);
+  });
+
+  it('skips already earned', () => {
+    const earned = new Set(['first-million', 'ten-million']);
+    const result = checkMilestones(50_000_000, earned);
+    expect(result).toEqual(['fifty-million']);
+  });
+
+  it('all milestones at 100B', () => {
+    expect(checkMilestones(100_000_000_000, new Set()).length).toBe(12);
+  });
+
+  it('milestones are sorted ascending', () => {
+    for (let i = 1; i < MILESTONES.length; i++) {
+      expect(MILESTONES[i].tokens).toBeGreaterThan(MILESTONES[i - 1].tokens);
+    }
+  });
+
+  it('all milestone ids are unique', () => {
+    const ids = MILESTONES.map(m => m.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+});
+
+// ─── Logger Level Tests ───
+
+const LEVEL_PRIORITY: Record<string, number> = { debug: 0, info: 1, warn: 2, error: 3 };
+
+function shouldLog(messageLevel: string, currentLevel: string): boolean {
+  return LEVEL_PRIORITY[messageLevel] >= LEVEL_PRIORITY[currentLevel];
+}
+
+describe('Logger Level Filtering', () => {
+  it('info shows at info level', () => expect(shouldLog('info', 'info')).toBe(true));
+  it('debug hidden at info level', () => expect(shouldLog('debug', 'info')).toBe(false));
+  it('error shows at any level', () => {
+    expect(shouldLog('error', 'debug')).toBe(true);
+    expect(shouldLog('error', 'info')).toBe(true);
+    expect(shouldLog('error', 'warn')).toBe(true);
+    expect(shouldLog('error', 'error')).toBe(true);
+  });
+  it('warn hidden at error level', () => expect(shouldLog('warn', 'error')).toBe(false));
+  it('debug shows at debug level', () => expect(shouldLog('debug', 'debug')).toBe(true));
+});
+
+// ─── ETA Formatter Tests ───
+
+function formatETA(minutes: number): string {
+  if (minutes < 60) return `${Math.round(minutes)}m`;
+  if (minutes < 1440) return `${Math.round(minutes / 60)}h`;
+  return `${Math.round(minutes / 1440)}d`;
+}
+
+describe('ETA Formatter', () => {
+  it('formats minutes', () => expect(formatETA(30)).toBe('30m'));
+  it('formats hours', () => expect(formatETA(120)).toBe('2h'));
+  it('formats days', () => expect(formatETA(2880)).toBe('2d'));
+  it('rounds up hours', () => expect(formatETA(90)).toBe('2h'));
+  it('boundary: 59 min', () => expect(formatETA(59)).toBe('59m'));
+  it('boundary: 60 min', () => expect(formatETA(60)).toBe('1h'));
+  it('boundary: 1440 min = 1d', () => expect(formatETA(1440)).toBe('1d'));
+});
+
+// ─── SSH Reconnect Logic Tests ───
+
+const MAX_RECONNECT_ATTEMPTS = 5;
+const RECONNECT_DELAYS = [5000, 10000, 30000, 60000, 120000];
+
+function getReconnectDelay(attempt: number): number {
+  return RECONNECT_DELAYS[Math.min(attempt, RECONNECT_DELAYS.length - 1)];
+}
+
+describe('SSH Reconnect Logic', () => {
+  it('first attempt = 5s', () => expect(getReconnectDelay(0)).toBe(5000));
+  it('second attempt = 10s', () => expect(getReconnectDelay(1)).toBe(10000));
+  it('fifth attempt = 120s', () => expect(getReconnectDelay(4)).toBe(120000));
+  it('beyond max clamps to 120s', () => expect(getReconnectDelay(10)).toBe(120000));
+  it('delays are monotonically increasing', () => {
+    for (let i = 1; i < RECONNECT_DELAYS.length; i++) {
+      expect(RECONNECT_DELAYS[i]).toBeGreaterThan(RECONNECT_DELAYS[i - 1]);
+    }
+  });
+});
