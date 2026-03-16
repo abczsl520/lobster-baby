@@ -3,6 +3,7 @@ import { exec } from 'child_process';
 import { log } from './logger';
 import { scanRealTokenUsage, getTodayTokens } from './scanner';
 import { readStore, writeStore } from './store';
+import { updateTrayTooltip } from './tray';
 
 let isCheckingStatus = false;
 let lastStatusPayload = '';
@@ -113,6 +114,7 @@ export function checkOpenClawStatus() {
         broadcastStatus('openclaw-status', {
           status, activeSessions, tokenInfo: { daily: dailyTokens, total: totalTokens },
         });
+        updateTrayTooltip(status, totalTokens);
       } catch { /* window might be closing */ }
     })
     .catch((err) => log(`Status check error: ${err}`))
