@@ -6,6 +6,29 @@ import { logError } from '../logger';
 import { sshManager } from '../ssh-manager';
 
 export function registerSSHIPC() {
+  // Batch status check for all connected servers
+  ipcMain.handle('ssh-batch-status', async () => {
+    const servers = sshManager.getServers();
+    const results: Record<string, any> = {};
+    const promises = servers.map(async (s) => {
+      if (!sshManager.isConnected(s.id)) {
+        results[s.id] = { connected: false };
+        return;
+      }
+      try {
+        const [status, tokens] = await Promise.all([
+          sshManager.getOpenClawStatus(s.id),
+          sshManager.getRemoteTokens(s.id),
+        ]);
+        results[s.id] = { ...status, tokens };
+      } catch {
+        results[s.id] = { connected: false, error: 'Failed' };
+      }
+    });
+    await Promise.all(promises);
+    return results;
+  });
+
   ipcMain.handle('ssh-get-servers', () => {
     return sshManager.getServers().map(s => ({
       ...s,
