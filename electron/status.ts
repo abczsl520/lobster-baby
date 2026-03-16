@@ -2,6 +2,7 @@ import { BrowserWindow } from 'electron';
 import { exec } from 'child_process';
 import { log } from './logger';
 import { scanRealTokenUsage, getTodayTokens } from './scanner';
+import { readStore, writeStore } from './store';
 
 let isCheckingStatus = false;
 let lastStatusPayload = '';
@@ -86,6 +87,22 @@ export function checkOpenClawStatus() {
 
       const totalTokens = realTokens;
       const dailyTokens = getTodayTokens();
+
+      // Track streak
+      const today = new Date().toISOString().slice(0, 10);
+      const store = readStore();
+      if (store.lastActiveDate !== today && (status === 'active' || status === 'idle')) {
+        const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+        if (store.lastActiveDate === yesterday) {
+          store.streakDays = (store.streakDays || 1) + 1;
+        } else if (store.lastActiveDate !== today) {
+          store.streakDays = 1;
+        }
+        store.onlineDays = (store.onlineDays || 0) + 1;
+        store.lastActiveDate = today;
+        writeStore(store);
+        log(`Streak: ${store.streakDays} days, total online: ${store.onlineDays}`);
+      }
 
       const newPayload = JSON.stringify({ status, totalTokens, dailyTokens });
       if (newPayload !== lastStatusPayload) {
