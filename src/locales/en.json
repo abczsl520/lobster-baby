@@ -174,7 +174,19 @@
       "Want some fish snacks",
       "🫧",
       "Waiting for owner...",
-      "Spacing out.jpg"
+      "Spacing out.jpg",
+      "What was that sound?",
+      "Counting stars ⭐",
+      "Humming a tune~🎵",
+      "Miss the ocean",
+      "How's your day?",
+      "Peeking at you 👀",
+      "Yawn~ 🥱",
+      "Doing nothing.png",
+      "Wanna chat?",
+      "Sleepy...",
+      "Daydreaming",
+      "🌊 Wanna surf"
     ],
     "active": [
       "Burning tokens again!",
@@ -186,7 +198,19 @@
       "APIs buzzing",
       "Super productive today",
       "Wallet is crying...",
-      "⚡ Max output"
+      "⚡ Max output",
+      "Interesting code!",
+      "You're a machine!",
+      "Can't stop now!",
+      "Tokens go brrrr 🚀",
+      "Brain overclocked",
+      "Nice prompt!",
+      "Learned something new",
+      "So productive today",
+      "Max efficiency 💯",
+      "Code god mode",
+      "Another bug squashed!",
+      "Inspiration flowing ✨"
     ],
     "error": [
       "Owner? Are you there?",
@@ -194,7 +218,13 @@
       "So cold...",
       "Belly up...",
       "Help!",
-      "Signal lost..."
+      "Signal lost...",
+      "Network hiccup...",
+      "Hold on...",
+      "Don't panic!",
+      "Try reconnecting?",
+      "😵 Dizzy...",
+      "Finding signal..."
     ],
     "special": {
       "tokens500m": "500M tokens burned today! 💸",
@@ -203,7 +233,11 @@
       "tokens50m": "50M tokens today~",
       "level9": "I'm a legendary lobster now 🌈",
       "level7": "Such high level, owner is amazing",
-      "level5": "Golden crown lobster, shining ✨"
+      "level5": "Golden crown lobster, shining ✨",
+      "morning": "Good morning! 🌅",
+      "night": "Working late? 🌙",
+      "weekend": "Coding on weekend? Hardcore!",
+      "longSession": "Long session! Take a break?"
     },
     "remote": [
       "☁️ Remote monitoring~",
@@ -211,7 +245,13 @@
       "☁️ Signal stable",
       "Remote connection OK~",
       "Cloud guardian 🦞",
-      "Server status OK!"
+      "Server status OK!",
+      "☁️ All clear in the cloud",
+      "Nice view from here",
+      "Watching your server",
+      "Guarding across the sea 🌊",
+      "Low latency, no worries~",
+      "PM2 processes alive"
     ]
   },
   "update": {
