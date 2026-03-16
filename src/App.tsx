@@ -248,6 +248,7 @@ function LobsterApp() {
           status={status}
           levelInfo={levelInfo}
           onClick={handleClick}
+          onDoubleClick={() => window.electronAPI.showPanel('status')}
           dockState={dockState}
         />
       </div>
