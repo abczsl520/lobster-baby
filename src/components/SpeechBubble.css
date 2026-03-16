@@ -17,11 +17,12 @@
   pointer-events: none;
   z-index: 999;
   will-change: transform, opacity;
-  animation: speech-in 0.45s cubic-bezier(0.22, 1.15, 0.36, 1) forwards;
+  animation: speech-in 0.45s cubic-bezier(0.22, 1.15, 0.36, 1) forwards,
+             speech-float 3s ease-in-out 0.5s infinite;
   white-space: nowrap;
 }
 
-/* Triangle tail using pseudo-element */
+/* Triangle tail */
 .speech-bubble::after {
   content: '';
   position: absolute;
@@ -41,7 +42,7 @@
   user-select: none;
 }
 
-/* Enter animation */
+/* Enter */
 @keyframes speech-in {
   0% {
     opacity: 0;
@@ -60,7 +61,17 @@
   }
 }
 
-/* Exit animation */
+/* Gentle float while visible */
+@keyframes speech-float {
+  0%, 100% {
+    transform: translate3d(calc(-50% + var(--bubble-offset, 0px)), 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(calc(-50% + var(--bubble-offset, 0px)), -3px, 0) scale(1);
+  }
+}
+
+/* Exit */
 .speech-bubble.leaving {
   animation: speech-out 0.4s ease-in forwards;
 }
