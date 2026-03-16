@@ -5,6 +5,23 @@
   gap: 6px;
 }
 
+.achievement-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  padding: 0 2px 4px;
+}
+
+.achievement-count {
+  font-size: 10px;
+  background: rgba(255, 215, 0, 0.1);
+  color: #ffd700;
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
 .achievement-item {
   display: flex;
   align-items: center;
