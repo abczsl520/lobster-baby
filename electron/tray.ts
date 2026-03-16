@@ -1,4 +1,5 @@
 import { BrowserWindow, Menu, Tray, nativeImage, app } from 'electron';
+import path from 'path';
 import { t } from './i18n-main';
 
 let tray: Tray | null = null;
@@ -38,9 +39,23 @@ export function updateTrayMenu() {
 }
 
 export function createTray() {
-  const icon = nativeImage.createFromDataURL(
-    'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAA2ElEQVQ4T2NkoBAwUqifgWoGMDIyNjAyMv5nYGD4T8gFjP///2dgZGRsYGJiagBpxmcIyGBGRsYGJiamBmJcADKYiYmpgZGRsQGfIf8ZGBgbmJiYGhgZGRvwGQIKBiYmpgZGRsYGfIaAgoGJiamBkZGxAZ8h/xkYGBuYmJgaGBkZG/AZAgoGJiamBkZGxgZ8hoCCgYmJqYGRkbEBnyH/GRgYG5iYmBoYGRkb8BkCCgYmJqYGRkbGBnyGgIKBiYmpgZGRsQGfIaBgYGJiamBkZGzAZwgAqFBBEQmNF/IAAAAASUVORK5CYII='
-  );
+  // Use lobster icon from assets — path resolves differently in dev vs packaged
+  const basePath = app.isPackaged 
+    ? path.join(process.resourcesPath, 'tray-icon.png')
+    : path.join(__dirname, '..', 'electron', 'assets', 'tray-icon.png');
+  
+  let icon: Electron.NativeImage;
+  try {
+    icon = nativeImage.createFromPath(basePath);
+    // Resize for tray (16x16 template on macOS)
+    icon = icon.resize({ width: 18, height: 18 });
+    icon.setTemplateImage(true);
+  } catch {
+    // Fallback to inline base64
+    icon = nativeImage.createFromDataURL(
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAA2ElEQVQ4T2NkoBAwUqifgWoGMDIyNjAyMv5nYGD4T8gFjP///2dgZGRsYGJiagBpxmcIyGBGRsYGJiamBmJcADKYiYmpgZGRsQGfIf8ZGBgbmJiYGhgZGRvwGQIKBiYmpgZGRsYGfIaAgoGJiamBkZGxAZ8h/xkYGBuYmJgaGBkZG/AZAgoGJiamBkZGxgZ8hoCCgYmJqYGRkbEBnyH/GRgYG5iYmBoYGRkb8BkCCgYmJqYGRkbGBnyGgIKBiYmpgZGRsQGfIaBgYGJiamBkZGzAZwgAqFBBEQmNF/IAAAAASUVORK5CYII='
+    );
+  }
 
   tray = new Tray(icon);
   tray.setToolTip('🦞 Lobster Baby');
