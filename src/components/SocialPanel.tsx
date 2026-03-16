@@ -371,10 +371,19 @@ export const SocialPanel: React.FC<SocialPanelProps> = ({ visible, onClose }) =>
           </div>
         )}
         {stats && (
-          <div className="social-stats-bar">
-            <span>🦞 {stats.total_users}</span>
-            <span>🟢 {stats.active_24h}</span>
-            <span>⚔️ {stats.total_pks}</span>
+          <div className="social-stats-card">
+            <div className="social-stat-item">
+              <span className="social-stat-value">{stats.total_users ?? 0}</span>
+              <span className="social-stat-label">🦞 {t('social.statLobsters')}</span>
+            </div>
+            <div className="social-stat-item">
+              <span className="social-stat-value">{stats.active_24h ?? 0}</span>
+              <span className="social-stat-label">🟢 {t('social.statActive')}</span>
+            </div>
+            <div className="social-stat-item">
+              <span className="social-stat-value">{stats.total_pks ?? 0}</span>
+              <span className="social-stat-label">⚔️ {t('social.statPKs')}</span>
+            </div>
           </div>
         )}
       </div>

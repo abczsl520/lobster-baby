@@ -163,7 +163,10 @@
     "registerCommunity": "🦞 注册社区",
     "statsLobsters": "🦞 {{count}} 只龙虾",
     "statsActive": "🟢 {{count}} 活跃",
-    "statsPKs": "⚔️ {{count}} 场PK"
+    "statsPKs": "⚔️ {{count}} 场PK",
+    "statLobsters": "龙虾",
+    "statActive": "活跃",
+    "statPKs": "对战"
   },
   "speech": {
     "idle": [

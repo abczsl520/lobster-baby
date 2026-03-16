@@ -163,7 +163,10 @@
     "registerCommunity": "🦞 Join Community",
     "statsLobsters": "🦞 {{count}} lobsters",
     "statsActive": "🟢 {{count}} active",
-    "statsPKs": "⚔️ {{count}} PKs"
+    "statsPKs": "⚔️ {{count}} PKs",
+    "statLobsters": "Lobsters",
+    "statActive": "Active",
+    "statPKs": "PKs"
   },
   "speech": {
     "idle": [
