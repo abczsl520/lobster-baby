@@ -36,6 +36,7 @@ declare global {
       toggleAlwaysOnTop: () => Promise<boolean>;
       getLevelData: () => Promise<{ totalTokens: number }>;
       getDailyTokens: () => Promise<Record<string, number>>;
+      exportTokenCSV: () => Promise<{ success: boolean; path?: string }>;
       getSettings: () => Promise<{ autoFadeEnabled: boolean; idleOpacity?: number }>;
       updateSettings: (settings: Record<string, any>) => Promise<any>;
       showPanel: (route?: string) => Promise<void>;

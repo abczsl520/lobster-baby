@@ -105,7 +105,7 @@ export const PluginPanel: React.FC<PluginPanelProps> = ({ visible, onClose }) =>
     const perms = confirmInstall.permissions || [];
     const hasHighRisk = perms.includes('shell');
     return (
-      <div className="plugin-panel">
+      <div className="plugin-panel" role="dialog" aria-label="Plugin Panel">
         <div className="plugin-header">
           <button className="plugin-back" onClick={() => setConfirmInstall(null)}>←</button>
           <h3>🔒 {t('plugin.confirmInstall')}</h3>
@@ -138,9 +138,9 @@ export const PluginPanel: React.FC<PluginPanelProps> = ({ visible, onClose }) =>
   }
 
   return (
-    <div className="plugin-panel">
+    <div className="plugin-panel" role="dialog" aria-label="Plugin Panel">
       <div className="plugin-header">
-        <button className="plugin-back" onClick={onClose}>←</button>
+        <button className="plugin-back" onClick={onClose} aria-label="Back">←</button>
         <h3>🧩 {t('status.plugins')}</h3>
       </div>
 

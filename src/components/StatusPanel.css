@@ -478,3 +478,50 @@
   height: 200px;
   font-size: 24px;
 }
+
+/* ─── Keyboard Focus Styles ─── */
+.feature-card:focus-visible,
+.action-btn:focus-visible,
+.setting-row select:focus-visible,
+.setting-row input:focus-visible {
+  outline: 2px solid var(--theme-accent, #ff6b6b);
+  outline-offset: 2px;
+}
+
+.toggle-switch input:focus-visible + .toggle-slider {
+  outline: 2px solid var(--theme-accent, #ff6b6b);
+  outline-offset: 2px;
+}
+
+/* ─── Animated Background ─── */
+.panel-window .status-panel::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle at 30% 70%,
+    var(--theme-glow, rgba(255, 77, 77, 0.08)) 0%,
+    transparent 50%
+  ),
+  radial-gradient(
+    circle at 70% 30%,
+    var(--theme-glow, rgba(255, 77, 77, 0.05)) 0%,
+    transparent 50%
+  );
+  animation: bg-drift 20s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.status-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes bg-drift {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(5%, -3%) rotate(3deg); }
+}

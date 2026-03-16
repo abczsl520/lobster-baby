@@ -181,7 +181,7 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
     <div className="ssh-panel">
       {/* ── Header ── */}
       <div className="ssh-header">
-        <button className="ssh-back-btn" onClick={onClose}>←</button>
+        <button className="ssh-back-btn" onClick={onClose} aria-label="Back">←</button>
         <span className="ssh-title">🖥️ {t('ssh.title')}</span>
         {activeServerObj && (
           <span className="ssh-connected-badge">🟢 {activeServerObj.name}</span>

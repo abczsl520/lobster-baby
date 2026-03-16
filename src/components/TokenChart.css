@@ -157,3 +157,25 @@
 .chart-stat-value.trend-down {
   color: #ff5252;
 }
+
+.chart-header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chart-export-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.chart-export-btn:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+}

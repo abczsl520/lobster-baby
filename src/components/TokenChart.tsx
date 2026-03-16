@@ -62,7 +62,10 @@ export const TokenChart: React.FC<TokenChartProps> = ({ visible }) => {
     <div className="token-chart">
       <div className="chart-header">
         <span className="chart-title">📈 {t('chart.trend7d')}</span>
-        <span className="chart-avg">{t('chart.dailyAvg')} {formatTokens(avgDay)}</span>
+        <div className="chart-header-right">
+          <span className="chart-avg">{t('chart.dailyAvg')} {formatTokens(avgDay)}</span>
+          <button className="chart-export-btn" onClick={() => window.electronAPI.exportTokenCSV()} title={t('chart.export')}>📥</button>
+        </div>
       </div>
 
       <div className="chart-bars">

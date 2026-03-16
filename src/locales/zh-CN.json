@@ -399,7 +399,8 @@
     "today": "今天",
     "yesterday": "昨天",
     "peak": "峰值",
-    "vsLastWeek": "环比"
+    "vsLastWeek": "环比",
+    "export": "导出数据"
   },
   "theme": {
     "lobsterRed": "龙虾红",
