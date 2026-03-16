@@ -238,21 +238,7 @@
       "night": "这么晚了还在忙啊…🌙",
       "weekend": "周末也在写代码？真卷",
       "longSession": "已经连续工作好久了，休息一下？"
-    },
-    "remote": [
-      "☁️ 远程监控中~",
-      "服务器在跑呢！",
-      "☁️ 信号稳定",
-      "远程连接正常~",
-      "云端守护中 🦞",
-      "服务器状态 OK！",
-      "☁️ 云端一切正常",
-      "远程的风景真好",
-      "帮你看着服务器呢",
-      "跨越山海守护你 🌊",
-      "延迟很低，放心~",
-      "PM2 进程都活着"
-    ]
+    }
   },
   "update": {
     "newVersion": "新版本可用！",
@@ -297,38 +283,6 @@
     "english": "English",
     "autoStart": "开机启动",
     "idleOpacity": "待机透明度"
-  },
-  "remote": {
-    "title": "远程模式",
-    "dataSource": "数据源",
-    "local": "本地（自动检测）",
-    "remoteServer": "远程（云服务器）",
-    "status": "状态",
-    "connected": "已连接",
-    "disconnected": "未连接",
-    "notConfigured": "未配置",
-    "lastHeartbeat": "最后心跳",
-    "reporterVersion": "Reporter 版本",
-    "generateToken": "生成 Reporter Token",
-    "revokeToken": "吊销 Token",
-    "copyToken": "复制 Token",
-    "copied": "已复制！",
-    "installCommand": "安装命令",
-    "installHint": "在云服务器上执行以下命令安装 Reporter：",
-    "tokenGenerated": "Token 已生成",
-    "tokenRevoked": "Token 已吊销",
-    "offlineReasons": {
-      "openclaw_offline": "OpenClaw 未运行",
-      "reporter_offline": "Reporter 离线",
-      "relay_unreachable": "中继服务器不可达",
-      "token_invalid": "Token 无效"
-    },
-    "cloudIcon": "☁️",
-    "remoteMode": "远程模式",
-    "secondsAgo": "{{seconds}}秒前",
-    "minutesAgo": "{{minutes}}分钟前",
-    "hoursAgo": "{{hours}}小时前",
-    "needRegister": "请先注册社交功能"
   },
   "ssh": {
     "title": "远程控制",
@@ -397,11 +351,6 @@
     },
     "manageServers": "管理服务器",
     "home": {
-      "dataSource": "龙虾状态数据源",
-      "dataSourceDesc": "龙虾显示的运行数据来自哪里？本地自动检测，或从你的云服务器同步",
-      "localMode": "本地检测",
-      "cloudMode": "云端同步",
-      "reporterNeeded": "需要在服务器安装 Reporter 才能同步数据",
       "sshServers": "SSH 直连管理",
       "sshDesc": "直接连接你的服务器，查看状态、管理进程、查看日志",
       "noServers": "还没添加服务器，点击下方按钮开始",

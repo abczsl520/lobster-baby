@@ -238,21 +238,7 @@
       "night": "Working late? 🌙",
       "weekend": "Coding on weekend? Hardcore!",
       "longSession": "Long session! Take a break?"
-    },
-    "remote": [
-      "☁️ Remote monitoring~",
-      "Server is running!",
-      "☁️ Signal stable",
-      "Remote connection OK~",
-      "Cloud guardian 🦞",
-      "Server status OK!",
-      "☁️ All clear in the cloud",
-      "Nice view from here",
-      "Watching your server",
-      "Guarding across the sea 🌊",
-      "Low latency, no worries~",
-      "PM2 processes alive"
-    ]
+    }
   },
   "update": {
     "newVersion": "New version available!",
@@ -297,38 +283,6 @@
     "english": "English",
     "autoStart": "Start on login",
     "idleOpacity": "Idle opacity"
-  },
-  "remote": {
-    "title": "Remote Mode",
-    "dataSource": "Data Source",
-    "local": "Local (auto-detect)",
-    "remoteServer": "Remote (cloud server)",
-    "status": "Status",
-    "connected": "Connected",
-    "disconnected": "Disconnected",
-    "notConfigured": "Not configured",
-    "lastHeartbeat": "Last heartbeat",
-    "reporterVersion": "Reporter version",
-    "generateToken": "Generate Reporter Token",
-    "revokeToken": "Revoke Token",
-    "copyToken": "Copy Token",
-    "copied": "Copied!",
-    "installCommand": "Install command",
-    "installHint": "Run this command on your cloud server to install Reporter:",
-    "tokenGenerated": "Token generated",
-    "tokenRevoked": "Token revoked",
-    "offlineReasons": {
-      "openclaw_offline": "OpenClaw not running",
-      "reporter_offline": "Reporter offline",
-      "relay_unreachable": "Relay server unreachable",
-      "token_invalid": "Token invalid"
-    },
-    "cloudIcon": "☁️",
-    "remoteMode": "Remote Mode",
-    "secondsAgo": "{{seconds}}s ago",
-    "minutesAgo": "{{minutes}}m ago",
-    "hoursAgo": "{{hours}}h ago",
-    "needRegister": "Please register social features first"
   },
   "ssh": {
     "title": "Remote Control",
@@ -397,11 +351,6 @@
     },
     "manageServers": "Manage servers",
     "home": {
-      "dataSource": "Status Data Source",
-      "dataSourceDesc": "Where does the lobster get its status data? Auto-detect locally or sync from your cloud server",
-      "localMode": "Local",
-      "cloudMode": "Cloud Sync",
-      "reporterNeeded": "Install Reporter on your server to sync data",
       "sshServers": "SSH Direct Access",
       "sshDesc": "Connect directly to your servers to view status, manage processes, and read logs",
       "noServers": "No servers added yet. Click below to get started",
