@@ -14,7 +14,8 @@
     "unpinFromTop": "📌 Unpin",
     "quit": "🚪 Quit",
     "upToDate": "✓ Up to date",
-    "remote": "Remote"
+    "remote": "Remote",
+    "rate": "Rate"
   },
   "milestone": {
     "firstMillion": "First Million",
@@ -395,6 +396,8 @@
     "dailyAvg": "Daily avg",
     "weekTotal": "Week total",
     "today": "Today",
-    "yesterday": "Yesterday"
+    "yesterday": "Yesterday",
+    "peak": "Peak",
+    "vsLastWeek": "vs last week"
   }
 }

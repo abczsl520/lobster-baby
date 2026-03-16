@@ -36,6 +36,18 @@ export const TokenChart: React.FC<TokenChartProps> = ({ visible }) => {
   const maxTokens = Math.max(...days.map(d => d.tokens), 1);
   const totalWeek = days.reduce((sum, d) => sum + d.tokens, 0);
   const avgDay = totalWeek / 7;
+  const peakDay = days.reduce((max, d) => d.tokens > max.tokens ? d : max, days[0]);
+
+  // Week-over-week: compare last 7 days total with previous 7 days
+  const prevWeekDays: number[] = [];
+  for (let i = 13; i >= 7; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split('T')[0];
+    prevWeekDays.push(dailyData[dateStr] || 0);
+  }
+  const prevWeekTotal = prevWeekDays.reduce((s, v) => s + v, 0);
+  const weekChange = prevWeekTotal > 0 ? ((totalWeek - prevWeekTotal) / prevWeekTotal * 100) : 0;
 
   // Color based on relative height
   const getBarColor = (tokens: number) => {
@@ -54,6 +66,15 @@ export const TokenChart: React.FC<TokenChartProps> = ({ visible }) => {
       </div>
 
       <div className="chart-bars">
+        {/* Average line */}
+        {avgDay > 0 && (
+          <div
+            className="chart-avg-line"
+            style={{ bottom: `${Math.max(4, (avgDay / maxTokens) * 100)}%` }}
+          >
+            <span className="chart-avg-label">avg</span>
+          </div>
+        )}
         {days.map((day, i) => {
           const heightPct = Math.max(4, (day.tokens / maxTokens) * 100);
           return (
@@ -77,8 +98,23 @@ export const TokenChart: React.FC<TokenChartProps> = ({ visible }) => {
         })}
       </div>
 
-      <div className="chart-total">
-        {t('chart.weekTotal')}: {formatTokens(totalWeek)}
+      <div className="chart-footer">
+        <div className="chart-stat">
+          <span className="chart-stat-label">{t('chart.weekTotal')}</span>
+          <span className="chart-stat-value">{formatTokens(totalWeek)}</span>
+        </div>
+        <div className="chart-stat">
+          <span className="chart-stat-label">{t('chart.peak')}</span>
+          <span className="chart-stat-value">{peakDay.label} ({formatTokens(peakDay.tokens)})</span>
+        </div>
+        {weekChange !== 0 && (
+          <div className="chart-stat">
+            <span className="chart-stat-label">{t('chart.vsLastWeek')}</span>
+            <span className={`chart-stat-value ${weekChange > 0 ? 'trend-up' : 'trend-down'}`}>
+              {weekChange > 0 ? '↑' : '↓'} {Math.abs(weekChange).toFixed(0)}%
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );
