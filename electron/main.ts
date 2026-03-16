@@ -1,16 +1,19 @@
-import { app, BrowserWindow, ipcMain, screen, Menu, shell, Notification, globalShortcut } from 'electron';
+import { app, BrowserWindow, ipcMain, screen, Menu, shell, globalShortcut } from 'electron';
 import path from 'path';
 import https from 'https';
 import { log, logError, logWarn, logDebug } from './logger';
 import { readStore, writeStore } from './store';
-import { findOpenClaw, scanRealTokenUsage, scanDailyTokens, getTodayTokens } from './scanner';
+import { findOpenClaw, scanRealTokenUsage } from './scanner';
 import * as dock from './dock';
 import { createTray, updateTrayMenu, setMainWindowGetter as setTrayMainWindow, setPanelCallback } from './tray';
 import { initStatus, startStatusCheck, stopStatusCheck } from './status';
-import * as social from './social';
 import * as plugins from './plugins';
 import { sshManager } from './ssh-manager';
 import { t } from './i18n-main';
+import { registerSocialIPC, startSocialSync, calcLevel } from './ipc/social';
+import { registerPluginIPC } from './ipc/plugins';
+import { registerSSHIPC } from './ipc/ssh';
+import { registerSettingsIPC } from './ipc/settings';
 
 log('=== Lobster Baby starting ===');
 
@@ -24,9 +27,7 @@ const SNAP_DISTANCE = 15;
 const NORMAL_SIZE = { width: 200, height: 250 };
 const PANEL_SIZE = { width: 340, height: 700 };
 
-// Provide mainWindow getter to modules
 const getMainWindow = () => mainWindow;
-const getPanelWindow = () => panelWindow;
 
 function clampToScreen(x: number, y: number, w: number, h: number) {
   const display = screen.getDisplayNearestPoint({ x, y }).workArea;
@@ -36,6 +37,8 @@ function clampToScreen(x: number, y: number, w: number, h: number) {
     width: w, height: h,
   };
 }
+
+// ─── Main Window ───
 
 function createWindow() {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize;
@@ -62,11 +65,10 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 
-  // Logging
   mainWindow.webContents.on('did-finish-load', () => log('Page loaded'));
   mainWindow.webContents.on('did-fail-load', (_e, code, desc) => logError(`Page failed: ${code} ${desc}`));
 
-  // S22: Block navigation to external URLs
+  // S22: Block external navigation
   mainWindow.webContents.on('will-navigate', (event, url) => {
     const allowed = process.env.VITE_DEV_SERVER_URL || `file://${path.join(__dirname, '../dist/')}`;
     if (!url.startsWith(allowed) && !url.startsWith('file://')) {
@@ -75,7 +77,6 @@ function createWindow() {
     }
   });
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    // External links open in default browser via shell.openExternal (already validated in IPC)
     logWarn(`Blocked window.open: ${url}`);
     return { action: 'deny' };
   });
@@ -92,7 +93,7 @@ function createWindow() {
   mainWindow.webContents.on('unresponsive', () => logWarn('Renderer unresponsive'));
   mainWindow.webContents.on('responsive', () => log('Renderer responsive'));
 
-  // Save position on move + edge snapping
+  // Edge snapping + position save
   mainWindow.on('moved', () => {
     if (!mainWindow) return;
     if (dock.isDockingInProgress || dock.isPanelResizing) return;
@@ -143,20 +144,15 @@ function createWindow() {
   // Right-click context menu
   mainWindow.webContents.on('context-menu', () => {
     const isOnTop = mainWindow?.isAlwaysOnTop() ?? true;
-
-    // Build plugin menu items dynamically
     const pluginMenuItems = plugins.getMenuItems();
     const pluginSubMenu: Electron.MenuItemConstructorOptions[] = pluginMenuItems.length > 0
-      ? [
-          { type: 'separator' },
-          ...pluginMenuItems.map(item => ({
-            label: item.label,
-            click: async () => { try { await item.onClick(); } catch (e) { logError(`Plugin menu error: ${e}`); } },
-          })),
-        ]
+      ? [{ type: 'separator' }, ...pluginMenuItems.map(item => ({
+          label: item.label,
+          click: async () => { try { await item.onClick(); } catch (e) { logError(`Plugin menu error: ${e}`); } },
+        }))]
       : [];
 
-    const menu = Menu.buildFromTemplate([
+    Menu.buildFromTemplate([
       { label: isOnTop ? t('menu.unpin') : t('menu.pin'), click: () => { mainWindow?.setAlwaysOnTop(!isOnTop); updateTrayMenu(); } },
       { type: 'separator' },
       { label: t('menu.status'), click: () => createPanelWindow('status') },
@@ -172,22 +168,21 @@ function createWindow() {
       { label: t('menu.dataDir'), click: () => shell.openPath(app.getPath('userData')) },
       { type: 'separator' },
       { label: t('menu.quit'), click: () => app.quit() },
-    ]);
-    menu.popup();
+    ]).popup();
   });
 
-  // Init modules with mainWindow getter
+  // Init modules
   dock.setMainWindowGetter(getMainWindow);
   setTrayMainWindow(getMainWindow);
   setPanelCallback(createPanelWindow);
   initStatus(openclawPath, getMainWindow);
-
   startStatusCheck();
   createTray();
   log('Window created');
 }
 
-// ─── IPC Handlers ───
+// ─── Drag IPC ───
+
 ipcMain.removeAllListeners('move-window');
 ipcMain.on('move-window', (event, deltaX: number, deltaY: number) => {
   if (typeof deltaX !== 'number' || typeof deltaY !== 'number') return;
@@ -197,10 +192,8 @@ ipcMain.on('move-window', (event, deltaX: number, deltaY: number) => {
 
   dock.clearDockTimeout();
   if (dock.isDockedLeft || dock.isDockedRight) {
-    dock.setIsDockedLeft(false);
-    dock.setIsDockedRight(false);
-    dock.stopHoverCheck();
-    dock.cancelDockAnimation();
+    dock.setIsDockedLeft(false); dock.setIsDockedRight(false);
+    dock.stopHoverCheck(); dock.cancelDockAnimation();
     dock.notifyDockState(mainWindow, null);
   }
   dock.setIsDraggingWindow(true);
@@ -213,25 +206,16 @@ ipcMain.on('move-window', (event, deltaX: number, deltaY: number) => {
   const display = screen.getDisplayNearestPoint({ x, y }).workArea;
 
   let newX = x + dx, newY = y + dy;
-  const MAGNETIC_DISTANCE = 30;
-  const SNAP_STRENGTH = 0.3;
+  const MAG = 30, SNAP = 0.3;
 
   const leftDist = newX - display.x;
-  if (leftDist < MAGNETIC_DISTANCE && leftDist > -bounds.width / 2) {
-    newX = Math.round(newX - (leftDist * ((MAGNETIC_DISTANCE - leftDist) / MAGNETIC_DISTANCE) * SNAP_STRENGTH));
-  }
+  if (leftDist < MAG && leftDist > -bounds.width / 2) newX = Math.round(newX - (leftDist * ((MAG - leftDist) / MAG) * SNAP));
   const topDist = newY - display.y;
-  if (topDist < MAGNETIC_DISTANCE && topDist > -bounds.height / 2) {
-    newY = Math.round(newY - (topDist * ((MAGNETIC_DISTANCE - topDist) / MAGNETIC_DISTANCE) * SNAP_STRENGTH));
-  }
+  if (topDist < MAG && topDist > -bounds.height / 2) newY = Math.round(newY - (topDist * ((MAG - topDist) / MAG) * SNAP));
   const rightDist = (display.x + display.width) - (newX + bounds.width);
-  if (rightDist < MAGNETIC_DISTANCE && rightDist > -bounds.width / 2) {
-    newX = Math.round(newX + (rightDist * ((MAGNETIC_DISTANCE - rightDist) / MAGNETIC_DISTANCE) * SNAP_STRENGTH));
-  }
+  if (rightDist < MAG && rightDist > -bounds.width / 2) newX = Math.round(newX + (rightDist * ((MAG - rightDist) / MAG) * SNAP));
   const bottomDist = (display.y + display.height) - (newY + bounds.height);
-  if (bottomDist < MAGNETIC_DISTANCE && bottomDist > -bounds.height / 2) {
-    newY = Math.round(newY + (bottomDist * ((MAGNETIC_DISTANCE - bottomDist) / MAGNETIC_DISTANCE) * SNAP_STRENGTH));
-  }
+  if (bottomDist < MAG && bottomDist > -bounds.height / 2) newY = Math.round(newY + (bottomDist * ((MAG - bottomDist) / MAG) * SNAP));
 
   win.setPosition(newX, newY);
 });
@@ -245,303 +229,14 @@ ipcMain.on('drag-end', () => {
   if (atEdge) dock.scheduleDock(1500);
 });
 
-ipcMain.handle('toggle-always-on-top', () => {
-  if (!mainWindow || mainWindow.isDestroyed()) return false;
-  const isOnTop = mainWindow.isAlwaysOnTop();
-  mainWindow.setAlwaysOnTop(!isOnTop);
-  updateTrayMenu();
-  return !isOnTop;
-});
-
-ipcMain.handle('get-level-data', () => {
-  const realTokens = scanRealTokenUsage();
-  if (realTokens > 0) return { totalTokens: realTokens };
-  return { totalTokens: readStore().totalTokens || 0 };
-});
-
-ipcMain.handle('get-daily-tokens', () => scanDailyTokens(30));
-
-ipcMain.handle('get-settings', () => readStore().settings || { autoFadeEnabled: false });
-
-ipcMain.handle('update-settings', (_event, settings: Record<string, any>) => {
-  // S25: sanitize input — strip prototype pollution keys
-  if (settings && typeof settings === 'object') {
-    delete settings.__proto__;
-    delete settings.constructor;
-    delete settings.prototype;
-  }
-  const store = readStore();
-  store.settings = { ...store.settings, ...settings };
-  writeStore(store);
-  return store.settings;
-});
-
-ipcMain.handle('undock', () => dock.undockFromEdge());
-ipcMain.handle('redock', () => dock.scheduleDock(2000));
-
-// ─── Social IPC ───
-const THRESHOLDS = [0, 50000000, 200000000, 500000000, 1000000000, 2500000000, 5000000000, 10000000000, 25000000000, 50000000000];
-const ACHIEVEMENT_THRESHOLDS = [1e6, 1e7, 1e8, 1e9, 5e9, 1e10, 5e10];
-
-function calcLevel(tokens: number): number {
-  let level = 1;
-  for (let i = THRESHOLDS.length - 1; i >= 0; i--) {
-    if (tokens >= THRESHOLDS[i]) { level = i + 1; break; }
-  }
-  return level;
-}
-
-ipcMain.handle('social-register', async (_event, nickname: string) => {
-  try {
-    const realTokens = scanRealTokenUsage();
-    const level = calcLevel(realTokens);
-    const uptimeHours = Math.max(1, Math.floor(process.uptime() / 3600));
-    const result = await social.socialRegister(nickname, realTokens, level, uptimeHours);
-    const store = readStore();
-    store.socialToken = result.token;
-    store.lobsterId = result.lobster_id;
-    store.socialNickname = nickname;
-    writeStore(store);
-    return result;
-  } catch (err: any) { return { error: err.message }; }
-});
-
-ipcMain.handle('social-login', async () => {
-  try {
-    const result = await social.socialLogin();
-    const store = readStore();
-    store.socialToken = result.token;
-    store.lobsterId = result.lobster_id;
-    store.socialNickname = result.nickname;
-    writeStore(store);
-    return result;
-  } catch (err: any) { return { error: err.message }; }
-});
-
-ipcMain.handle('social-sync', async () => {
-  try {
-    const store = readStore();
-    if (!store.socialToken) return { error: t('social.notRegistered') };
-    const realTokens = scanRealTokenUsage();
-    const level = calcLevel(realTokens);
-    const achievements = ACHIEVEMENT_THRESHOLDS.filter(t => realTokens >= t).length;
-    const dailyTokens = Math.max(0, realTokens - (store.dailyTokensBaseline || 0));
-    return await social.socialSync(store.socialToken, realTokens, level, achievements, dailyTokens);
-  } catch (err: any) { return { error: err.message }; }
-});
-
-ipcMain.handle('social-leaderboard', async (_event, type: string, page: number) => {
-  try { return await social.socialGetLeaderboard(readStore().socialToken || null, type, page); }
-  catch (err: any) { return { error: err.message }; }
-});
-
-ipcMain.handle('social-pk-create', async () => {
-  try {
-    const store = readStore();
-    if (!store.socialToken) return { error: t('social.notRegistered') };
-    return await social.socialCreatePK(store.socialToken);
-  } catch (err: any) { return { error: err.message }; }
-});
-
-ipcMain.handle('social-pk-join', async (_event, code: string) => {
-  try {
-    const store = readStore();
-    if (!store.socialToken) return { error: t('social.notRegistered') };
-    return await social.socialJoinPK(store.socialToken, code);
-  } catch (err: any) { return { error: err.message }; }
-});
-
-ipcMain.handle('social-profile', async () => {
-  try {
-    const store = readStore();
-    if (!store.socialToken) return { error: t('social.notRegistered') };
-    return await social.socialGetProfile(store.socialToken);
-  } catch (err: any) { return { error: err.message }; }
-});
-
-ipcMain.handle('social-update-profile', async (_event, data: Record<string, any>) => {
-  try {
-    const store = readStore();
-    if (!store.socialToken) return { error: t('social.notRegistered') };
-    return await social.socialUpdateProfile(store.socialToken, data);
-  } catch (err: any) { return { error: err.message }; }
-});
-
-ipcMain.handle('social-delete-account', async () => {
-  try {
-    const store = readStore();
-    if (!store.socialToken) return { error: t('social.notRegistered') };
-    const result = await social.socialDeleteAccount(store.socialToken);
-    delete store.socialToken; delete store.lobsterId; delete store.socialNickname;
-    writeStore(store);
-    return result;
-  } catch (err: any) { return { error: err.message }; }
-});
-
-ipcMain.handle('social-get-local', () => {
-  const store = readStore();
-  return { lobsterId: store.lobsterId || null, nickname: store.socialNickname || null, hasToken: !!store.socialToken };
-});
-
-ipcMain.handle('social-stats', async () => {
-  try { return await social.socialGetStats(); }
-  catch (err: any) { return { error: err.message }; }
-});
-
-// ─── Plugin IPC ───
-ipcMain.handle('plugin-list', () => plugins.getInstalledPlugins());
-ipcMain.handle('plugin-enable', async (_event, id: string) => plugins.enablePlugin(id));
-ipcMain.handle('plugin-disable', async (_event, id: string) => plugins.disablePlugin(id));
-ipcMain.handle('plugin-uninstall', async (_event, id: string) => plugins.uninstallPlugin(id));
-ipcMain.handle('plugin-install-url', async (_event, url: string) => plugins.installFromUrl(url));
-ipcMain.handle('plugin-featured', async () => plugins.fetchFeaturedPlugins());
-ipcMain.handle('plugin-search', async (_event, query: string) => plugins.searchPlugins(query));
-ipcMain.handle('plugin-menu-items', () => {
-  return plugins.getMenuItems().map(m => ({ id: m.id, label: m.label, pluginId: m.pluginId }));
-});
-ipcMain.handle('plugin-menu-click', async (_event, menuId: string) => {
-  const item = plugins.getMenuItems().find(m => m.id === menuId);
-  if (item) { try { await item.onClick(); } catch (e) { logError(`Plugin menu click error: ${e}`); } }
-});
-
-// ─── SSH IPC Handlers ───
-ipcMain.handle('ssh-get-servers', () => {
-  return sshManager.getServers().map(s => ({
-    ...s,
-    encryptedCredential: undefined, // Never send credential to renderer
-    isConnected: sshManager.isConnected(s.id),
-  }));
-});
-
-ipcMain.handle('ssh-add-server', async (_event, data: {
-  name: string; host: string; port: number; username: string;
-  authType: 'password' | 'key'; credential: string;
-}) => {
-  try {
-    const server = sshManager.addServer({
-      name: data.name,
-      host: data.host,
-      port: data.port || 22,
-      username: data.username,
-      authType: data.authType,
-    }, data.credential);
-    return { success: true, server: { ...server, encryptedCredential: undefined } };
-  } catch (err: any) { return { error: err.message }; }
-});
-
-ipcMain.handle('ssh-remove-server', (_event, id: string) => {
-  return { success: sshManager.removeServer(id) };
-});
-
-ipcMain.handle('ssh-connect', async (_event, id: string) => {
-  return await sshManager.connect(id);
-});
-
-ipcMain.handle('ssh-disconnect', (_event, id: string) => {
-  sshManager.disconnect(id);
-  return { success: true };
-});
-
-// S4 FIX: Rate limit test connections (max 3 per minute)
-let testConnectionAttempts: number[] = [];
-const TEST_RATE_LIMIT = 3;
-const TEST_RATE_WINDOW = 60000; // 1 minute
-
-ipcMain.handle('ssh-test-connection', async (_event, data: {
-  host: string; port: number; username: string;
-  authType: 'password' | 'key'; credential: string;
-}) => {
-  // Rate limiting
-  const now = Date.now();
-  testConnectionAttempts = testConnectionAttempts.filter(t => now - t < TEST_RATE_WINDOW);
-  if (testConnectionAttempts.length >= TEST_RATE_LIMIT) {
-    return { success: false, error: 'Too many test attempts. Please wait a moment.' };
-  }
-  testConnectionAttempts.push(now);
-  
-  // Input validation
-  if (!data.host || typeof data.host !== 'string' || data.host.length > 255) {
-    return { success: false, error: 'Invalid host' };
-  }
-  if (!/^[a-zA-Z0-9._-]+$/.test(data.host)) {
-    return { success: false, error: 'Host contains invalid characters' };
-  }
-  
-  // Temporary connection test without saving
-  const { Client: SSHClient } = require('ssh2');
-  const client = new SSHClient();
-  try {
-    await new Promise<void>((resolve, reject) => {
-      const timeout = setTimeout(() => { client.end(); reject(new Error('Timeout')); }, 10000);
-      client.on('ready', () => { clearTimeout(timeout); client.end(); resolve(); });
-      client.on('error', (err: Error) => { clearTimeout(timeout); reject(err); });
-      const config: any = {
-        host: data.host, port: data.port || 22, username: data.username,
-        readyTimeout: 10000,
-      };
-      if (data.authType === 'password') config.password = data.credential;
-      else config.privateKey = data.credential;
-      client.connect(config);
-    });
-    return { success: true };
-  } catch (err: any) { return { success: false, error: err.message }; }
-});
-
-ipcMain.handle('ssh-openclaw-status', async (_event, serverId: string) => {
-  return await sshManager.getOpenClawStatus(serverId);
-});
-
-ipcMain.handle('ssh-remote-tokens', async (_event, serverId: string) => {
-  return await sshManager.getRemoteTokens(serverId);
-});
-
-ipcMain.handle('ssh-process-list', async (_event, serverId: string) => {
-  return await sshManager.getProcessList(serverId);
-});
-
-ipcMain.handle('ssh-system-info', async (_event, serverId: string) => {
-  return await sshManager.getSystemInfo(serverId);
-});
-
-ipcMain.handle('ssh-process-logs', async (_event, serverId: string, processName: string, lines?: number) => {
-  try {
-    return { logs: await sshManager.getProcessLogs(serverId, processName, lines) };
-  } catch (err: any) { return { error: err.message }; }
-});
-
-ipcMain.handle('ssh-restart-process', async (_event, serverId: string, processName: string) => {
-  return await sshManager.restartProcess(serverId, processName);
-});
-
-ipcMain.handle('ssh-list-dir', async (_event, serverId: string, dirPath: string) => {
-  // S3 FIX: Strict path validation — single project dir only, no traversal
-  if (typeof dirPath !== 'string' || dirPath.includes('..')) {
-    return { error: 'Path traversal not allowed.' };
-  }
-  if (!/^\/opt\/apps\/[a-zA-Z0-9_-]+\/?$/.test(dirPath)) {
-    return { error: 'Path not allowed. Only /opt/apps/<name>/ paths are accessible.' };
-  }
-  try {
-    const result = await sshManager.exec(serverId, `ls -la ${dirPath}`);
-    return { output: result.stdout, error: result.code !== 0 ? result.stderr : undefined };
-  } catch (err: any) { return { error: err.message }; }
-});
-
-ipcMain.handle('ssh-read-file', async (_event, serverId: string, filePath: string) => {
-  // S3 FIX: Strict path validation — single subdir, no traversal, no secrets
-  if (typeof filePath !== 'string' || filePath.includes('..')) {
-    return { error: 'Path traversal not allowed.' };
-  }
-  if (!/^\/opt\/apps\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_.-]+\.(js|ts|json|md|txt|yml|yaml)$/.test(filePath)) {
-    return { error: 'File path not allowed. No .env/.conf files, single directory depth only.' };
-  }
-  try {
-    const result = await sshManager.exec(serverId, `cat ${filePath}`);
-    return { content: result.stdout, error: result.code !== 0 ? result.stderr : undefined };
-  } catch (err: any) { return { error: err.message }; }
-});
+// ─── Register modular IPC handlers ───
+registerSettingsIPC(getMainWindow);
+registerSocialIPC();
+registerPluginIPC();
+registerSSHIPC();
 
 // ─── Panel Window ───
+
 function createPanelWindow(route?: string) {
   if (panelWindow && !panelWindow.isDestroyed()) {
     panelWindow.focus();
@@ -549,52 +244,36 @@ function createPanelWindow(route?: string) {
     return;
   }
 
-  // Position panel near main window
   const mainBounds = mainWindow?.getBounds();
-  const display = mainBounds 
+  const display = mainBounds
     ? screen.getDisplayNearestPoint({ x: mainBounds.x, y: mainBounds.y }).workArea
     : screen.getPrimaryDisplay().workArea;
-  
+
   let panelX = display.x + Math.round((display.width - PANEL_SIZE.width) / 2);
   let panelY = display.y + Math.round((display.height - PANEL_SIZE.height) / 2);
-  
-  // If main window exists, position panel to its left or right, bottom-aligned with lobster
+
   if (mainBounds) {
     const gap = 8;
     const spaceRight = display.x + display.width - (mainBounds.x + mainBounds.width);
     const spaceLeft = mainBounds.x - display.x;
-    
-    // Bottom-align with lobster window
     const idealY = mainBounds.y + mainBounds.height - PANEL_SIZE.height;
-    
-    if (spaceRight >= PANEL_SIZE.width + gap) {
-      panelX = mainBounds.x + mainBounds.width + gap;
-      panelY = idealY;
-    } else if (spaceLeft >= PANEL_SIZE.width + gap) {
-      panelX = mainBounds.x - PANEL_SIZE.width - gap;
-      panelY = idealY;
-    } else {
-      // Not enough space on sides — position above lobster, centered
-      panelX = mainBounds.x + Math.round((mainBounds.width - PANEL_SIZE.width) / 2);
-      panelY = mainBounds.y - PANEL_SIZE.height - gap;
-    }
+
+    if (spaceRight >= PANEL_SIZE.width + gap) { panelX = mainBounds.x + mainBounds.width + gap; panelY = idealY; }
+    else if (spaceLeft >= PANEL_SIZE.width + gap) { panelX = mainBounds.x - PANEL_SIZE.width - gap; panelY = idealY; }
+    else { panelX = mainBounds.x + Math.round((mainBounds.width - PANEL_SIZE.width) / 2); panelY = mainBounds.y - PANEL_SIZE.height - gap; }
   }
-  
-  // Clamp
+
   panelX = Math.max(display.x, Math.min(panelX, display.x + display.width - PANEL_SIZE.width));
   panelY = Math.max(display.y, Math.min(panelY, display.y + display.height - PANEL_SIZE.height));
 
   panelWindow = new BrowserWindow({
     width: PANEL_SIZE.width, height: PANEL_SIZE.height,
     x: panelX, y: panelY,
-    frame: false, transparent: true,
-    resizable: false, alwaysOnTop: true,
-    skipTaskbar: true, hasShadow: true,
-    backgroundColor: '#00000000',
+    frame: false, transparent: true, resizable: false, alwaysOnTop: true,
+    skipTaskbar: true, hasShadow: true, backgroundColor: '#00000000',
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
-      contextIsolation: true, nodeIntegration: false,
-      backgroundThrottling: false,
+      contextIsolation: true, nodeIntegration: false, backgroundThrottling: false,
     },
   });
 
@@ -605,69 +284,29 @@ function createPanelWindow(route?: string) {
     panelWindow.loadFile(path.join(__dirname, '../dist/index.html'), { search: `panel=${panelRoute}` });
   }
 
-  // S22: Block navigation to external URLs
   panelWindow.webContents.on('will-navigate', (event, url) => {
     const allowed = process.env.VITE_DEV_SERVER_URL || `file://${path.join(__dirname, '../dist/')}`;
-    if (!url.startsWith(allowed) && !url.startsWith('file://')) {
-      logWarn(`Panel: Blocked navigation to: ${url}`);
-      event.preventDefault();
-    }
+    if (!url.startsWith(allowed) && !url.startsWith('file://')) { logWarn(`Panel: Blocked nav: ${url}`); event.preventDefault(); }
   });
-  panelWindow.webContents.setWindowOpenHandler(({ url }) => {
-    logWarn(`Panel: Blocked window.open: ${url}`);
-    return { action: 'deny' };
-  });
-
+  panelWindow.webContents.setWindowOpenHandler(({ url }) => { logWarn(`Panel: Blocked window.open: ${url}`); return { action: 'deny' }; });
   panelWindow.on('closed', () => { panelWindow = null; });
-
-  // ESC closes panel window
   panelWindow.webContents.on('before-input-event', (event, input) => {
-    if (input.key === 'Escape' && !input.alt && !input.control && !input.meta) {
-      closePanelWindow();
-      event.preventDefault();
-    }
+    if (input.key === 'Escape' && !input.alt && !input.control && !input.meta) { closePanelWindow(); event.preventDefault(); }
   });
-  
+
   logDebug(`Panel window created (route: ${panelRoute})`);
 }
 
 function closePanelWindow() {
-  if (panelWindow && !panelWindow.isDestroyed()) {
-    panelWindow.close();
-    panelWindow = null;
-  }
+  if (panelWindow && !panelWindow.isDestroyed()) { panelWindow.close(); panelWindow = null; }
 }
 
-ipcMain.handle('show-panel', (_event, route?: string) => {
-  createPanelWindow(route);
-});
+ipcMain.handle('show-panel', (_event, route?: string) => createPanelWindow(route));
+ipcMain.handle('hide-panel', () => closePanelWindow());
+ipcMain.handle('close-panel', () => closePanelWindow());
 
-ipcMain.handle('hide-panel', () => {
-  closePanelWindow();
-});
+// ─── Auto Update ───
 
-ipcMain.handle('close-panel', () => {
-  closePanelWindow();
-});
-
-ipcMain.handle('quit-app', () => app.quit());
-ipcMain.handle('open-external', async (_event, url: string) => {
-  // S18 fix: strict protocol check
-  if (typeof url !== 'string' || !(url.startsWith('https://') || url.startsWith('http://'))) return;
-  await shell.openExternal(url);
-});
-
-// ─── Level Up Notification ───
-ipcMain.handle('notify-level-up', (_event, level: number) => {
-  if (typeof level !== 'number' || level < 1 || level > 10) return;
-  const name = t(`levelName.${level}`) || `Lv.${level}`;
-  log(`Level up! Now Lv.${level} (${name})`);
-  if (Notification.isSupported()) {
-    new Notification({ title: t('levelUp.title'), body: t('levelUp.body', { level, name }), silent: false }).show();
-  }
-});
-
-// ─── Auto Update Check ───
 const APP_VERSION = app.getVersion();
 let updateCheckInterval: NodeJS.Timeout | null = null;
 
@@ -691,7 +330,7 @@ function compareVersions(v1: string, v2: string): number {
   return 0;
 }
 
-async function checkForUpdatesMain() {
+async function checkForUpdates() {
   try {
     const data = await fetchJSON('https://api.github.com/repos/abczsl520/lobster-baby/releases/latest');
     const latest = (data.tag_name || '').replace(/^v/, '');
@@ -700,51 +339,14 @@ async function checkForUpdatesMain() {
     if (mainWindow && !mainWindow.isDestroyed()) {
       mainWindow.webContents.send('update-available', { version: latest, url: data.html_url });
     }
-    if (Notification.isSupported()) {
-      const n = new Notification({ title: t('update.newVersionNotif'), body: t('update.versionPublished', { version: latest }), silent: false });
-      n.on('click', () => shell.openExternal(data.html_url));
-      n.show();
-    }
   } catch (err) { logError(`Update check failed: ${err}`); }
 }
 
-// ─── Social Auto-Sync ───
-let socialSyncInterval: NodeJS.Timeout | null = null;
-
-async function doSocialSync() {
-  try {
-    const store = readStore();
-    if (!store.socialToken) return;
-    const realTokens = scanRealTokenUsage();
-    const level = calcLevel(realTokens);
-    const achievements = ACHIEVEMENT_THRESHOLDS.filter(t => realTokens >= t).length;
-    const dailyTokens = Math.max(0, realTokens - (store.dailyTokensBaseline || 0));
-    await social.socialSync(store.socialToken, realTokens, level, achievements, dailyTokens);
-    log('Social sync completed');
-  } catch (err: any) { logError(`Social sync failed: ${err.message}`); }
-}
-
-function startSocialSync() {
-  const store = readStore();
-  if (!store.socialToken && !store.lobsterId) {
-    social.socialLogin().then(result => {
-      if (result.success) {
-        const s = readStore();
-        s.socialToken = result.token; s.lobsterId = result.lobster_id; s.socialNickname = result.nickname;
-        writeStore(s);
-        log(`Social auto-login: ${result.lobster_id}`);
-      }
-    }).catch(() => {});
-  }
-  setTimeout(doSocialSync, 30000);
-  socialSyncInterval = setInterval(doSocialSync, 60 * 60 * 1000);
-}
-
 // ─── App Lifecycle ───
+
 app.whenReady().then(async () => {
   createWindow();
 
-  // Init plugin system
   plugins.setStatusGetter(() => {
     const store = readStore();
     const realTokens = scanRealTokenUsage();
@@ -762,8 +364,8 @@ app.whenReady().then(async () => {
   });
   await plugins.initPlugins();
 
-  setTimeout(checkForUpdatesMain, 10000);
-  updateCheckInterval = setInterval(checkForUpdatesMain, 6 * 60 * 60 * 1000);
+  setTimeout(checkForUpdates, 10000);
+  updateCheckInterval = setInterval(checkForUpdates, 6 * 60 * 60 * 1000);
   startSocialSync();
 
   globalShortcut.register('CommandOrControl+Shift+L', () => {
@@ -786,21 +388,8 @@ app.whenReady().then(async () => {
 
 if (app.isPackaged) {
   const store = readStore();
-  const autoStart = store.autoStartEnabled !== false; // default true
-  app.setLoginItemSettings({ openAtLogin: autoStart, openAsHidden: false });
+  app.setLoginItemSettings({ openAtLogin: store.autoStartEnabled !== false, openAsHidden: false });
 }
-
-// Toggle auto-start
-ipcMain.handle('get-auto-start', () => {
-  return app.getLoginItemSettings().openAtLogin;
-});
-ipcMain.handle('set-auto-start', (_event, enabled: boolean) => {
-  app.setLoginItemSettings({ openAtLogin: enabled, openAsHidden: false });
-  const store = readStore();
-  store.autoStartEnabled = enabled;
-  writeStore(store);
-  return enabled;
-});
 
 app.on('window-all-closed', () => { stopStatusCheck(); if (process.platform !== 'darwin') app.quit(); });
 app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
