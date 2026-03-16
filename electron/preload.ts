@@ -94,6 +94,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   // SSH Remote Control
   sshGetServers: () => ipcRenderer.invoke('ssh-get-servers'),
+  sshBatchStatus: () => ipcRenderer.invoke('ssh-batch-status'),
   sshAddServer: (data: { name: string; host: string; port: number; username: string; authType: string; credential: string }) => ipcRenderer.invoke('ssh-add-server', data),
   sshRemoveServer: (id: string) => ipcRenderer.invoke('ssh-remove-server', id),
   sshConnect: (id: string) => ipcRenderer.invoke('ssh-connect', id),
