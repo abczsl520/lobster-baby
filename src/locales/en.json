@@ -238,7 +238,12 @@
       "morning": "Good morning! 🌅",
       "night": "Working late? 🌙",
       "weekend": "Coding on weekend? Hardcore!",
-      "longSession": "Long session! Take a break?"
+      "longSession": "Long session! Take a break?",
+      "newYear": "Happy New Year! 🎆",
+      "streak3": "3 days in a row! Keep it up!",
+      "streak7": "One week streak! You rock 🏅",
+      "firstUse": "Hello! I am your lobster pet 🦞",
+      "milestone": "New achievement unlocked! 🎉"
     }
   },
   "update": {
