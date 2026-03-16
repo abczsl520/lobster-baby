@@ -398,7 +398,8 @@
       "sec4": "Commands timeout after 30 seconds",
       "sec5": "Passwords never sent to renderer process",
       "gotIt": "Got it, let's go"
-    }
+    },
+    "lastSeen": "Last seen"
   },
   "chart": {
     "trend7d": "7-Day Trend",
