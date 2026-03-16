@@ -179,7 +179,7 @@ export const SocialPanel: React.FC<SocialPanelProps> = ({ visible, onClose }) =>
           {lbData && !loading && (
             <div className="lb-list">
               {lbData.items?.length === 0 && <div className="lb-empty">{t('social.lbEmpty')}</div>}
-              {lbData.items?.map((item: any) => (
+              {lbData.items?.map((item: { lobster_id: string; nickname: string; rank: number; total_tokens?: number; level?: number; streak_days?: number; achievements?: number }) => (
                 <div key={item.lobster_id} className={`lb-item ${item.lobster_id === localData.lobsterId ? 'me' : ''}`}>
                   <span className="lb-rank">{item.rank <= 3 ? ['🥇', '🥈', '🥉'][item.rank - 1] : `#${item.rank}`}</span>
                   <span className="lb-name">
@@ -187,9 +187,9 @@ export const SocialPanel: React.FC<SocialPanelProps> = ({ visible, onClose }) =>
                     <span className="lb-id">{item.lobster_id}</span>
                   </span>
                   <span className="lb-value">
-                    {lbType === 'tokens' ? formatTokens(item.total_tokens) :
-                     lbType === 'streak' ? t('social.streakDays', { days: item.streak_days }) :
-                     lbType === 'achievements' ? t('social.achievementCount', { count: item.achievements }) :
+                    {lbType === 'tokens' ? formatTokens(item.total_tokens ?? 0) :
+                     lbType === 'streak' ? t('social.streakDays', { days: item.streak_days ?? 0 }) :
+                     lbType === 'achievements' ? t('social.achievementCount', { count: item.achievements ?? 0 }) :
                      `Lv.${item.level}`}
                   </span>
                 </div>

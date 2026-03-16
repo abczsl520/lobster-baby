@@ -135,7 +135,7 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
         setActiveServer(serverId); setTab('status');
         await loadServers(); await loadOpenClawStatus();
       } else { setError(r.error || t('ssh.connectFailed')); }
-    } catch (e: any) { setError(e.message); }
+    } catch (e: unknown) { setError((e as Error).message); }
     setConnecting(null);
   };
 
@@ -161,7 +161,7 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
       const r = await window.electronAPI.sshRestartProcess(activeServer, processName);
       if (r.success) setTimeout(loadProcesses, 2000);
       else setError(r.error || t('ssh.restartFailed'));
-    } catch (e: any) { setError(e.message); }
+    } catch (e: unknown) { setError((e as Error).message); }
     setLoading(false);
   };
 
@@ -564,7 +564,7 @@ const AddServerForm: React.FC<{
     try {
       const r = await window.electronAPI.sshTestConnection({ host, port, username, authType, credential });
       setTestResult(r.success ? `✅ ${t('ssh.testSuccess')}` : `❌ ${r.error}`);
-    } catch (e: any) { setTestResult(`❌ ${e.message}`); }
+    } catch (e: unknown) { setTestResult(`❌ ${(e as Error).message}`); }
     setTesting(false);
   };
 

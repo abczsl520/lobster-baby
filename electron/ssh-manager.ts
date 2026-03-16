@@ -3,7 +3,7 @@
 
 // ssh2 is loaded at runtime via require() to avoid Vite/Rollup bundling issues
 // with native .node binaries
-let ssh2Module: any = null;
+let ssh2Module: { Client: new () => any } | null = null;
 function getSSH2() {
   if (!ssh2Module) {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -254,7 +254,7 @@ export class SSHManager {
     
     try {
       const credential = decryptCredential(server.encryptedCredential);
-      const config: any = {
+      const config: Record<string, unknown> = {
         host: server.host,
         port: server.port || 22,
         username: server.username,
@@ -303,9 +303,9 @@ export class SSHManager {
       });
       
       client.on('error', (err) => {
-        log(`SSH: Connection error for ${server.name}: ${err.message}`);
+        log(`SSH: Connection error for ${server.name}: ${(err as Error).message}`);
         this.connections.delete(serverId);
-        this.updateServerStatus(serverId, 'error', err.message);
+        this.updateServerStatus(serverId, 'error', (err as Error).message);
         this.scheduleReconnect(serverId);
       });
       
@@ -314,10 +314,10 @@ export class SSHManager {
       log(`SSH: Connected to ${server.name} (${server.host})`);
       
       return { success: true };
-    } catch (err: any) {
-      this.updateServerStatus(serverId, 'error', err.message);
-      log(`SSH: Failed to connect to ${server.name}: ${err.message}`);
-      return { success: false, error: err.message };
+    } catch (err: unknown) {
+      this.updateServerStatus(serverId, 'error', (err as Error).message);
+      log(`SSH: Failed to connect to ${server.name}: ${(err as Error).message}`);
+      return { success: false, error: (err as Error).message };
     } finally {
       this.connecting.delete(serverId);
     }
@@ -344,8 +344,8 @@ export class SSHManager {
         await this.connect(serverId);
         this.reconnectAttempts.delete(serverId); // Reset on success
         log(`SSH: Reconnected to ${serverId}`);
-      } catch (err: any) {
-        log(`SSH: Reconnect failed for ${serverId}: ${err.message}`);
+      } catch (err: unknown) {
+        log(`SSH: Reconnect failed for ${serverId}: ${(err as Error).message}`);
       }
     }, delay);
     
@@ -478,8 +478,8 @@ export class SSHManager {
       }
       
       return { connected: true, server: serverId, status: 'openclaw-not-found' };
-    } catch (err: any) {
-      return { connected: false, server: serverId, error: err.message };
+    } catch (err: unknown) {
+      return { connected: false, server: serverId, error: (err as Error).message };
     }
   }
 
@@ -519,8 +519,8 @@ console.log(JSON.stringify({total,daily}));
         }
       }
       return { total: 0, daily: 0, error: 'Failed to parse token data' };
-    } catch (err: any) {
-      return { total: 0, daily: 0, error: err.message };
+    } catch (err: unknown) {
+      return { total: 0, daily: 0, error: (err as Error).message };
     }
   }
   
@@ -530,7 +530,7 @@ console.log(JSON.stringify({total,daily}));
       if (result.code !== 0) return [];
       
       const processes = JSON.parse(result.stdout);
-      return processes.map((p: any) => ({
+      return processes.map((p: { name: string; pid: number; pm2_env?: { status?: string; pm_uptime?: number }; monit?: { cpu?: number; memory?: number } }) => ({
         name: p.name,
         pid: p.pid,
         status: p.pm2_env?.status || 'unknown',
@@ -595,8 +595,8 @@ console.log(JSON.stringify({total,daily}));
     try {
       const result = await this.exec(serverId, `pm2 restart ${processName}`);
       return { success: result.code === 0, error: result.code !== 0 ? result.stderr : undefined };
-    } catch (err: any) {
-      return { success: false, error: err.message };
+    } catch (err: unknown) {
+      return { success: false, error: (err as Error).message };
     }
   }
   

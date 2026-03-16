@@ -332,9 +332,9 @@ export async function installFromUrl(url: string, source: 'lbhub' | 'github' | '
 
     log(`Plugin [${manifest.id}] installed from ${source}: ${url}`);
     return { success: true, pluginId: manifest.id, manifest };
-  } catch (e: any) {
-    log(`Plugin install failed: ${e.message}`);
-    return { success: false, error: e.message };
+  } catch (e: unknown) {
+    log(`Plugin install failed: ${(e as Error).message}`);
+    return { success: false, error: (e as Error).message };
   } finally {
     // Cleanup tmp
     fs.rmSync(tmpDir, { recursive: true, force: true });

@@ -21,7 +21,7 @@ function getWin(): BrowserWindow | null {
 }
 
 // Broadcast to all windows (main + panel)
-function broadcastStatus(channel: string, data: any) {
+function broadcastStatus(channel: string, data: Record<string, unknown>) {
   for (const win of BrowserWindow.getAllWindows()) {
     if (!win.isDestroyed()) {
       try { win.webContents.send(channel, data); } catch { /* closing */ }
@@ -63,7 +63,7 @@ export function checkOpenClawStatus() {
             const data = JSON.parse(stdout);
             const sessions = data.sessions || [];
             activeSessions = sessions.length;
-            const hasRecentActivity = sessions.some((s: any) => s.ageMs < 60000);
+            const hasRecentActivity = sessions.some((s: { ageMs: number }) => s.ageMs < 60000);
             status = hasRecentActivity ? 'active' : 'idle';
             log(`OpenClaw status: ${status}, sessions: ${activeSessions}`);
           } catch (e) {

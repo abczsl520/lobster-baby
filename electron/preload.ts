@@ -2,13 +2,13 @@ import { contextBridge, ipcRenderer } from 'electron';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   onOpenClawStatus: (callback: (data: any) => void) => {
-    const handler = (_event: any, data: any) => callback(data);
+    const handler = (_event: unknown, data: any) => callback(data);
     ipcRenderer.on('openclaw-status', handler);
     // Return cleanup function
     return () => ipcRenderer.removeListener('openclaw-status', handler);
   },
   onUpdateAvailable: (callback: (data: any) => void) => {
-    const handler = (_event: any, data: any) => callback(data);
+    const handler = (_event: unknown, data: any) => callback(data);
     ipcRenderer.on('update-available', handler);
     return () => ipcRenderer.removeListener('update-available', handler);
   },
@@ -88,7 +88,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener('show-plugins', handler);
   },
   onPluginToast: (callback: (data: { message: string; duration: number }) => void) => {
-    const handler = (_event: any, data: any) => callback(data);
+    const handler = (_event: unknown, data: any) => callback(data);
     ipcRenderer.on('plugin-toast', handler);
     return () => ipcRenderer.removeListener('plugin-toast', handler);
   },
