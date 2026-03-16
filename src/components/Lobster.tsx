@@ -110,6 +110,9 @@ const COMBO_DURATIONS: Record<ComboTier, { badge: number; effect: number; starBu
   10: { badge: 900, effect: 3000, starBurst: 1000, flash: 550 },
 };
 
+// Idle micro-animations — random occasional actions
+const MICRO_ANIMS = ['micro-tilt', 'micro-wiggle', 'micro-peek', 'micro-bounce', 'micro-spin'] as const;
+
 export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, onDoubleClick, dockState }) => {
   const [isClicked, setIsClicked] = useState(false);
   const [tokenDelta, setTokenDelta] = useState<number | null>(null);
@@ -117,6 +120,10 @@ export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, on
   const [skinTransition, setSkinTransition] = useState(false);
   const [prevSkin, setPrevSkin] = useState<string | null>(null);
   const [combo, dispatchCombo] = useReducer(comboReducer, COMBO_INIT);
+  const [microAnim, setMicroAnim] = useState<string | null>(null);
+  const [sparkles, setSparkles] = useState<Array<{ id: number; x: number; y: number; emoji: string }>>([]);
+  const [statusFlash, setStatusFlash] = useState(false);
+  const prevStatusRef = useRef(status);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const clickCountRef = useRef(0);
   const comboResetRef = useRef<NodeJS.Timeout | null>(null);
@@ -125,6 +132,28 @@ export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, on
   const lastTokensRef = useRef<number>(levelInfo.currentTokens);
   const lastLevelRef = useRef<number>(0);
   const startTimeRef = useRef<number>(Date.now());
+
+  // Random micro-animations when idle
+  useEffect(() => {
+    if (status !== 'idle' && status !== 'active') return;
+    const interval = setInterval(() => {
+      if (Math.random() < 0.3) {
+        const anim = MICRO_ANIMS[Math.floor(Math.random() * MICRO_ANIMS.length)];
+        setMicroAnim(anim);
+        setTimeout(() => setMicroAnim(null), 1200);
+      }
+    }, 8000 + Math.random() * 7000);
+    return () => clearInterval(interval);
+  }, [status]);
+
+  // Status change flash
+  useEffect(() => {
+    if (prevStatusRef.current !== status) {
+      prevStatusRef.current = status;
+      setStatusFlash(true);
+      setTimeout(() => setStatusFlash(false), 600);
+    }
+  }, [status]);
 
   // Cleanup all combo timers
   const clearComboTimers = () => {
@@ -188,6 +217,19 @@ export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, on
       setIsClicked(false);
       timeoutRef.current = null;
     }, 500);
+
+    // Click sparkle particles
+    const SPARKLE_EMOJIS = ['✨', '⭐', '💫', '🌟', '❤️', '🦞'];
+    const newSparkles = Array.from({ length: 5 }, (_, i) => ({
+      id: Date.now() + i,
+      x: Math.random() * 120 - 60,
+      y: Math.random() * -80 - 20,
+      emoji: SPARKLE_EMOJIS[Math.floor(Math.random() * SPARKLE_EMOJIS.length)],
+    }));
+    setSparkles(prev => [...prev, ...newSparkles]);
+    setTimeout(() => {
+      setSparkles(prev => prev.filter(s => !newSparkles.find(n => n.id === s.id)));
+    }, 1000);
 
     // Combo tracking
     clickCountRef.current += 1;
@@ -259,7 +301,7 @@ export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, on
 
   return (
     <div
-      className={`lobster-container ${status} ${isClicked ? 'clicked' : ''} ${dockState ? `docked-${dockState}` : ''}`}
+      className={`lobster-container ${status} ${isClicked ? 'clicked' : ''} ${dockState ? `docked-${dockState}` : ''} ${microAnim || ''} ${statusFlash ? 'status-flash' : ''}`}
       onClick={handleClick}
       onDoubleClick={(e) => { e.stopPropagation(); onDoubleClick?.(); }}
     >
@@ -288,6 +330,13 @@ export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, on
           ))}
         </div>
       )}
+
+      {/* Click sparkle particles */}
+      {sparkles.map(s => (
+        <span key={s.id} className="click-sparkle" style={{ '--sx': `${s.x}px`, '--sy': `${s.y}px` } as React.CSSProperties}>
+          {s.emoji}
+        </span>
+      ))}
 
       {/* Level indicator */}
       <div className="level-badge">Lv.{levelInfo.level}</div>
