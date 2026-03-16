@@ -15,7 +15,8 @@ import { registerPluginIPC } from './ipc/plugins';
 import { registerSSHIPC } from './ipc/ssh';
 import { registerSettingsIPC } from './ipc/settings';
 
-log('=== Lobster Baby starting ===');
+const startupTime = Date.now();
+log(`=== Lobster Baby starting ===`);
 
 const openclawPath = findOpenClaw();
 
@@ -65,7 +66,7 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
   }
 
-  mainWindow.webContents.on('did-finish-load', () => log('Page loaded'));
+  mainWindow.webContents.on('did-finish-load', () => log(`Page loaded (${Date.now() - startupTime}ms startup)`));
   mainWindow.webContents.on('did-fail-load', (_e, code, desc) => logError(`Page failed: ${code} ${desc}`));
 
   // S22: Block external navigation
@@ -345,6 +346,7 @@ async function checkForUpdates() {
 // ─── App Lifecycle ───
 
 app.whenReady().then(async () => {
+  log(`v${APP_VERSION} on Electron ${process.versions.electron}`);
   createWindow();
 
   plugins.setStatusGetter(() => {
