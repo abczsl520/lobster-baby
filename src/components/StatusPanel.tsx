@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { OpenClawStatus, LevelInfo } from '../types';
 import { formatTokens } from '../utils/levels';
 import { TokenChart } from './TokenChart';
 import { AchievementList } from './AchievementList';
-import { SocialPanel } from './SocialPanel';
-import { PluginPanel } from './PluginPanel';
-import { SSHPanel } from './SSHPanel';
+const SocialPanel = lazy(() => import('./SocialPanel').then(m => ({ default: m.SocialPanel })));
+const PluginPanel = lazy(() => import('./PluginPanel').then(m => ({ default: m.PluginPanel })));
+const SSHPanel = lazy(() => import('./SSHPanel').then(m => ({ default: m.SSHPanel })));
 import './StatusPanel.css';
 
 const APP_VERSION = __APP_VERSION__;
@@ -118,19 +118,19 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
   if (showPlugins) {
     return (
       <div className="status-panel">
-        <PluginPanel visible={true} onClose={closePlugins} />
+        <Suspense fallback={<div className="panel-loading">⏳</div>}><PluginPanel visible={true} onClose={closePlugins} /></Suspense>
       </div>
     );
   }
 
   if (showSocial) {
-    return <SocialPanel visible={true} onClose={closeSocial} />;
+    return <Suspense fallback={<div className="panel-loading">⏳</div>}><SocialPanel visible={true} onClose={closeSocial} /></Suspense>;
   }
 
   if (showSSH) {
     return (
       <div className="status-panel" onClick={(e) => e.stopPropagation()}>
-        <SSHPanel visible={true} onClose={() => setShowSSH(false)} />
+        <Suspense fallback={<div className="panel-loading">⏳</div>}><SSHPanel visible={true} onClose={() => setShowSSH(false)} /></Suspense>
       </div>
     );
   }
