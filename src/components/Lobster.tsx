@@ -123,6 +123,7 @@ export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, on
   const [microAnim, setMicroAnim] = useState<string | null>(null);
   const [sparkles, setSparkles] = useState<Array<{ id: number; x: number; y: number; emoji: string }>>([]);
   const [statusFlash, setStatusFlash] = useState(false);
+  const [transitionType, setTransitionType] = useState<'wake' | 'sleep' | 'alert' | ''>('');
   const prevStatusRef = useRef(status);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const clickCountRef = useRef(0);
@@ -146,12 +147,25 @@ export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, on
     return () => clearInterval(interval);
   }, [status]);
 
-  // Status change flash
+  // Status change transition
   useEffect(() => {
     if (prevStatusRef.current !== status) {
+      const prev = prevStatusRef.current;
       prevStatusRef.current = status;
       setStatusFlash(true);
-      setTimeout(() => setStatusFlash(false), 600);
+      
+      // Direction-aware transition
+      if (prev === 'idle' && status === 'active') {
+        setTransitionType('wake');
+      } else if (prev === 'active' && status === 'idle') {
+        setTransitionType('sleep');
+      } else if (status === 'error') {
+        setTransitionType('alert');
+      } else {
+        setTransitionType('wake');
+      }
+      
+      setTimeout(() => { setStatusFlash(false); setTransitionType(''); }, 800);
     }
   }, [status]);
 
@@ -301,7 +315,7 @@ export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, on
 
   return (
     <div
-      className={`lobster-container ${status} ${isClicked ? 'clicked' : ''} ${dockState ? `docked-${dockState}` : ''} ${microAnim || ''} ${statusFlash ? 'status-flash' : ''}`}
+      className={`lobster-container ${status} ${isClicked ? 'clicked' : ''} ${dockState ? `docked-${dockState}` : ''} ${microAnim || ''} ${statusFlash ? `status-flash transition-${transitionType}` : ''}`}
       onClick={handleClick}
       onDoubleClick={(e) => { e.stopPropagation(); onDoubleClick?.(); }}
     >
