@@ -6,9 +6,8 @@ import { readStore, writeStore } from './store';
 import { findOpenClaw, scanRealTokenUsage } from './scanner';
 import * as dock from './dock';
 import { createTray, updateTrayMenu, setMainWindowGetter as setTrayMainWindow, setPanelCallback } from './tray';
-import { initStatus, startStatusCheck, stopStatusCheck, switchStatusMode, getStatusMode } from './status';
+import { initStatus, startStatusCheck, stopStatusCheck } from './status';
 import * as social from './social';
-import * as remote from './remote-status';
 import * as plugins from './plugins';
 import { sshManager } from './ssh-manager';
 import { t } from './i18n-main';
@@ -387,53 +386,6 @@ ipcMain.handle('social-get-local', () => {
 ipcMain.handle('social-stats', async () => {
   try { return await social.socialGetStats(); }
   catch (err: any) { return { error: err.message }; }
-});
-
-// ─── Remote Status IPC ───
-ipcMain.handle('remote-generate-token', async () => {
-  try {
-    const store = readStore();
-    if (!store.socialToken) return { error: 'not registered' };
-    const result = await remote.generateReporterToken(store.socialToken);
-    return result;
-  } catch (err: any) { return { error: err.message }; }
-});
-
-ipcMain.handle('remote-revoke-token', async () => {
-  try {
-    const store = readStore();
-    if (!store.socialToken) return { error: 'not registered' };
-    await remote.revokeReporterToken(store.socialToken);
-    // If in remote mode, switch back to local
-    if (getStatusMode() === 'remote') switchStatusMode('local');
-    return { ok: true };
-  } catch (err: any) { return { error: err.message }; }
-});
-
-ipcMain.handle('remote-get-info', async () => {
-  try {
-    const store = readStore();
-    if (!store.socialToken) return { error: 'not registered' };
-    return await remote.getRemoteInfo(store.socialToken);
-  } catch (err: any) { return { error: err.message }; }
-});
-
-ipcMain.handle('remote-get-status', async () => {
-  try {
-    const store = readStore();
-    if (!store.socialToken) return { error: 'not registered' };
-    return await remote.getRemoteStatus(store.socialToken);
-  } catch (err: any) { return { error: err.message }; }
-});
-
-ipcMain.handle('remote-switch-mode', (_event, mode: string) => {
-  if (mode !== 'local' && mode !== 'remote') return { error: 'invalid mode' };
-  switchStatusMode(mode as 'local' | 'remote');
-  return { ok: true, mode };
-});
-
-ipcMain.handle('remote-get-mode', () => {
-  return { mode: getStatusMode() };
 });
 
 // ─── Plugin IPC ───

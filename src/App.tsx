@@ -82,7 +82,6 @@ function LobsterApp() {
   const [autoFadeEnabled, setAutoFadeEnabled] = useState(false);
   const [currentAchievement, setCurrentAchievement] = useState<Milestone | null>(null);
   const [unlockedMilestones, setUnlockedMilestones] = useState<Set<string>>(new Set());
-  const [isRemoteMode, setIsRemoteMode] = useState(false);
 
   // Drag state
   const isDragging = useRef(false);
@@ -109,9 +108,6 @@ function LobsterApp() {
       if (settings.idleOpacity) {
         document.documentElement.style.setProperty('--idle-opacity', String(settings.idleOpacity / 100));
       }
-    });
-    window.electronAPI.remoteGetMode?.().then((r: any) => {
-      setIsRemoteMode(r?.mode === 'remote');
     }).catch(() => {});
   }, []);
 
@@ -245,7 +241,6 @@ function LobsterApp() {
           levelInfo={levelInfo}
           tokenInfo={tokenInfo}
           isPanelOpen={false}
-          isRemote={isRemoteMode}
         />
         <Lobster
           status={status}

@@ -36,13 +36,6 @@ interface SystemInfo {
   diskPercent: number;
 }
 
-interface RemoteInfo {
-  hasReporterToken: boolean;
-  tokenIssuedAt: string | null;
-  lastHeartbeat: string | null;
-  reporterVersion: string | null;
-}
-
 type Tab = 'home' | 'status' | 'processes' | 'system' | 'logs' | 'servers' | 'guide';
 
 interface SSHPanelProps {
@@ -59,13 +52,6 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
   const [connecting, setConnecting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Remote mode state
-  const [remoteMode, setRemoteMode] = useState<'local' | 'remote'>('local');
-  const [remoteInfo, setRemoteInfo] = useState<RemoteInfo | null>(null);
-  const [generatedToken, setGeneratedToken] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
-  const [remoteLoading, setRemoteLoading] = useState(false);
-
   // SSH data
   const [openclawStatus, setOpenclawStatus] = useState<any>(null);
   const [processes, setProcesses] = useState<ProcessInfo[]>([]);
@@ -80,20 +66,6 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
   const loadServers = useCallback(async () => {
     try { setServers(await window.electronAPI.sshGetServers()); } catch {}
   }, []);
-
-  const loadRemoteMode = async () => {
-    try {
-      const r = await window.electronAPI.remoteGetMode();
-      if (r.mode === 'local' || r.mode === 'remote') setRemoteMode(r.mode);
-    } catch {}
-  };
-
-  const loadRemoteInfo = async () => {
-    try {
-      const r = await window.electronAPI.remoteGetInfo();
-      if (!r.error) setRemoteInfo(r);
-    } catch {}
-  };
 
   const loadOpenClawStatus = async () => {
     if (!activeServer) return;
@@ -128,7 +100,7 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
 
   // ── Init ──
   useEffect(() => {
-    if (visible) { loadServers(); loadRemoteMode(); loadRemoteInfo(); }
+    if (visible) { loadServers(); }
     return () => { if (refreshRef.current) clearInterval(refreshRef.current); };
   }, [visible, loadServers]);
 
@@ -145,43 +117,6 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
     }
     return () => { if (refreshRef.current) clearInterval(refreshRef.current); };
   }, [activeServer, tab, visible]);
-
-  // ── Remote mode handlers ──
-  const handleModeSwitch = async (newMode: 'local' | 'remote') => {
-    setError(null);
-    if (newMode === 'remote') {
-      const local = await window.electronAPI.socialGetLocal();
-      if (!local.hasToken) { setError(t('remote.needRegister')); return; }
-    }
-    const r = await window.electronAPI.remoteSwitchMode(newMode);
-    if (r.error) { setError(r.error); return; }
-    setRemoteMode(newMode);
-  };
-
-  const handleGenerateToken = async () => {
-    setRemoteLoading(true); setError(null);
-    try {
-      const r = await window.electronAPI.remoteGenerateToken();
-      if (r.error) { setError(r.error); return; }
-      setGeneratedToken(r.token || null);
-      await loadRemoteInfo();
-    } catch (e: any) { setError(e.message); }
-    finally { setRemoteLoading(false); }
-  };
-
-  const handleRevokeToken = async () => {
-    setRemoteLoading(true); setError(null);
-    try {
-      const r = await window.electronAPI.remoteRevokeToken();
-      if (r.error) { setError(r.error); return; }
-      setGeneratedToken(null); setRemoteInfo(null); setRemoteMode('local');
-    } catch (e: any) { setError(e.message); }
-    finally { setRemoteLoading(false); }
-  };
-
-  const handleCopy = async (text: string) => {
-    try { await navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch {}
-  };
 
   // ── SSH handlers ──
   const handleConnect = async (serverId: string) => {
@@ -227,14 +162,6 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
     if (newTab === 'status') await loadOpenClawStatus();
     else if (newTab === 'processes') await loadProcesses();
     else if (newTab === 'system') await loadSystemInfo();
-  };
-
-  const formatTimeAgo = (isoStr: string | null) => {
-    if (!isoStr) return '-';
-    const diff = Date.now() - new Date(isoStr).getTime();
-    if (diff < 60_000) return `${Math.floor(diff / 1000)}s`;
-    if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m`;
-    return `${Math.floor(diff / 3_600_000)}h`;
   };
 
   if (!visible) return null;
@@ -292,69 +219,7 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
       {tab === 'home' && (
         <div className="ssh-home">
 
-          {/* ── Section 1: 数据源 ── */}
-          <div className="ssh-card">
-            <div className="ssh-card-header">
-              <span className="ssh-card-title">{t('ssh.home.dataSource')}</span>
-              <span className="ssh-card-badge">{remoteMode === 'remote' ? '☁️' : '🏠'}</span>
-            </div>
-            <div className="ssh-card-desc">{t('ssh.home.dataSourceDesc')}</div>
-            <div className="ssh-toggle-group">
-              <button
-                className={`ssh-toggle-btn ${remoteMode === 'local' ? 'active' : ''}`}
-                onClick={() => handleModeSwitch('local')}
-              >
-                🏠 {t('ssh.home.localMode')}
-              </button>
-              <button
-                className={`ssh-toggle-btn ${remoteMode === 'remote' ? 'active' : ''}`}
-                onClick={() => handleModeSwitch('remote')}
-              >
-                ☁️ {t('ssh.home.cloudMode')}
-              </button>
-            </div>
-
-            {/* Reporter 状态 */}
-            {remoteMode === 'remote' && (
-              <div className="ssh-reporter-box">
-                {remoteInfo?.hasReporterToken ? (
-                  <div className="ssh-reporter-status">
-                    <span className={remoteInfo.lastHeartbeat ? 'dot-online' : 'dot-offline'} />
-                    <span>{remoteInfo.lastHeartbeat ? t('remote.connected') : t('remote.disconnected')}</span>
-                    {remoteInfo.lastHeartbeat && (
-                      <span className="ssh-time-ago">{formatTimeAgo(remoteInfo.lastHeartbeat)}</span>
-                    )}
-                    {remoteInfo.reporterVersion && (
-                      <span className="ssh-reporter-ver">v{remoteInfo.reporterVersion}</span>
-                    )}
-                    <button className="ssh-link-btn danger" onClick={handleRevokeToken} disabled={remoteLoading}>
-                      {t('remote.revokeToken')}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="ssh-reporter-setup">
-                    <p>{t('ssh.home.reporterNeeded')}</p>
-                    <button className="ssh-btn primary-sm" onClick={handleGenerateToken} disabled={remoteLoading}>
-                      {remoteLoading ? '...' : t('remote.generateToken')}
-                    </button>
-                  </div>
-                )}
-                {generatedToken && (
-                  <div className="ssh-token-block">
-                    <div className="ssh-token-label">{t('remote.installHint')}</div>
-                    <code className="ssh-token-cmd">
-                      curl -sSL https://lbhub.ai/reporter/install.sh | bash -s -- --token {generatedToken}
-                    </code>
-                    <button className="ssh-link-btn" onClick={() => handleCopy(`curl -sSL https://lbhub.ai/reporter/install.sh | bash -s -- --token ${generatedToken}`)}>
-                      {copied ? '✅ ' + t('remote.copied') : '📋 ' + t('remote.copyToken')}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* ── Section 2: SSH 服务器 ── */}
+          {/* ── SSH 服务器 ── */}
           <div className="ssh-card">
             <div className="ssh-card-header">
               <span className="ssh-card-title">{t('ssh.home.sshServers')}</span>

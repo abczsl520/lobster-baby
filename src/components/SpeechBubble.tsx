@@ -8,7 +8,6 @@ interface SpeechBubbleProps {
   levelInfo: LevelInfo;
   tokenInfo: TokenInfo;
   isPanelOpen: boolean;
-  isRemote?: boolean;
 }
 
 function getSpecialLine(t: (key: string) => string, levelInfo: LevelInfo, tokenInfo: TokenInfo): string | null {
@@ -47,7 +46,7 @@ interface BubbleState {
   leaving: boolean;
 }
 
-export const SpeechBubble: React.FC<SpeechBubbleProps> = ({ status, levelInfo, tokenInfo, isPanelOpen, isRemote }) => {
+export const SpeechBubble: React.FC<SpeechBubbleProps> = ({ status, levelInfo, tokenInfo, isPanelOpen }) => {
   const [bubble, setBubble] = useState<BubbleState | null>(null);
   const scheduleRef = useRef<number | null>(null);
   const exitRef = useRef<number | null>(null);
@@ -58,7 +57,6 @@ export const SpeechBubble: React.FC<SpeechBubbleProps> = ({ status, levelInfo, t
   const idleLines = t('speech.idle', { returnObjects: true }) as string[];
   const activeLines = t('speech.active', { returnObjects: true }) as string[];
   const errorLines = t('speech.error', { returnObjects: true }) as string[];
-  const remoteLines = t('speech.remote', { returnObjects: true }) as string[];
 
   const clearTimers = useCallback(() => {
     if (scheduleRef.current !== null) { window.clearTimeout(scheduleRef.current); scheduleRef.current = null; }
@@ -74,11 +72,6 @@ export const SpeechBubble: React.FC<SpeechBubbleProps> = ({ status, levelInfo, t
     }
 
     const getPool = () => {
-      // In remote mode, mix in remote-specific lines
-      if (isRemote && Array.isArray(remoteLines) && remoteLines.length > 0) {
-        const base = status === 'active' ? activeLines : status === 'error' ? errorLines : idleLines;
-        return [...base, ...remoteLines];
-      }
       switch (status) {
         case 'active': return activeLines;
         case 'error': return errorLines;
