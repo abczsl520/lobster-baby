@@ -359,3 +359,16 @@
   gap: 8px;
   justify-content: flex-end;
 }
+
+/* ─── Active Plugin Indicator ─── */
+.plugin-active-dot {
+  color: #00e676;
+  font-size: 8px;
+  margin-left: 4px;
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
