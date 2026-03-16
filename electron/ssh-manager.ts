@@ -155,6 +155,11 @@ function decryptCredential(encrypted: string): string {
 export class SSHManager {
   private connections: Map<string, any> = new Map();  // ssh2.Client instances
   private connecting: Map<string, boolean> = new Map();
+  private reconnectTimers: Map<string, NodeJS.Timeout> = new Map();
+  private reconnectAttempts: Map<string, number> = new Map();
+  private manualDisconnect: Set<string> = new Set();
+  private static MAX_RECONNECT_ATTEMPTS = 5;
+  private static RECONNECT_DELAYS = [5000, 10000, 30000, 60000, 120000]; // Exponential backoff
   
   // ─── Server CRUD ───
   
@@ -231,6 +236,8 @@ export class SSHManager {
   // ─── Connection Management ───
   
   async connect(serverId: string): Promise<{ success: boolean; error?: string }> {
+    this.manualDisconnect.delete(serverId); // Clear manual disconnect flag
+    this.cancelReconnect(serverId); // Cancel any pending reconnect
     if (this.connections.has(serverId)) {
       return { success: true };
     }
@@ -287,17 +294,19 @@ export class SSHManager {
       // Store connection
       this.connections.set(serverId, client);
       
-      // Handle disconnect
+      // Handle disconnect with auto-reconnect
       client.on('close', () => {
         log(`SSH: Connection closed for ${server.name}`);
         this.connections.delete(serverId);
         this.updateServerStatus(serverId, 'offline');
+        this.scheduleReconnect(serverId);
       });
       
       client.on('error', (err) => {
         log(`SSH: Connection error for ${server.name}: ${err.message}`);
         this.connections.delete(serverId);
         this.updateServerStatus(serverId, 'error', err.message);
+        this.scheduleReconnect(serverId);
       });
       
       // Update status
@@ -314,7 +323,44 @@ export class SSHManager {
     }
   }
   
+  private scheduleReconnect(serverId: string): void {
+    // Don't reconnect if manually disconnected
+    if (this.manualDisconnect.has(serverId)) return;
+    
+    const attempts = this.reconnectAttempts.get(serverId) || 0;
+    if (attempts >= SSHManager.MAX_RECONNECT_ATTEMPTS) {
+      log(`SSH: Max reconnect attempts reached for ${serverId}`);
+      this.reconnectAttempts.delete(serverId);
+      return;
+    }
+    
+    const delay = SSHManager.RECONNECT_DELAYS[Math.min(attempts, SSHManager.RECONNECT_DELAYS.length - 1)];
+    log(`SSH: Scheduling reconnect for ${serverId} in ${delay / 1000}s (attempt ${attempts + 1})`);
+    
+    const timer = setTimeout(async () => {
+      this.reconnectTimers.delete(serverId);
+      this.reconnectAttempts.set(serverId, attempts + 1);
+      try {
+        await this.connect(serverId);
+        this.reconnectAttempts.delete(serverId); // Reset on success
+        log(`SSH: Reconnected to ${serverId}`);
+      } catch (err: any) {
+        log(`SSH: Reconnect failed for ${serverId}: ${err.message}`);
+      }
+    }, delay);
+    
+    this.reconnectTimers.set(serverId, timer);
+  }
+  
+  private cancelReconnect(serverId: string): void {
+    const timer = this.reconnectTimers.get(serverId);
+    if (timer) { clearTimeout(timer); this.reconnectTimers.delete(serverId); }
+    this.reconnectAttempts.delete(serverId);
+  }
+  
   disconnect(serverId: string): void {
+    this.manualDisconnect.add(serverId);
+    this.cancelReconnect(serverId);
     const client = this.connections.get(serverId);
     if (client) {
       try { client.end(); } catch {}
