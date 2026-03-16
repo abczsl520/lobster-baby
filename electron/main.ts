@@ -5,7 +5,7 @@ import { log, logError, logWarn, logDebug } from './logger';
 import { readStore, writeStore } from './store';
 import { findOpenClaw, scanRealTokenUsage } from './scanner';
 import * as dock from './dock';
-import { createTray, updateTrayMenu, setMainWindowGetter as setTrayMainWindow } from './tray';
+import { createTray, updateTrayMenu, setMainWindowGetter as setTrayMainWindow, setPanelCallback } from './tray';
 import { initStatus, startStatusCheck, stopStatusCheck, switchStatusMode, getStatusMode } from './status';
 import * as social from './social';
 import * as remote from './remote-status';
@@ -180,6 +180,7 @@ function createWindow() {
   // Init modules with mainWindow getter
   dock.setMainWindowGetter(getMainWindow);
   setTrayMainWindow(getMainWindow);
+  setPanelCallback(createPanelWindow);
   initStatus(openclawPath, getMainWindow);
 
   startStatusCheck();

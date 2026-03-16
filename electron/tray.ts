@@ -5,8 +5,14 @@ import { t } from './i18n-main';
 let tray: Tray | null = null;
 let _mainWindow: (() => BrowserWindow | null) | null = null;
 
+let _panelCallback: ((route?: string) => void) | null = null;
+
 export function setMainWindowGetter(getter: () => BrowserWindow | null) {
   _mainWindow = getter;
+}
+
+export function setPanelCallback(cb: (route?: string) => void) {
+  _panelCallback = cb;
 }
 
 function getWin(): BrowserWindow | null {
@@ -31,6 +37,9 @@ export function updateTrayMenu() {
         }
       },
     },
+    { type: 'separator' },
+    { label: t('menu.status'), click: () => _panelCallback?.('status') },
+    { label: t('menu.remote'), click: () => _panelCallback?.('remote') },
     { type: 'separator' },
     { label: t('menu.reload'), click: () => win?.reload() },
     { label: t('menu.quit'), click: () => app.quit() },
