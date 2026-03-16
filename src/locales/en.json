@@ -11,7 +11,6 @@
     "plugins": "Plugins",
     "autoHide": "Auto Hide",
     "pinToTop": "📌 Pin",
-    "unpinFromTop": "📌 Unpin",
     "quit": "🚪 Quit",
     "upToDate": "✓ Up to date",
     "remote": "Remote",
@@ -85,7 +84,6 @@
     "nickname": "Nickname",
     "nicknamePlaceholder": "Name your lobster",
     "nicknameMinLength": "Nickname must be at least 2 characters",
-    "registerBtn": "Register & Join",
     "leaderboard": "Leaderboard",
     "pk": "PK Battle",
     "profile": "Profile",
@@ -94,26 +92,19 @@
     "level": "Level",
     "onlineDays": "Online Days",
     "rank": "Rank",
-    "noData": "No data yet",
     "loading": "Loading...",
     "pkCreate": "Create PK",
     "pkJoin": "Join PK",
     "pkCode": "PK Code",
     "pkCodePlaceholder": "Enter 6-digit code",
     "pkCodeRequired": "Please enter a 6-digit PK code",
-    "pkWaiting": "Waiting for opponent...",
     "pkResult": "PK Result",
     "pkWin": "🎉 You win!",
     "pkLose": "😢 You lose",
     "pkDraw": "🤝 Draw",
-    "myScore": "My Score",
-    "opponentScore": "Opponent",
-    "editProfile": "Edit Profile",
     "deleteAccount": "Delete Account",
-    "deleteConfirm": "Delete your account? This cannot be undone.",
     "notRegistered": "Not registered",
     "joinLeaderboard": "Join Leaderboard",
-    "totalUsers": "{{count}} lobster owners",
     "lobsterId": "Lobster ID",
     "agreePrivacy": "Please agree to the privacy policy",
     "registerTitle": "🦞 Register",
@@ -161,9 +152,6 @@
     "menuProfile": "My Profile",
     "unregisteredText": "Join the lobster community and compete!",
     "registerCommunity": "🦞 Join Community",
-    "statsLobsters": "🦞 {{count}} lobsters",
-    "statsActive": "🟢 {{count}} active",
-    "statsPKs": "⚔️ {{count}} PKs",
     "statLobsters": "Lobsters",
     "statActive": "Active",
     "statPKs": "PKs"
@@ -253,9 +241,7 @@
   "update": {
     "newVersion": "New version available!",
     "updateNow": "Update Now",
-    "remindLater": "Remind Later",
-    "newVersionNotif": "🦞 New version!",
-    "versionPublished": "v{{version}} released"
+    "remindLater": "Remind Later"
   },
   "menu": {
     "status": "📊 Status",
@@ -302,10 +288,6 @@
     "welcome": {
       "title": "Manage Your Servers Remotely",
       "desc": "Securely connect via SSH to monitor server status, manage processes, and view logs",
-      "feature1": "OpenClaw Status",
-      "feature2": "PM2 Process Manager",
-      "feature3": "System Resources",
-      "feature4": "Live Log Viewer",
       "hint": "🔒 Credentials encrypted with system keychain. All commands filtered through security whitelist."
     },
     "tab": {
@@ -313,8 +295,7 @@
       "processes": "Procs",
       "system": "System",
       "logs": "Logs",
-      "servers": "Servers",
-      "overview": "Overview"
+      "servers": "Servers"
     },
     "addServer": "Add Server",
     "connect": "Connect",
@@ -327,7 +308,6 @@
     "testSuccess": "Connected!",
     "notInstalled": "OpenClaw not installed",
     "noProcesses": "No PM2 processes found",
-    "serverCount": "{{total}} servers, {{connected}} connected",
     "processCount": "{{total}} processes, {{online}} online",
     "lastConnected": "Last connected",
     "viewLogs": "View logs",
@@ -364,7 +344,6 @@
       "test": "Test Connection",
       "save": "Save"
     },
-    "manageServers": "Manage servers",
     "home": {
       "sshServers": "SSH Direct Access",
       "sshDesc": "Connect directly to your servers to view status, manage processes, and read logs",
