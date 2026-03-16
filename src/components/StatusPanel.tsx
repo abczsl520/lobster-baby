@@ -129,14 +129,14 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
 
   if (showSSH) {
     return (
-      <div className="status-panel" onClick={(e) => e.stopPropagation()}>
+      <div className="status-panel" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Status Panel">
         <Suspense fallback={<div className="panel-loading">⏳</div>}><SSHPanel visible={true} onClose={() => setShowSSH(false)} /></Suspense>
       </div>
     );
   }
 
   return (
-    <div className="status-panel" onClick={(e) => e.stopPropagation()}>
+    <div className="status-panel" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Status Panel">
       {/* Header */}
       <div className="status-panel-header">
         <div className="header-left">
@@ -145,7 +145,7 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
             {statusDot[status]}
           </span>
         </div>
-        <button className="close-btn" onClick={onClose}>×</button>
+        <button className="close-btn" onClick={onClose} aria-label="Close panel">×</button>
       </div>
 
       <div className="status-panel-scroll">

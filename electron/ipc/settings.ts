@@ -27,6 +27,27 @@ export function registerSettingsIPC(getMainWindow: () => BrowserWindow | null) {
 
   ipcMain.handle('get-daily-tokens', () => scanDailyTokens(30));
 
+  ipcMain.handle('export-token-csv', async () => {
+    const data = scanDailyTokens(90); // Last 90 days
+    const rows = ['Date,Tokens'];
+    const sorted = Object.entries(data).sort(([a], [b]) => a.localeCompare(b));
+    for (const [date, tokens] of sorted) {
+      rows.push(`${date},${tokens}`);
+    }
+    const csv = rows.join('\n');
+    const { dialog } = await import('electron');
+    const { filePath } = await dialog.showSaveDialog({
+      defaultPath: `lobster-tokens-${new Date().toISOString().slice(0, 10)}.csv`,
+      filters: [{ name: 'CSV', extensions: ['csv'] }],
+    });
+    if (filePath) {
+      const fs = await import('fs');
+      fs.writeFileSync(filePath, csv);
+      return { success: true, path: filePath };
+    }
+    return { success: false };
+  });
+
   ipcMain.handle('get-settings', () => readStore().settings || { autoFadeEnabled: false });
 
   ipcMain.handle('update-settings', (_event, settings: Record<string, any>) => {

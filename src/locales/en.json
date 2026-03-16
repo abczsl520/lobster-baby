@@ -399,7 +399,8 @@
     "today": "Today",
     "yesterday": "Yesterday",
     "peak": "Peak",
-    "vsLastWeek": "vs last week"
+    "vsLastWeek": "vs last week",
+    "export": "Export data"
   },
   "theme": {
     "lobsterRed": "Lobster Red",

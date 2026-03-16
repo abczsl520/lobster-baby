@@ -40,6 +40,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   toggleAlwaysOnTop: () => ipcRenderer.invoke('toggle-always-on-top'),
   getLevelData: () => ipcRenderer.invoke('get-level-data'),
   getDailyTokens: () => ipcRenderer.invoke('get-daily-tokens'),
+  exportTokenCSV: () => ipcRenderer.invoke('export-token-csv'),
   getSettings: () => ipcRenderer.invoke('get-settings'),
   updateSettings: (settings: Record<string, any>) => ipcRenderer.invoke('update-settings', settings),
   showPanel: (route?: string) => ipcRenderer.invoke('show-panel', route),

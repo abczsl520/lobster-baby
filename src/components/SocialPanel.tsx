@@ -117,7 +117,7 @@ export const SocialPanel: React.FC<SocialPanelProps> = ({ visible, onClose }) =>
   // ─── Register View ───
   if (view === 'register') {
     return (
-      <div className="social-panel">
+      <div className="social-panel" role="dialog" aria-label="Social Panel">
         <div className="social-header">
           <button className="social-back" onClick={() => { setError(''); setView('home'); }}>←</button>
           <h3>{t('social.registerTitle')}</h3>
@@ -149,7 +149,7 @@ export const SocialPanel: React.FC<SocialPanelProps> = ({ visible, onClose }) =>
   // ─── Leaderboard View ───
   if (view === 'leaderboard') {
     return (
-      <div className="social-panel">
+      <div className="social-panel" role="dialog" aria-label="Social Panel">
         <div className="social-header">
           <button className="social-back" onClick={() => { setError(''); setView('home'); }}>←</button>
           <h3>{t('social.leaderboardTitle')}</h3>
@@ -210,7 +210,7 @@ export const SocialPanel: React.FC<SocialPanelProps> = ({ visible, onClose }) =>
   // ─── PK View ───
   if (view === 'pk') {
     return (
-      <div className="social-panel">
+      <div className="social-panel" role="dialog" aria-label="Social Panel">
         <div className="social-header">
           <button className="social-back" onClick={() => { setError(''); setView('home'); setPkResult(null); setMyPkCode(''); setPkCode(''); }}>←</button>
           <h3>{t('social.pkTitle')}</h3>
@@ -287,7 +287,7 @@ export const SocialPanel: React.FC<SocialPanelProps> = ({ visible, onClose }) =>
   // ─── Profile View ───
   if (view === 'profile') {
     return (
-      <div className="social-panel">
+      <div className="social-panel" role="dialog" aria-label="Social Panel">
         <div className="social-header">
           <button className="social-back" onClick={() => { setError(''); setView('home'); }}>←</button>
           <h3>{t('social.profileTitle')}</h3>
@@ -333,9 +333,9 @@ export const SocialPanel: React.FC<SocialPanelProps> = ({ visible, onClose }) =>
 
   // ─── Home View ───
   return (
-    <div className="social-panel">
+    <div className="social-panel" role="dialog" aria-label="Social Panel">
       <div className="social-header">
-        <button className="social-back" onClick={onClose}>←</button>
+        <button className="social-back" onClick={onClose} aria-label="Back">←</button>
         <h3>{t('social.communityTitle')}</h3>
       </div>
       <div className="social-body">
