@@ -40,6 +40,7 @@ interface LobsterProps {
   status: OpenClawStatus;
   levelInfo: LevelInfo;
   onClick: () => void;
+  onDoubleClick?: () => void;
   dockState: string | null;
 }
 
@@ -109,7 +110,7 @@ const COMBO_DURATIONS: Record<ComboTier, { badge: number; effect: number; starBu
   10: { badge: 900, effect: 3000, starBurst: 1000, flash: 550 },
 };
 
-export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, dockState }) => {
+export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, onDoubleClick, dockState }) => {
   const [isClicked, setIsClicked] = useState(false);
   const [tokenDelta, setTokenDelta] = useState<number | null>(null);
   const [showLevelUp, setShowLevelUp] = useState(false);
@@ -260,6 +261,7 @@ export const Lobster: React.FC<LobsterProps> = ({ status, levelInfo, onClick, do
     <div
       className={`lobster-container ${status} ${isClicked ? 'clicked' : ''} ${dockState ? `docked-${dockState}` : ''}`}
       onClick={handleClick}
+      onDoubleClick={(e) => { e.stopPropagation(); onDoubleClick?.(); }}
     >
       {/* Screen flash (fixed, outside lobster) */}
       {combo.screenFlash && <div key={combo.screenFlashKey} className="combo-screen-flash" />}
