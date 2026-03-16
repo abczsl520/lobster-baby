@@ -493,3 +493,65 @@
   font-size: 13px;
   color: rgba(255, 255, 255, 0.75);
 }
+
+/* ─── Social Stats Card ─── */
+.social-stats-card {
+  display: flex;
+  justify-content: space-around;
+  padding: 10px;
+  margin-top: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.social-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.social-stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--theme-accent, #ff6b6b);
+}
+
+.social-stat-label {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+/* ─── PK Result Animations ─── */
+.pk-result {
+  animation: pk-reveal 0.5s ease-out;
+}
+
+@keyframes pk-reveal {
+  0% { transform: scale(0.8); opacity: 0; }
+  60% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.pk-winner {
+  animation: winner-glow 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes winner-glow {
+  0% { text-shadow: 0 0 5px var(--theme-accent, #ff6b6b); }
+  100% { text-shadow: 0 0 15px var(--theme-accent, #ff6b6b), 0 0 30px var(--theme-glow, rgba(255, 77, 77, 0.3)); }
+}
+
+.pk-winner.draw {
+  animation: none;
+}
+
+.pk-vs {
+  animation: vs-pulse 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes vs-pulse {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.15); }
+}
