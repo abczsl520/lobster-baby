@@ -52,7 +52,7 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
   showSocial: externalShowSocial, onCloseSocial, onOpenSocial,
   showPlugins: externalShowPlugins, onOpenPlugins, onClosePlugins,
   showRemote, onOpenRemote: _onOpenRemote, onCloseRemote: _onCloseRemote,
-  isPanelWindow: _isPanelWindow = false,
+  isPanelWindow = false,
 }) => {
   const [internalShowChart, setInternalShowChart] = useState(false);
   const [internalShowAchievements, setInternalShowAchievements] = useState(false);
@@ -60,6 +60,7 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
   const [internalShowPlugins, setInternalShowPlugins] = useState(false);
   const [showSSH, setShowSSH] = useState(showRemote ?? false);
   const [autoStartEnabled, setAutoStartEnabled] = useState(true);
+  const [internalAutoFade, setInternalAutoFade] = useState(false);
   const [idleOpacity, setIdleOpacity] = useState(30);
   const [sparklineData, setSparklineData] = useState<number[]>([]);
   const { t, i18n } = useTranslation();
@@ -84,11 +85,12 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
 
   React.useEffect(() => {
     window.electronAPI.getAutoStart?.().then((v: boolean) => setAutoStartEnabled(v)).catch(() => {});
-    window.electronAPI.getSettings?.().then((s: { idleOpacity?: number }) => {
+    window.electronAPI.getSettings?.().then((s: { idleOpacity?: number; autoFadeEnabled?: boolean }) => {
       if (s?.idleOpacity) {
         setIdleOpacity(s.idleOpacity);
         document.documentElement.style.setProperty('--idle-opacity', String(s.idleOpacity / 100));
       }
+      if (s?.autoFadeEnabled !== undefined) setInternalAutoFade(s.autoFadeEnabled);
     }).catch(() => {});
     // Load sparkline data
     window.electronAPI.getDailyTokens?.().then((data: Record<string, number>) => {
@@ -100,6 +102,18 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
   const toggleChart = onToggleChart ?? (() => setInternalShowChart(!internalShowChart));
   const showAchievements = externalShowAchievements !== undefined ? externalShowAchievements : internalShowAchievements;
   const toggleAchievements = onToggleAchievements ?? (() => setInternalShowAchievements(!internalShowAchievements));
+  
+  // autoFade: panel window manages its own state
+  const isAutoFadeOn = isPanelWindow ? internalAutoFade : autoFadeEnabled;
+  const handleToggleAutoFade = () => {
+    if (isPanelWindow) {
+      const next = !internalAutoFade;
+      setInternalAutoFade(next);
+      window.electronAPI.updateSettings?.({ autoFadeEnabled: next });
+    } else {
+      onToggleAutoFade?.();
+    }
+  };
   const showSocial = externalShowSocial !== undefined ? externalShowSocial : internalShowSocial;
   const closeSocial = onCloseSocial ?? (() => setInternalShowSocial(false));
   const openSocial = onOpenSocial ?? (() => setInternalShowSocial(true));
@@ -263,13 +277,13 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
               <label className="toggle-switch">
                 <input
                   type="checkbox"
-                  checked={autoFadeEnabled}
-                  onChange={onToggleAutoFade}
+                  checked={isAutoFadeOn}
+                  onChange={handleToggleAutoFade}
                 />
                 <span className="toggle-slider" />
               </label>
             </div>
-            {autoFadeEnabled && (
+            {isAutoFadeOn && (
               <div className="setting-row">
                 <span className="setting-label">{t('settings.idleOpacity')}</span>
                 <div className="opacity-slider">
