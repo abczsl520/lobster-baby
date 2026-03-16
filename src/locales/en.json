@@ -293,7 +293,8 @@
   "settings": {
     "language": "Language",
     "chinese": "中文",
-    "english": "English"
+    "english": "English",
+    "autoStart": "Start on login"
   },
   "remote": {
     "title": "Remote Mode",

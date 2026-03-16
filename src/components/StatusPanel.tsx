@@ -48,11 +48,13 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
   const [internalShowPlugins, setInternalShowPlugins] = useState(false);
   const [showSSH, setShowSSH] = useState(false);
   const [statusMode, setStatusMode] = useState<string>('local');
+  const [autoStartEnabled, setAutoStartEnabled] = useState(true);
   const { t, i18n } = useTranslation();
 
   // Check remote mode on mount
   React.useEffect(() => {
     window.electronAPI.remoteGetMode?.().then((r: any) => setStatusMode(r?.mode || 'local')).catch(() => {});
+    window.electronAPI.getAutoStart?.().then((v: boolean) => setAutoStartEnabled(v)).catch(() => {});
   }, []);
   const showChart = externalShowChart !== undefined ? externalShowChart : internalShowChart;
   const toggleChart = onToggleChart ?? (() => setInternalShowChart(!internalShowChart));
@@ -194,6 +196,21 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
                   type="checkbox"
                   checked={autoFadeEnabled}
                   onChange={onToggleAutoFade}
+                />
+                <span className="toggle-slider" />
+              </label>
+            </div>
+            <div className="setting-row">
+              <span className="setting-label">{t('settings.autoStart')}</span>
+              <label className="toggle-switch">
+                <input
+                  type="checkbox"
+                  checked={autoStartEnabled}
+                  onChange={async () => {
+                    const newVal = !autoStartEnabled;
+                    setAutoStartEnabled(newVal);
+                    await window.electronAPI.setAutoStart?.(newVal);
+                  }}
                 />
                 <span className="toggle-slider" />
               </label>

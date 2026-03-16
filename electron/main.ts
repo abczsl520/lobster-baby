@@ -818,7 +818,23 @@ app.whenReady().then(async () => {
   });
 });
 
-if (app.isPackaged) app.setLoginItemSettings({ openAtLogin: true, openAsHidden: false });
+if (app.isPackaged) {
+  const store = readStore();
+  const autoStart = store.autoStartEnabled !== false; // default true
+  app.setLoginItemSettings({ openAtLogin: autoStart, openAsHidden: false });
+}
+
+// Toggle auto-start
+ipcMain.handle('get-auto-start', () => {
+  return app.getLoginItemSettings().openAtLogin;
+});
+ipcMain.handle('set-auto-start', (_event, enabled: boolean) => {
+  app.setLoginItemSettings({ openAtLogin: enabled, openAsHidden: false });
+  const store = readStore();
+  store.autoStartEnabled = enabled;
+  writeStore(store);
+  return enabled;
+});
 
 app.on('window-all-closed', () => { stopStatusCheck(); if (process.platform !== 'darwin') app.quit(); });
 app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
