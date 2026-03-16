@@ -170,6 +170,7 @@ export const PluginPanel: React.FC<PluginPanelProps> = ({ visible, onClose }) =>
                   <div className="plugin-card-info">
                     <span className="plugin-name">{p.manifest.name}</span>
                     <span className="plugin-version">v{p.manifest.version}</span>
+                    {p.active && <span className="plugin-active-dot">●</span>}
                   </div>
                   <label className="toggle-switch small">
                     <input type="checkbox" checked={p.record.enabled} onChange={() => handleToggle(p.id, p.record.enabled)} disabled={loading} />
