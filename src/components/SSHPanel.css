@@ -65,23 +65,26 @@
   gap: 2px;
   margin-bottom: 8px;
   overflow-x: auto;
+  scrollbar-width: none;
 }
+.ssh-tabs::-webkit-scrollbar { display: none; }
 
 .ssh-tab {
   flex: 1;
-  padding: 5px 2px;
+  padding: 6px 4px;
   border: none;
   background: rgba(255, 255, 255, 0.05);
   color: #aaa;
   cursor: pointer;
-  border-radius: 4px;
-  font-size: 10px;
+  border-radius: 6px;
+  font-size: 11px;
   white-space: nowrap;
   transition: all 0.2s;
-  min-width: 28px;
+  min-width: 32px;
+  text-align: center;
 }
 .ssh-tab:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
-.ssh-tab.active { background: rgba(52, 152, 219, 0.3); color: #3498db; }
+.ssh-tab.active { background: rgba(52, 152, 219, 0.25); color: #3498db; font-weight: 500; }
 
 /* ─── Home Tab ─── */
 .ssh-home {
@@ -206,12 +209,12 @@
 
 .ssh-server-row {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 8px;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 6px;
+  border-radius: 8px;
   transition: all 0.2s;
 }
 
@@ -230,14 +233,19 @@
 .ssh-server-dot { font-size: 10px; }
 
 .ssh-server-row-name {
-  font-size: 11px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .ssh-server-row-host {
+  font-size: 10px;
+  color: #888;
+}
+
+.ssh-server-row-last {
   font-size: 9px;
   color: #666;
 }
@@ -245,8 +253,8 @@
 .ssh-server-row-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
+  gap: 6px;
+  padding-left: 16px;
 }
 
 /* Icon button */
@@ -421,19 +429,23 @@
 
 .ssh-status-card, .ssh-system-card {
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 6px;
-  padding: 8px;
+  border-radius: 8px;
+  padding: 10px;
   margin-bottom: 8px;
 }
 
 .ssh-status-row {
   display: flex;
   justify-content: space-between;
-  padding: 4px 0;
+  align-items: center;
+  padding: 5px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  font-size: 11px;
+  font-size: 12px;
+  gap: 8px;
 }
 .ssh-status-row:last-child { border-bottom: none; }
+.ssh-status-row > span:first-child { color: #999; flex-shrink: 0; }
+.ssh-status-row > span:last-child { font-weight: 500; text-align: right; word-break: break-word; }
 
 .ssh-status-badge {
   padding: 1px 6px;
@@ -447,29 +459,32 @@
 
 .ssh-process-card {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 8px;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 10px;
   margin-bottom: 4px;
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 4px;
+  border-radius: 6px;
   transition: background 0.2s;
 }
 .ssh-process-card:hover { background: rgba(255, 255, 255, 0.08); }
+.ssh-process-card.online { border-left: 2px solid #2ecc71; }
+.ssh-process-card.stopped { border-left: 2px solid #e74c3c; }
 
-.ssh-process-name { font-weight: bold; font-size: 11px; }
-.ssh-process-meta { font-size: 9px; color: #888; margin-top: 1px; }
-.ssh-process-actions { display: flex; gap: 4px; }
+.ssh-process-name { font-weight: 600; font-size: 12px; }
+.ssh-process-meta { font-size: 10px; color: #888; margin-top: 2px; word-break: break-word; }
+.ssh-process-actions { display: flex; gap: 6px; }
 
 .ssh-meter-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 6px;
   padding: 4px 0;
   font-size: 11px;
 }
-.ssh-meter-row > span:first-child { min-width: 70px; }
-.ssh-meter-row > span:last-child { font-size: 9px; color: #aaa; min-width: 100px; text-align: right; }
+.ssh-meter-row > span:first-child { white-space: nowrap; }
+.ssh-meter-row > span:last-child { font-size: 9px; color: #aaa; text-align: right; white-space: nowrap; }
 
 .ssh-meter {
   flex: 1;
@@ -590,62 +605,63 @@
 /* ─── Add Server Form ─── */
 .ssh-add-form {
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 6px;
-  padding: 10px;
+  border-radius: 8px;
+  padding: 12px;
   margin-top: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .ssh-form-title {
-  font-weight: bold;
-  margin-bottom: 8px;
-  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  font-size: 13px;
 }
 
 .ssh-add-form label {
   display: block;
-  font-size: 10px;
-  color: #888;
-  margin: 6px 0 2px;
+  font-size: 11px;
+  color: #999;
+  margin: 8px 0 3px;
 }
 
 .ssh-add-form input, .ssh-add-form textarea {
   width: 100%;
-  padding: 5px 8px;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 4px;
+  padding: 7px 10px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
   color: #e0e0e0;
-  font-size: 11px;
+  font-size: 12px;
   box-sizing: border-box;
   transition: border-color 0.2s;
 }
 
 .ssh-add-form input:focus, .ssh-add-form textarea:focus {
-  border-color: rgba(52, 152, 219, 0.5);
+  border-color: rgba(52, 152, 219, 0.6);
   outline: none;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
 }
 
 .ssh-add-form textarea {
   font-family: 'Monaco', 'Menlo', monospace;
-  font-size: 10px;
+  font-size: 11px;
   resize: vertical;
 }
 
 .ssh-form-row { display: flex; gap: 8px; }
 .ssh-form-row > div { flex: 1; }
 
-.ssh-auth-toggle { display: flex; gap: 4px; }
+.ssh-auth-toggle { display: flex; gap: 4px; margin: 4px 0; }
 
 .ssh-auth-toggle button {
   flex: 1;
-  padding: 5px;
+  padding: 6px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  border-radius: 6px;
   color: #888;
   cursor: pointer;
-  font-size: 10px;
+  font-size: 11px;
   transition: all 0.2s;
 }
 
@@ -653,20 +669,21 @@
   background: rgba(52, 152, 219, 0.2);
   border-color: rgba(52, 152, 219, 0.4);
   color: #3498db;
+  font-weight: 500;
 }
 
 .ssh-test-result {
-  margin-top: 6px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 11px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
   background: rgba(255, 255, 255, 0.05);
 }
 
 .ssh-form-actions {
   display: flex;
   gap: 6px;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 .ssh-form-actions .ssh-btn { flex: 1; }
 .ssh-form-actions .ssh-btn.primary { width: auto; margin-top: 0; }

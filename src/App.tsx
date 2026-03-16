@@ -47,12 +47,12 @@ function PanelApp() {
         activeSessions={activeSessions}
         onClose={handleClose}
         showChart={initialRoute === 'chart'}
-        onToggleChart={() => {}}
+        onToggleChart={() => setInitialRoute(initialRoute === 'chart' ? 'status' : 'chart')}
         autoFadeEnabled={false}
         onToggleAutoFade={() => {}}
         updateInfo={updateInfo}
         showAchievements={initialRoute === 'achievements'}
-        onToggleAchievements={() => {}}
+        onToggleAchievements={() => setInitialRoute(initialRoute === 'achievements' ? 'status' : 'achievements')}
         showSocial={initialRoute === 'social'}
         onOpenSocial={() => setInitialRoute('social')}
         onCloseSocial={() => setInitialRoute('status')}
