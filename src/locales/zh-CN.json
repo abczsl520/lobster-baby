@@ -15,7 +15,8 @@
     "quit": "🚪 退出",
     "upToDate": "✓ 最新",
     "remote": "远程",
-    "rate": "速率"
+    "rate": "速率",
+    "sessions": "会话"
   },
   "milestone": {
     "firstMillion": "百万起步",

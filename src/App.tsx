@@ -21,7 +21,7 @@ function getPanelRoute(): string | null {
 
 // ─── Panel Window App ───
 function PanelApp() {
-  const { status, tokenInfo } = useOpenClawStatus();
+  const { status, tokenInfo, activeSessions } = useOpenClawStatus();
   const levelInfo = useLevelSystem();
   const { updateInfo } = useUpdateChecker();
   const [initialRoute, setInitialRoute] = useState<string>(getPanelRoute() || 'status');
@@ -44,6 +44,7 @@ function PanelApp() {
         status={status}
         levelInfo={levelInfo}
         tokenInfo={tokenInfo}
+        activeSessions={activeSessions}
         onClose={handleClose}
         showChart={initialRoute === 'chart'}
         onToggleChart={() => {}}

@@ -15,7 +15,8 @@
     "quit": "🚪 Quit",
     "upToDate": "✓ Up to date",
     "remote": "Remote",
-    "rate": "Rate"
+    "rate": "Rate",
+    "sessions": "Sessions"
   },
   "milestone": {
     "firstMillion": "First Million",

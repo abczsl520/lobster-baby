@@ -21,6 +21,7 @@ interface StatusPanelProps {
   status: OpenClawStatus;
   levelInfo: LevelInfo;
   tokenInfo: { daily: number; total: number };
+  activeSessions?: number;
   onClose: () => void;
   showChart?: boolean;
   onToggleChart?: () => void;
@@ -42,7 +43,7 @@ interface StatusPanelProps {
 }
 
 export const StatusPanel: React.FC<StatusPanelProps> = ({
-  status, levelInfo, tokenInfo, onClose,
+  status, levelInfo, tokenInfo, activeSessions = 0, onClose,
   showChart: externalShowChart, onToggleChart,
   autoFadeEnabled = false, onToggleAutoFade,
   updateInfo,
@@ -59,6 +60,7 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
   const [showSSH, setShowSSH] = useState(showRemote ?? false);
   const [autoStartEnabled, setAutoStartEnabled] = useState(true);
   const [idleOpacity, setIdleOpacity] = useState(30);
+  const [sparklineData, setSparklineData] = useState<number[]>([]);
   const { t, i18n } = useTranslation();
 
   // Token rate calculation (tokens/min over last 60s)
@@ -86,6 +88,11 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
         setIdleOpacity(s.idleOpacity);
         document.documentElement.style.setProperty('--idle-opacity', String(s.idleOpacity / 100));
       }
+    }).catch(() => {});
+    // Load sparkline data
+    window.electronAPI.getDailyTokens?.().then((data: Record<string, number>) => {
+      const sorted = Object.entries(data).sort(([a], [b]) => a.localeCompare(b)).slice(-7);
+      setSparklineData(sorted.map(([, v]) => v));
     }).catch(() => {});
   }, []);
   const showChart = externalShowChart !== undefined ? externalShowChart : internalShowChart;
@@ -153,19 +160,39 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
 
           {/* ── Level Progress Card ── */}
           <div className="card level-card">
-            <div className="progress-bar">
-              <div
-                className="progress-fill"
-                style={{
-                  width: `${progressPercent}%`,
-                  backgroundColor: levelInfo.isRainbow ? '#ff4444' : levelInfo.color,
-                }}
-              />
-            </div>
-            <div className="level-stats">
-              <span className="level-current">{formatTokens(levelInfo.currentTokens)}</span>
-              <span className="level-divider">/</span>
-              <span className="level-target">{formatTokens(levelInfo.nextLevelTokens)}</span>
+            <div className="level-card-top">
+              <div className="level-card-info">
+                <div className="progress-bar">
+                  <div
+                    className="progress-fill"
+                    style={{
+                      width: `${progressPercent}%`,
+                      backgroundColor: levelInfo.isRainbow ? '#ff4444' : levelInfo.color,
+                    }}
+                  />
+                </div>
+                <div className="level-stats">
+                  <span className="level-current">{formatTokens(levelInfo.currentTokens)}</span>
+                  <span className="level-divider">/</span>
+                  <span className="level-target">{formatTokens(levelInfo.nextLevelTokens)}</span>
+                </div>
+              </div>
+              {sparklineData.length > 1 && (
+                <svg className="sparkline" viewBox="0 0 60 24" preserveAspectRatio="none">
+                  <polyline
+                    fill="none"
+                    stroke="var(--theme-accent, #ff6b6b)"
+                    strokeWidth="1.5"
+                    strokeLinejoin="round"
+                    points={sparklineData.map((v, i) => {
+                      const max = Math.max(...sparklineData, 1);
+                      const x = (i / (sparklineData.length - 1)) * 60;
+                      const y = 24 - (v / max) * 22;
+                      return `${x},${y}`;
+                    }).join(' ')}
+                  />
+                </svg>
+              )}
             </div>
             {levelInfo.level < 10 && (
               <div className="level-remaining">
@@ -195,8 +222,8 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
               <span className="stat-chip-value">{tokenRate > 0 ? `${formatTokens(tokenRate)}/m` : '—'}</span>
             </div>
             <div className="stat-chip">
-              <span className="stat-chip-label">{t('status.progress')}</span>
-              <span className="stat-chip-value">{progressPercent.toFixed(1)}%</span>
+              <span className="stat-chip-label">{t('status.sessions')}</span>
+              <span className="stat-chip-value">{activeSessions}</span>
             </div>
           </div>
 
