@@ -47,6 +47,13 @@ export function updateTrayMenu() {
   tray.setContextMenu(contextMenu);
 }
 
+export function updateTrayTooltip(status: string, tokens: number) {
+  if (!tray) return;
+  const statusEmoji = status === 'active' ? '🟢' : status === 'error' ? '🔴' : '💤';
+  const tokenStr = tokens >= 1e9 ? `${(tokens / 1e9).toFixed(1)}B` : tokens >= 1e6 ? `${(tokens / 1e6).toFixed(0)}M` : `${tokens}`;
+  tray.setToolTip(`🦞 Lobster Baby ${statusEmoji} ${tokenStr} tokens`);
+}
+
 export function createTray() {
   // Use lobster icon from assets — path resolves differently in dev vs packaged
   const basePath = app.isPackaged 

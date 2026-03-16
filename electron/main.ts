@@ -5,7 +5,7 @@ import { log, logError, logWarn, logDebug } from './logger';
 import { readStore, writeStore } from './store';
 import { findOpenClaw, scanRealTokenUsage } from './scanner';
 import * as dock from './dock';
-import { createTray, updateTrayMenu, setMainWindowGetter as setTrayMainWindow, setPanelCallback } from './tray';
+import { createTray, updateTrayMenu, updateTrayTooltip, setMainWindowGetter as setTrayMainWindow, setPanelCallback } from './tray';
 import { initStatus, startStatusCheck, stopStatusCheck } from './status';
 import * as plugins from './plugins';
 import { sshManager } from './ssh-manager';
@@ -372,6 +372,10 @@ app.whenReady().then(async () => {
     if (!mainWindow) return;
     if (mainWindow.isVisible()) mainWindow.hide();
     else { mainWindow.show(); mainWindow.focus(); }
+  });
+
+  globalShortcut.register('CommandOrControl+Shift+P', () => {
+    createPanelWindow('status');
   });
 
   screen.on('display-removed', () => {
