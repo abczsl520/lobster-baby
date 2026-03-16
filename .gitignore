@@ -11,8 +11,8 @@ src/assets/lobster-nobg-original.png
 src/assets/lobster-raw.png
 
 # TypeScript compiled output (source is .ts)
-electron/*.js
-electron/*.d.ts
+electron/**/*.js
+electron/**/*.d.ts
 src/**/*.js
 src/**/*.d.ts
 !src/vite-env.d.ts

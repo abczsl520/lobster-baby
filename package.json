@@ -12,6 +12,7 @@
   ],
   "scripts": {
     "dev": "vite",
+    "prebuild": "find electron -name '*.js' -delete 2>/dev/null || true",
     "build": "tsc && vite build && tsc -p tsconfig.node.json",
     "electron:dev": "vite",
     "electron:build": "npm run build && electron-builder",
