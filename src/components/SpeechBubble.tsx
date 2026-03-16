@@ -32,6 +32,15 @@ function getSpecialLine(t: (key: string) => string, levelInfo: LevelInfo, tokenI
   if (hour >= 23 || hour < 3) return t('speech.special.night');
   if ((day === 0 || day === 6) && Math.random() < 0.3) return t('speech.special.weekend');
 
+  // New Year (Jan 1 or Chinese New Year area)
+  const month = new Date().getMonth();
+  if (month === 0 && new Date().getDate() === 1) return t('speech.special.newYear');
+
+  // Long session (4+ hours)
+  if (typeof window !== 'undefined' && performance.now() > 4 * 60 * 60 * 1000 && Math.random() < 0.3) {
+    return t('speech.special.longSession');
+  }
+
   return null;
 }
 
