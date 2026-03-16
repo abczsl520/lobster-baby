@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain, screen, Menu, shell, Notification, globalShortcut } from 'electron';
 import path from 'path';
 import https from 'https';
-import { log } from './logger';
+import { log, logError, logWarn, logDebug } from './logger';
 import { readStore, writeStore } from './store';
 import { findOpenClaw, scanRealTokenUsage } from './scanner';
 import * as dock from './dock';
@@ -65,24 +65,24 @@ function createWindow() {
 
   // Logging
   mainWindow.webContents.on('did-finish-load', () => log('Page loaded'));
-  mainWindow.webContents.on('did-fail-load', (_e, code, desc) => log(`Page failed: ${code} ${desc}`));
+  mainWindow.webContents.on('did-fail-load', (_e, code, desc) => logError(`Page failed: ${code} ${desc}`));
 
   // S22: Block navigation to external URLs
   mainWindow.webContents.on('will-navigate', (event, url) => {
     const allowed = process.env.VITE_DEV_SERVER_URL || `file://${path.join(__dirname, '../dist/')}`;
     if (!url.startsWith(allowed) && !url.startsWith('file://')) {
-      log(`Blocked navigation to: ${url}`);
+      logWarn(`Blocked navigation to: ${url}`);
       event.preventDefault();
     }
   });
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     // External links open in default browser via shell.openExternal (already validated in IPC)
-    log(`Blocked window.open: ${url}`);
+    logWarn(`Blocked window.open: ${url}`);
     return { action: 'deny' };
   });
 
   mainWindow.webContents.on('render-process-gone', (_e, details) => {
-    log(`Renderer crashed: ${JSON.stringify(details)}`);
+    logError(`Renderer crashed: ${JSON.stringify(details)}`);
     if (details.reason !== 'clean-exit') {
       setTimeout(() => {
         if (mainWindow && !mainWindow.isDestroyed()) mainWindow.reload();
@@ -90,7 +90,7 @@ function createWindow() {
       }, 1000);
     }
   });
-  mainWindow.webContents.on('unresponsive', () => log('Renderer unresponsive'));
+  mainWindow.webContents.on('unresponsive', () => logWarn('Renderer unresponsive'));
   mainWindow.webContents.on('responsive', () => log('Renderer responsive'));
 
   // Save position on move + edge snapping
@@ -152,7 +152,7 @@ function createWindow() {
           { type: 'separator' },
           ...pluginMenuItems.map(item => ({
             label: item.label,
-            click: async () => { try { await item.onClick(); } catch (e) { log(`Plugin menu error: ${e}`); } },
+            click: async () => { try { await item.onClick(); } catch (e) { logError(`Plugin menu error: ${e}`); } },
           })),
         ]
       : [];
@@ -447,7 +447,7 @@ ipcMain.handle('plugin-menu-items', () => {
 });
 ipcMain.handle('plugin-menu-click', async (_event, menuId: string) => {
   const item = plugins.getMenuItems().find(m => m.id === menuId);
-  if (item) { try { await item.onClick(); } catch (e) { log(`Plugin menu click error: ${e}`); } }
+  if (item) { try { await item.onClick(); } catch (e) { logError(`Plugin menu click error: ${e}`); } }
 });
 
 // ─── SSH IPC Handlers ───
@@ -651,18 +651,18 @@ function createPanelWindow(route?: string) {
   panelWindow.webContents.on('will-navigate', (event, url) => {
     const allowed = process.env.VITE_DEV_SERVER_URL || `file://${path.join(__dirname, '../dist/')}`;
     if (!url.startsWith(allowed) && !url.startsWith('file://')) {
-      log(`Panel: Blocked navigation to: ${url}`);
+      logWarn(`Panel: Blocked navigation to: ${url}`);
       event.preventDefault();
     }
   });
   panelWindow.webContents.setWindowOpenHandler(({ url }) => {
-    log(`Panel: Blocked window.open: ${url}`);
+    logWarn(`Panel: Blocked window.open: ${url}`);
     return { action: 'deny' };
   });
 
   panelWindow.on('closed', () => { panelWindow = null; });
   
-  log(`Panel window created (route: ${panelRoute})`);
+  logDebug(`Panel window created (route: ${panelRoute})`);
 }
 
 function closePanelWindow() {
@@ -739,7 +739,7 @@ async function checkForUpdatesMain() {
       n.on('click', () => shell.openExternal(data.html_url));
       n.show();
     }
-  } catch (err) { log(`Update check failed: ${err}`); }
+  } catch (err) { logError(`Update check failed: ${err}`); }
 }
 
 // ─── Social Auto-Sync ───
@@ -755,7 +755,7 @@ async function doSocialSync() {
     const dailyTokens = Math.max(0, realTokens - (store.dailyTokensBaseline || 0));
     await social.socialSync(store.socialToken, realTokens, level, achievements, dailyTokens);
     log('Social sync completed');
-  } catch (err: any) { log(`Social sync failed: ${err.message}`); }
+  } catch (err: any) { logError(`Social sync failed: ${err.message}`); }
 }
 
 function startSocialSync() {
