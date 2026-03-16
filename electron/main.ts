@@ -163,6 +163,7 @@ function createWindow() {
       { label: t('menu.status'), click: () => createPanelWindow('status') },
       { label: t('menu.community'), click: () => createPanelWindow('social') },
       { label: t('menu.plugins'), click: () => createPanelWindow('plugins') },
+      { label: t('menu.remote'), click: () => createPanelWindow('remote') },
       { type: 'separator' },
       { label: t('menu.trends'), click: () => createPanelWindow('chart') },
       { label: t('menu.achievements'), click: () => createPanelWindow('achievements') },

@@ -58,6 +58,9 @@ function PanelApp() {
         showPlugins={initialRoute === 'plugins'}
         onOpenPlugins={() => setInitialRoute('plugins')}
         onClosePlugins={() => setInitialRoute('status')}
+        showRemote={initialRoute === 'remote'}
+        onOpenRemote={() => setInitialRoute('remote')}
+        onCloseRemote={() => setInitialRoute('status')}
         isPanelWindow={true}
       />
       <PluginToast />
