@@ -3,7 +3,7 @@ import path from 'path';
 import https from 'https';
 import { log, logError, logWarn, logDebug } from './logger';
 import { readStore, writeStore } from './store';
-import { findOpenClaw, scanRealTokenUsage } from './scanner';
+import { findOpenClaw, scanRealTokenUsage, scanDailyTokens, getTodayTokens } from './scanner';
 import * as dock from './dock';
 import { createTray, updateTrayMenu, setMainWindowGetter as setTrayMainWindow, setPanelCallback } from './tray';
 import { initStatus, startStatusCheck, stopStatusCheck } from './status';
@@ -259,7 +259,7 @@ ipcMain.handle('get-level-data', () => {
   return { totalTokens: readStore().totalTokens || 0 };
 });
 
-ipcMain.handle('get-daily-tokens', () => readStore().dailyTokens || {});
+ipcMain.handle('get-daily-tokens', () => scanDailyTokens(30));
 
 ipcMain.handle('get-settings', () => readStore().settings || { autoFadeEnabled: false });
 
