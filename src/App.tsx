@@ -106,6 +106,9 @@ function LobsterApp() {
   useEffect(() => {
     window.electronAPI.getSettings().then(settings => {
       setAutoFadeEnabled(settings.autoFadeEnabled ?? false);
+      if (settings.idleOpacity) {
+        document.documentElement.style.setProperty('--idle-opacity', String(settings.idleOpacity / 100));
+      }
     });
     window.electronAPI.remoteGetMode?.().then((r: any) => {
       setIsRemoteMode(r?.mode === 'remote');

@@ -53,12 +53,19 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
   const [showSSH, setShowSSH] = useState(showRemote ?? false);
   const [statusMode, setStatusMode] = useState<string>('local');
   const [autoStartEnabled, setAutoStartEnabled] = useState(true);
+  const [idleOpacity, setIdleOpacity] = useState(30);
   const { t, i18n } = useTranslation();
 
   // Check remote mode on mount
   React.useEffect(() => {
     window.electronAPI.remoteGetMode?.().then((r: any) => setStatusMode(r?.mode || 'local')).catch(() => {});
     window.electronAPI.getAutoStart?.().then((v: boolean) => setAutoStartEnabled(v)).catch(() => {});
+    window.electronAPI.getSettings?.().then((s: any) => {
+      if (s?.idleOpacity) {
+        setIdleOpacity(s.idleOpacity);
+        document.documentElement.style.setProperty('--idle-opacity', String(s.idleOpacity / 100));
+      }
+    }).catch(() => {});
   }, []);
   const showChart = externalShowChart !== undefined ? externalShowChart : internalShowChart;
   const toggleChart = onToggleChart ?? (() => setInternalShowChart(!internalShowChart));
@@ -204,6 +211,26 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
                 <span className="toggle-slider" />
               </label>
             </div>
+            {autoFadeEnabled && (
+              <div className="setting-row">
+                <span className="setting-label">{t('settings.idleOpacity')}</span>
+                <div className="opacity-slider">
+                  <input
+                    type="range"
+                    min="10"
+                    max="80"
+                    value={idleOpacity}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setIdleOpacity(val);
+                      document.documentElement.style.setProperty('--idle-opacity', String(val / 100));
+                      window.electronAPI.updateSettings({ idleOpacity: val });
+                    }}
+                  />
+                  <span className="opacity-value">{idleOpacity}%</span>
+                </div>
+              </div>
+            )}
             <div className="setting-row">
               <span className="setting-label">{t('settings.autoStart')}</span>
               <label className="toggle-switch">

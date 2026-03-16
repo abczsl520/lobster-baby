@@ -295,7 +295,8 @@
     "language": "Language",
     "chinese": "中文",
     "english": "English",
-    "autoStart": "Start on login"
+    "autoStart": "Start on login",
+    "idleOpacity": "Idle opacity"
   },
   "remote": {
     "title": "Remote Mode",
