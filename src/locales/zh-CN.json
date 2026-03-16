@@ -30,7 +30,17 @@
     "tenBillion": "百亿神话",
     "tenBillionDesc": "累计消耗 10B tokens",
     "fiftyBillion": "五百亿永恒",
-    "fiftyBillionDesc": "累计消耗 50B tokens"
+    "fiftyBillionDesc": "累计消耗 50B tokens",
+    "fiftyMillion": "五千万 Token！",
+    "fiftyMillionDesc": "你已经消耗了 5000 万 Token！",
+    "fiveHundredMillion": "五亿 Token！",
+    "fiveHundredMillionDesc": "半个十亿！你是认真的",
+    "twoBillion": "二十亿 Token！",
+    "twoBillionDesc": "这已经不是普通用户了",
+    "twentyBillion": "两百亿 Token！",
+    "twentyBillionDesc": "你可能是全球前 1% 的 AI 用户",
+    "hundredBillion": "千亿 Token！",
+    "hundredBillionDesc": "传说中的终极龙虾，无人能及"
   },
   "perm": {
     "shell": "执行命令",

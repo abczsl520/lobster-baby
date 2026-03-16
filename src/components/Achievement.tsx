@@ -41,9 +41,14 @@ export interface Milestone {
 export const MILESTONES: Milestone[] = [
   { id: 'first-million', tokens: 1_000_000, titleKey: 'milestone.firstMillion', descKey: 'milestone.firstMillionDesc', icon: '🎯' },
   { id: 'ten-million', tokens: 10_000_000, titleKey: 'milestone.tenMillion', descKey: 'milestone.tenMillionDesc', icon: '🔥' },
+  { id: 'fifty-million', tokens: 50_000_000, titleKey: 'milestone.fiftyMillion', descKey: 'milestone.fiftyMillionDesc', icon: '⚡' },
   { id: 'hundred-million', tokens: 100_000_000, titleKey: 'milestone.hundredMillion', descKey: 'milestone.hundredMillionDesc', icon: '💎' },
+  { id: 'five-hundred-million', tokens: 500_000_000, titleKey: 'milestone.fiveHundredMillion', descKey: 'milestone.fiveHundredMillionDesc', icon: '🌋' },
   { id: 'one-billion', tokens: 1_000_000_000, titleKey: 'milestone.oneBillion', descKey: 'milestone.oneBillionDesc', icon: '🏆' },
+  { id: 'two-billion', tokens: 2_000_000_000, titleKey: 'milestone.twoBillion', descKey: 'milestone.twoBillionDesc', icon: '🔱' },
   { id: 'five-billion', tokens: 5_000_000_000, titleKey: 'milestone.fiveBillion', descKey: 'milestone.fiveBillionDesc', icon: '👑' },
   { id: 'ten-billion', tokens: 10_000_000_000, titleKey: 'milestone.tenBillion', descKey: 'milestone.tenBillionDesc', icon: '🌟' },
+  { id: 'twenty-billion', tokens: 20_000_000_000, titleKey: 'milestone.twentyBillion', descKey: 'milestone.twentyBillionDesc', icon: '🐉' },
   { id: 'fifty-billion', tokens: 50_000_000_000, titleKey: 'milestone.fiftyBillion', descKey: 'milestone.fiftyBillionDesc', icon: '🦞' },
+  { id: 'hundred-billion', tokens: 100_000_000_000, titleKey: 'milestone.hundredBillion', descKey: 'milestone.hundredBillionDesc', icon: '🌌' },
 ];

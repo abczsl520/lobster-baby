@@ -30,7 +30,17 @@
     "tenBillion": "10B Mythic",
     "tenBillionDesc": "Consumed 10B tokens",
     "fiftyBillion": "50B Eternal",
-    "fiftyBillionDesc": "Consumed 50B tokens"
+    "fiftyBillionDesc": "Consumed 50B tokens",
+    "fiftyMillion": "50M Tokens!",
+    "fiftyMillionDesc": "You've consumed 50 million tokens!",
+    "fiveHundredMillion": "500M Tokens!",
+    "fiveHundredMillionDesc": "Half a billion! You're serious",
+    "twoBillion": "2B Tokens!",
+    "twoBillionDesc": "This is no ordinary user",
+    "twentyBillion": "20B Tokens!",
+    "twentyBillionDesc": "Probably top 1% AI user globally",
+    "hundredBillion": "100B Tokens!",
+    "hundredBillionDesc": "The legendary ultimate lobster, unmatched"
   },
   "perm": {
     "shell": "Shell Commands",
