@@ -48,6 +48,12 @@
       "dist-electron/**/*",
       "package.json"
     ],
+    "extraResources": [
+      {
+        "from": "electron/assets/tray-icon.png",
+        "to": "tray-icon.png"
+      }
+    ],
     "mac": {
       "icon": "build/icon.png",
       "category": "public.app-category.utilities",
