@@ -272,7 +272,8 @@
     "quit": "❌ Quit",
     "showLobster": "🦞 Show Lobster Baby",
     "pin": "📌 Pin to Top",
-    "unpin": "📌 Unpin"
+    "unpin": "📌 Unpin",
+    "remote": "🖥️ Remote"
   },
   "levelUp": {
     "title": "🦞 Lobster Baby leveled up!",

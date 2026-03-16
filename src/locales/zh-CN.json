@@ -272,7 +272,8 @@
     "quit": "❌ 退出",
     "showLobster": "🦞 显示龙虾宝宝",
     "pin": "📌 置顶",
-    "unpin": "📌 取消置顶"
+    "unpin": "📌 取消置顶",
+    "remote": "🖥️ 远程控制"
   },
   "levelUp": {
     "title": "🦞 龙虾宝宝升级了！",

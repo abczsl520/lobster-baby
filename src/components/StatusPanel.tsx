@@ -29,6 +29,9 @@ interface StatusPanelProps {
   showPlugins?: boolean;
   onOpenPlugins?: () => void;
   onClosePlugins?: () => void;
+  showRemote?: boolean;
+  onOpenRemote?: () => void;
+  onCloseRemote?: () => void;
   isPanelWindow?: boolean;
 }
 
@@ -40,13 +43,14 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
   showAchievements: externalShowAchievements, onToggleAchievements,
   showSocial: externalShowSocial, onCloseSocial, onOpenSocial,
   showPlugins: externalShowPlugins, onOpenPlugins, onClosePlugins,
+  showRemote, onOpenRemote: _onOpenRemote, onCloseRemote: _onCloseRemote,
   isPanelWindow: _isPanelWindow = false,
 }) => {
   const [internalShowChart, setInternalShowChart] = useState(false);
   const [internalShowAchievements, setInternalShowAchievements] = useState(false);
   const [internalShowSocial, setInternalShowSocial] = useState(false);
   const [internalShowPlugins, setInternalShowPlugins] = useState(false);
-  const [showSSH, setShowSSH] = useState(false);
+  const [showSSH, setShowSSH] = useState(showRemote ?? false);
   const [statusMode, setStatusMode] = useState<string>('local');
   const [autoStartEnabled, setAutoStartEnabled] = useState(true);
   const { t, i18n } = useTranslation();
