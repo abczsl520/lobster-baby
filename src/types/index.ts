@@ -94,6 +94,8 @@ declare global {
       sshRestartProcess: (serverId: string, processName: string) => Promise<{ success: boolean; error?: string }>;
       sshListDir: (serverId: string, path: string) => Promise<{ output?: string; error?: string }>;
       sshReadFile: (serverId: string, path: string) => Promise<{ content?: string; error?: string }>;
+      getAutoStart: () => Promise<boolean>;
+      setAutoStart: (enabled: boolean) => Promise<boolean>;
     };
   }
 }

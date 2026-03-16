@@ -110,4 +110,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   sshRestartProcess: (serverId: string, processName: string) => ipcRenderer.invoke('ssh-restart-process', serverId, processName),
   sshListDir: (serverId: string, path: string) => ipcRenderer.invoke('ssh-list-dir', serverId, path),
   sshReadFile: (serverId: string, path: string) => ipcRenderer.invoke('ssh-read-file', serverId, path),
+  // Settings
+  getAutoStart: () => ipcRenderer.invoke('get-auto-start'),
+  setAutoStart: (enabled: boolean) => ipcRenderer.invoke('set-auto-start', enabled),
 });
