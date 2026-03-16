@@ -51,14 +51,11 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
   const [internalShowSocial, setInternalShowSocial] = useState(false);
   const [internalShowPlugins, setInternalShowPlugins] = useState(false);
   const [showSSH, setShowSSH] = useState(showRemote ?? false);
-  const [statusMode, setStatusMode] = useState<string>('local');
   const [autoStartEnabled, setAutoStartEnabled] = useState(true);
   const [idleOpacity, setIdleOpacity] = useState(30);
   const { t, i18n } = useTranslation();
 
-  // Check remote mode on mount
   React.useEffect(() => {
-    window.electronAPI.remoteGetMode?.().then((r: any) => setStatusMode(r?.mode || 'local')).catch(() => {});
     window.electronAPI.getAutoStart?.().then((v: boolean) => setAutoStartEnabled(v)).catch(() => {});
     window.electronAPI.getSettings?.().then((s: any) => {
       if (s?.idleOpacity) {
@@ -119,7 +116,7 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
       {/* Header */}
       <div className="status-panel-header">
         <div className="header-left">
-          <h3>{statusMode === 'remote' ? '☁️' : '🦞'} Lv.{levelInfo.level}</h3>
+          <h3>🦞 Lv.{levelInfo.level}</h3>
           <span className="header-status" style={{ color: statusColor[status] }}>
             {statusDot[status]}
           </span>
