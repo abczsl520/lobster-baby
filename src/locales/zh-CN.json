@@ -435,5 +435,12 @@
       "sec5": "密码永远不会发送到渲染进程",
       "gotIt": "我知道了，开始使用"
     }
+  },
+  "chart": {
+    "trend7d": "7 天趋势",
+    "dailyAvg": "日均",
+    "weekTotal": "本周合计",
+    "today": "今天",
+    "yesterday": "昨天"
   }
 }

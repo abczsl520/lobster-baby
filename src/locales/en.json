@@ -435,5 +435,12 @@
       "sec5": "Passwords never sent to renderer process",
       "gotIt": "Got it, let's go"
     }
+  },
+  "chart": {
+    "trend7d": "7-Day Trend",
+    "dailyAvg": "Daily avg",
+    "weekTotal": "Week total",
+    "today": "Today",
+    "yesterday": "Yesterday"
   }
 }
