@@ -4,6 +4,7 @@ import { OpenClawStatus, LevelInfo } from '../types';
 import { formatTokens } from '../utils/levels';
 import { TokenChart } from './TokenChart';
 import { AchievementList } from './AchievementList';
+import { ErrorBoundary } from './ErrorBoundary';
 const SocialPanel = lazy(() => import('./SocialPanel').then(m => ({ default: m.SocialPanel })));
 const PluginPanel = lazy(() => import('./PluginPanel').then(m => ({ default: m.PluginPanel })));
 const SSHPanel = lazy(() => import('./SSHPanel').then(m => ({ default: m.SSHPanel })));
@@ -125,19 +126,19 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
   if (showPlugins) {
     return (
       <div className="status-panel">
-        <Suspense fallback={<div className="panel-loading">⏳</div>}><PluginPanel visible={true} onClose={closePlugins} /></Suspense>
+        <ErrorBoundary><Suspense fallback={<div className="panel-loading">⏳</div>}><PluginPanel visible={true} onClose={closePlugins} /></Suspense></ErrorBoundary>
       </div>
     );
   }
 
   if (showSocial) {
-    return <Suspense fallback={<div className="panel-loading">⏳</div>}><SocialPanel visible={true} onClose={closeSocial} /></Suspense>;
+    return <ErrorBoundary><Suspense fallback={<div className="panel-loading">⏳</div>}><SocialPanel visible={true} onClose={closeSocial} /></Suspense></ErrorBoundary>;
   }
 
   if (showSSH) {
     return (
       <div className="status-panel" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Status Panel">
-        <Suspense fallback={<div className="panel-loading">⏳</div>}><SSHPanel visible={true} onClose={() => setShowSSH(false)} /></Suspense>
+        <ErrorBoundary><Suspense fallback={<div className="panel-loading">⏳</div>}><SSHPanel visible={true} onClose={() => setShowSSH(false)} /></Suspense></ErrorBoundary>
       </div>
     );
   }
