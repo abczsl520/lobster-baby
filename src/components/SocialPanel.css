@@ -25,7 +25,7 @@
 .social-header h3 {
   margin: 0;
   font-size: 15px;
-  color: #ff6b6b;
+  color: var(--theme-accent, #ff6b6b);
   font-weight: 600;
 }
 
@@ -68,8 +68,8 @@
 .social-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .social-btn.primary {
-  background: rgba(255, 77, 77, 0.2);
-  border-color: rgba(255, 77, 77, 0.4);
+  background: var(--theme-accent-dim, rgba(255, 77, 77, 0.2));
+  border-color: var(--theme-accent-hover, rgba(255, 77, 77, 0.4));
   color: #ff8a8a;
   width: 100%;
 }
@@ -132,7 +132,7 @@
   display: block;
   font-size: 18px;
   font-weight: 700;
-  color: #ff6b6b;
+  color: var(--theme-accent, #ff6b6b);
   letter-spacing: 1px;
 }
 .welcome-name {
@@ -164,7 +164,7 @@
 }
 .social-menu-item:hover {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 77, 77, 0.2);
+  border-color: var(--theme-accent-dim, rgba(255, 77, 77, 0.2));
 }
 .menu-icon { font-size: 18px; }
 .menu-text { flex: 1; font-size: 14px; font-weight: 500; }
@@ -214,7 +214,7 @@
   cursor: pointer;
 }
 .privacy-check input[type="checkbox"] {
-  accent-color: #ff6b6b;
+  accent-color: var(--theme-accent, #ff6b6b);
 }
 .privacy-link {
   color: #ff8a8a;
@@ -270,7 +270,7 @@
 }
 .lb-item:hover { background: rgba(255, 255, 255, 0.06); }
 .lb-item.me {
-  background: rgba(255, 77, 77, 0.08);
+  background: var(--theme-glow, rgba(255, 77, 77, 0.08));
   border: 1px solid rgba(255, 77, 77, 0.15);
 }
 
@@ -316,7 +316,7 @@
   padding: 8px;
   font-size: 12px;
   color: #ff8a8a;
-  background: rgba(255, 77, 77, 0.08);
+  background: var(--theme-glow, rgba(255, 77, 77, 0.08));
   border-radius: 8px;
   margin-top: 4px;
 }
@@ -372,7 +372,7 @@
   font-size: 28px;
   font-weight: 800;
   letter-spacing: 6px;
-  color: #ff6b6b;
+  color: var(--theme-accent, #ff6b6b);
   font-family: monospace;
 }
 .pk-code-hint {
@@ -411,7 +411,7 @@
 .pk-score {
   font-size: 20px;
   font-weight: 800;
-  color: #ff6b6b;
+  color: var(--theme-accent, #ff6b6b);
   margin-bottom: 8px;
 }
 .pk-detail {
@@ -436,7 +436,7 @@
 .profile-id {
   font-size: 20px;
   font-weight: 800;
-  color: #ff6b6b;
+  color: var(--theme-accent, #ff6b6b);
   letter-spacing: 1px;
 }
 .profile-name {
