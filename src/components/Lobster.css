@@ -483,3 +483,82 @@
     transform: translate3d(var(--burst-x), var(--burst-y), 0) scale(0.4) rotate(160deg);
   }
 }
+
+/* ─── Idle Micro-Animations ─── */
+.lobster-container.micro-tilt .lobster-img {
+  animation: micro-tilt 1s ease-in-out !important;
+}
+.lobster-container.micro-wiggle .lobster-img {
+  animation: micro-wiggle 0.8s ease-in-out !important;
+}
+.lobster-container.micro-peek .lobster-img {
+  animation: micro-peek 1.2s ease-in-out !important;
+}
+.lobster-container.micro-bounce .lobster-img {
+  animation: micro-bounce 0.6s ease-in-out !important;
+}
+.lobster-container.micro-spin .lobster-img {
+  animation: micro-spin 1s ease-in-out !important;
+}
+
+@keyframes micro-tilt {
+  0%, 100% { transform: rotate(0deg); }
+  30% { transform: rotate(-8deg); }
+  70% { transform: rotate(5deg); }
+}
+
+@keyframes micro-wiggle {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-5px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+@keyframes micro-peek {
+  0%, 100% { transform: translateY(0) scale(1); }
+  30% { transform: translateY(8px) scale(0.95); }
+  60% { transform: translateY(-12px) scale(1.05); }
+}
+
+@keyframes micro-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+}
+
+@keyframes micro-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ─── Click Sparkle Particles ─── */
+.click-sparkle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  font-size: 16px;
+  pointer-events: none;
+  animation: sparkle-fly 1s ease-out forwards;
+  z-index: 100;
+}
+
+@keyframes sparkle-fly {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--sx), var(--sy)) scale(0.3);
+    opacity: 0;
+  }
+}
+
+/* ─── Status Transition Flash ─── */
+.lobster-container.status-flash .lobster-img {
+  animation: status-flash-pulse 0.6s ease-out !important;
+}
+
+@keyframes status-flash-pulse {
+  0% { filter: brightness(1.8) drop-shadow(0 0 20px rgba(255, 255, 255, 0.8)); }
+  100% { filter: brightness(1); }
+}
