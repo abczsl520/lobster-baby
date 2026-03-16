@@ -12,8 +12,14 @@ export const AchievementList: React.FC<AchievementListProps> = ({ currentTokens,
   const { t } = useTranslation();
   if (!visible) return null;
 
+  const unlockedCount = MILESTONES.filter(m => currentTokens >= m.tokens).length;
+
   return (
     <div className="achievement-list">
+      <div className="achievement-header">
+        <span>{t('status.achievements')}</span>
+        <span className="achievement-count">{unlockedCount}/{MILESTONES.length}</span>
+      </div>
       {MILESTONES.map((m) => {
         const unlocked = currentTokens >= m.tokens;
         const progress = Math.min(100, (currentTokens / m.tokens) * 100);
