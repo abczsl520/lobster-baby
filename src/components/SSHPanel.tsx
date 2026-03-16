@@ -54,6 +54,7 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
 
   // SSH data
   const [openclawStatus, setOpenclawStatus] = useState<any>(null);
+  const [remoteTokens, setRemoteTokens] = useState<{ total: number; daily: number } | null>(null);
   const [processes, setProcesses] = useState<ProcessInfo[]>([]);
   const [systemInfo, setSystemInfo] = useState<SystemInfo | null>(null);
   const [logs, setLogs] = useState<string>('');
@@ -70,7 +71,14 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
   const loadOpenClawStatus = async () => {
     if (!activeServer) return;
     setLoading(true);
-    try { setOpenclawStatus(await window.electronAPI.sshOpenClawStatus(activeServer)); } catch {}
+    try {
+      const [status, tokens] = await Promise.all([
+        window.electronAPI.sshOpenClawStatus(activeServer),
+        window.electronAPI.sshRemoteTokens(activeServer),
+      ]);
+      setOpenclawStatus(status);
+      if (!tokens.error) setRemoteTokens(tokens);
+    } catch {}
     setLoading(false);
   };
 
@@ -135,7 +143,7 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
     await window.electronAPI.sshDisconnect(serverId);
     if (activeServer === serverId) {
       setActiveServer(null); setTab('home');
-      setOpenclawStatus(null); setProcesses([]); setSystemInfo(null);
+      setOpenclawStatus(null); setRemoteTokens(null); setProcesses([]); setSystemInfo(null);
     }
     await loadServers();
   };
@@ -406,6 +414,18 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
                     <span>{t('ssh.field.tokens')}</span>
                     <span>{(openclawStatus.totalTokens / 1e6).toFixed(1)}M</span>
                   </div>
+                )}
+                {remoteTokens && (
+                  <>
+                    <div className="ssh-status-row">
+                      <span>{t('ssh.field.dailyTokens')}</span>
+                      <span>{(remoteTokens.daily / 1e6).toFixed(1)}M</span>
+                    </div>
+                    <div className="ssh-status-row">
+                      <span>{t('ssh.field.totalTokensScanned')}</span>
+                      <span>{(remoteTokens.total / 1e6).toFixed(1)}M</span>
+                    </div>
+                  </>
                 )}
                 {openclawStatus.uptime && (
                   <div className="ssh-status-row">

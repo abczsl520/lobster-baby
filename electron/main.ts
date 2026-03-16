@@ -491,6 +491,10 @@ ipcMain.handle('ssh-openclaw-status', async (_event, serverId: string) => {
   return await sshManager.getOpenClawStatus(serverId);
 });
 
+ipcMain.handle('ssh-remote-tokens', async (_event, serverId: string) => {
+  return await sshManager.getRemoteTokens(serverId);
+});
+
 ipcMain.handle('ssh-process-list', async (_event, serverId: string) => {
   return await sshManager.getProcessList(serverId);
 });
