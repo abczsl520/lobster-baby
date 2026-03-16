@@ -284,7 +284,9 @@
     "english": "English",
     "autoStart": "开机启动",
     "idleOpacity": "待机透明度",
-    "theme": "主题"
+    "theme": "主题",
+    "backup": "备份数据",
+    "restore": "恢复数据"
   },
   "ssh": {
     "title": "远程控制",

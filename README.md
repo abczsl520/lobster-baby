@@ -25,13 +25,19 @@
 - 🎨 **10 级龙虾皮肤** — AI 生成，从粉色宝宝到龙虾之王
 - 📊 **真实 API 用量** — 扫描 OpenClaw session 文件，精确统计
 - 🌐 **龙虾社区** — 注册编号、排行榜、PK 对战
-- 🏆 **成就系统** — Token 里程碑解锁
-- 📈 **趋势图表** — 每日 Token 消耗可视化
+- 🏆 **成就系统** — Token 里程碑解锁（12 个成就）
+- 📈 **趋势图表** — 每日 Token 趋势、均值线、峰值、周环比、CSV 导出
 - 🖱️ **边缘吸附** — 拖到屏幕边缘自动停靠，专属停靠动画
 - 🔥 **连击特效** — 快速点击触发旋转/弹跳/彩虹/跳舞，动画可叠加
 - 🔔 **自动更新** — 检测新版本并提示
-- 🧩 **插件系统** — 安装/开发插件扩展功能，权限沙箱保护
+- 🧩 **插件系统** — 安装/开发插件扩展功能，权限沙箱 + 速率限制保护
 - 🌍 **多语言** — 中文/English，自动检测系统语言
+- 🎭 **桌面宠物动画** — 闲时微动画（歪头/摇摆/探头）、点击粒子、状态闪光
+- 🎨 **主题系统** — 5 种配色方案（龙虾红/海洋蓝/森林绿/日落紫/尊贵金）
+- 🔌 **SSH 远程管理** — 直连服务器查看状态、进程管理、日志查看
+- ⚡ **实时速率** — Token 消耗速率 + 预计升级时间
+- 💾 **数据备份** — 一键备份/恢复所有设置和数据
+- 👁️ **自动透明** — 闲置后自动半透明，可调节透明度
 
 ## ✨ Features
 
@@ -39,13 +45,19 @@
 - 🎨 **10-Level Skins** — AI-generated, from pink baby to Lobster King
 - 📊 **Real API Usage** — Scans OpenClaw session files for accurate stats
 - 🌐 **Lobster Community** — Registration, leaderboards, PK battles
-- 🏆 **Achievements** — Token milestone unlocks
-- 📈 **Trend Charts** — Daily token consumption visualization
+- 🏆 **Achievements** — Token milestone unlocks (12 milestones)
+- 📈 **Trend Charts** — Daily trends, avg line, peak day, WoW comparison, CSV export
 - 🖱️ **Edge Docking** — Drag to screen edge, auto-dock with custom animations
 - 🔥 **Combo Effects** — Rapid clicks trigger spin/bounce/rainbow/dance, stackable animations
 - 🔔 **Auto Update** — Detects new versions and prompts
-- 🧩 **Plugin System** — Install/develop plugins with sandboxed permissions
+- 🧩 **Plugin System** — Install/develop plugins with sandboxed permissions + rate limiting
 - 🌍 **i18n** — Chinese/English, auto-detects system language
+- 🎭 **Pet Animations** — Idle micro-animations, click sparkles, status flash
+- 🎨 **Theme System** — 5 color themes (Lobster Red/Ocean Blue/Forest Green/Sunset Purple/Golden Luxe)
+- 🔌 **SSH Remote** — Direct server connection for status, process management, log viewing
+- ⚡ **Real-time Rate** — Token consumption rate + estimated time to next level
+- 💾 **Data Backup** — One-click backup/restore all settings and data
+- 👁️ **Auto Transparency** — Auto-fade when idle, adjustable opacity
 
 ## 📦 下载安装 / Download
 

@@ -284,7 +284,9 @@
     "english": "English",
     "autoStart": "Start on login",
     "idleOpacity": "Idle opacity",
-    "theme": "Theme"
+    "theme": "Theme",
+    "backup": "Backup",
+    "restore": "Restore"
   },
   "ssh": {
     "title": "Remote Control",
