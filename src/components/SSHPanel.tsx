@@ -231,7 +231,10 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
           <div className="ssh-card">
             <div className="ssh-card-header">
               <span className="ssh-card-title">{t('ssh.home.sshServers')}</span>
-              <span className="ssh-card-badge">{servers.length > 0 ? `${connectedCount}/${servers.length}` : '0'}</span>
+              <div className="ssh-card-header-right">
+                <button className="ssh-refresh-btn" onClick={loadServers} title={t('ssh.refresh')}>🔄</button>
+                <span className="ssh-card-badge">{servers.length > 0 ? `${connectedCount}/${servers.length}` : '0'}</span>
+              </div>
             </div>
             <div className="ssh-card-desc">{t('ssh.home.sshDesc')}</div>
 
@@ -243,7 +246,10 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
                       <span className="ssh-server-dot">{s.isConnected ? '🟢' : (s.lastStatus === 'error' ? '🔴' : '⚫')}</span>
                       <div>
                         <div className="ssh-server-row-name">{s.name}</div>
-                        <div className="ssh-server-row-host">{s.username}@{s.host}</div>
+                        <div className="ssh-server-row-host">{s.username}@{s.host}:{s.port || 22}</div>
+                        {s.lastConnected && !s.isConnected && (
+                          <div className="ssh-server-row-last">{t('ssh.lastSeen')}: {new Date(s.lastConnected).toLocaleString()}</div>
+                        )}
                       </div>
                     </div>
                     <div className="ssh-server-row-actions">

@@ -713,3 +713,31 @@
 }
 .ssh-form-actions .ssh-btn { flex: 1; }
 .ssh-form-actions .ssh-btn.primary { width: auto; margin-top: 0; }
+
+.ssh-server-row-last {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.3);
+  margin-top: 1px;
+}
+
+.ssh-card-header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ssh-refresh-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  opacity: 0.5;
+  transition: opacity 0.2s, transform 0.3s;
+}
+
+.ssh-refresh-btn:hover {
+  opacity: 1;
+  transform: rotate(180deg);
+}
