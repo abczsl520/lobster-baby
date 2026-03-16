@@ -14,7 +14,8 @@
     "unpinFromTop": "📌 取消置顶",
     "quit": "🚪 退出",
     "upToDate": "✓ 最新",
-    "remote": "远程"
+    "remote": "远程",
+    "rate": "速率"
   },
   "milestone": {
     "firstMillion": "百万起步",
@@ -395,6 +396,8 @@
     "dailyAvg": "日均",
     "weekTotal": "本周合计",
     "today": "今天",
-    "yesterday": "昨天"
+    "yesterday": "昨天",
+    "peak": "峰值",
+    "vsLastWeek": "环比"
   }
 }

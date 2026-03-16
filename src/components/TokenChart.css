@@ -101,3 +101,59 @@
   padding-top: 6px;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
+
+/* ─── Average Line ─── */
+.chart-avg-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.2);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.chart-avg-label {
+  position: absolute;
+  right: 4px;
+  top: -12px;
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.3);
+  text-transform: uppercase;
+}
+
+/* ─── Chart Footer Stats ─── */
+.chart-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.chart-stat {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 70px;
+}
+
+.chart-stat-label {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.3);
+  text-transform: uppercase;
+}
+
+.chart-stat-value {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+}
+
+.chart-stat-value.trend-up {
+  color: #00e676;
+}
+
+.chart-stat-value.trend-down {
+  color: #ff5252;
+}

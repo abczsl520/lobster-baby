@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { OpenClawStatus, LevelInfo } from '../types';
 import { formatTokens } from '../utils/levels';
@@ -10,6 +10,12 @@ import { SSHPanel } from './SSHPanel';
 import './StatusPanel.css';
 
 const APP_VERSION = __APP_VERSION__;
+
+function formatETA(minutes: number): string {
+  if (minutes < 60) return `${Math.round(minutes)}m`;
+  if (minutes < 1440) return `${Math.round(minutes / 60)}h`;
+  return `${Math.round(minutes / 1440)}d`;
+}
 
 interface StatusPanelProps {
   status: OpenClawStatus;
@@ -54,6 +60,24 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
   const [autoStartEnabled, setAutoStartEnabled] = useState(true);
   const [idleOpacity, setIdleOpacity] = useState(30);
   const { t, i18n } = useTranslation();
+
+  // Token rate calculation (tokens/min over last 60s)
+  const tokenHistoryRef = useRef<Array<{ time: number; tokens: number }>>([]);
+  const [tokenRate, setTokenRate] = useState(0);
+
+  useEffect(() => {
+    const now = Date.now();
+    tokenHistoryRef.current.push({ time: now, tokens: tokenInfo.total });
+    // Keep only last 5 minutes
+    tokenHistoryRef.current = tokenHistoryRef.current.filter(e => now - e.time < 300_000);
+    if (tokenHistoryRef.current.length >= 2) {
+      const oldest = tokenHistoryRef.current[0];
+      const elapsed = (now - oldest.time) / 60_000; // minutes
+      if (elapsed > 0.1) {
+        setTokenRate(Math.round((tokenInfo.total - oldest.tokens) / elapsed));
+      }
+    }
+  }, [tokenInfo.total]);
 
   React.useEffect(() => {
     window.electronAPI.getAutoStart?.().then((v: boolean) => setAutoStartEnabled(v)).catch(() => {});
@@ -144,7 +168,12 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
               <span className="level-target">{formatTokens(levelInfo.nextLevelTokens)}</span>
             </div>
             {levelInfo.level < 10 && (
-              <div className="level-remaining">{t('status.needTokens', { tokens: formatTokens(tokensToNextLevel) })}</div>
+              <div className="level-remaining">
+                {t('status.needTokens', { tokens: formatTokens(tokensToNextLevel) })}
+                {tokenRate > 0 && (
+                  <span className="level-eta"> · ~{formatETA(tokensToNextLevel / tokenRate)}</span>
+                )}
+              </div>
             )}
             {levelInfo.level === 10 && (
               <div className="level-remaining" style={{ color: '#ffd700' }}>{t('status.maxLevel')}</div>
@@ -160,6 +189,10 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
             <div className="stat-chip">
               <span className="stat-chip-label">{t('status.total')}</span>
               <span className="stat-chip-value">{formatTokens(tokenInfo.total)}</span>
+            </div>
+            <div className="stat-chip">
+              <span className="stat-chip-label">{t('status.rate')}</span>
+              <span className="stat-chip-value">{tokenRate > 0 ? `${formatTokens(tokenRate)}/m` : '—'}</span>
             </div>
             <div className="stat-chip">
               <span className="stat-chip-label">{t('status.progress')}</span>
