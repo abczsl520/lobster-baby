@@ -82,6 +82,7 @@ declare global {
       sshDisconnect: (id: string) => Promise<{ success: boolean }>;
       sshTestConnection: (data: { host: string; port: number; username: string; authType: string; credential: string }) => Promise<{ success: boolean; error?: string }>;
       sshOpenClawStatus: (serverId: string) => Promise<any>;
+      sshRemoteTokens: (serverId: string) => Promise<{ total: number; daily: number; error?: string }>;
       sshProcessList: (serverId: string) => Promise<any[]>;
       sshSystemInfo: (serverId: string) => Promise<any>;
       sshProcessLogs: (serverId: string, processName: string, lines?: number) => Promise<{ logs?: string; error?: string }>;

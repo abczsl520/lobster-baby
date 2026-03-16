@@ -333,7 +333,9 @@
       "hostname": "主机名",
       "load": "负载",
       "memory": "内存",
-      "disk": "磁盘"
+      "disk": "磁盘",
+      "dailyTokens": "今日 Token",
+      "totalTokensScanned": "总 Token（扫描）"
     },
     "form": {
       "name": "名称",

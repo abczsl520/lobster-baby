@@ -436,6 +436,47 @@ export class SSHManager {
       return { connected: false, server: serverId, error: err.message };
     }
   }
+
+  async getRemoteTokens(serverId: string): Promise<{ total: number; daily: number; error?: string }> {
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      // Use node for speed — it's guaranteed to exist on OpenClaw servers
+      const script = `node -e "
+const fs=require('fs'),p=require('path');
+const d=p.join(require('os').homedir(),'.openclaw/agents/main/sessions');
+if(!fs.existsSync(d)){console.log(JSON.stringify({total:0,daily:0}));process.exit(0)}
+let total=0,daily=0;const today='${today}';
+for(const f of fs.readdirSync(d).filter(x=>x.endsWith('.jsonl'))){
+  const fp=p.join(d,f);let ft=0;
+  try{
+    const lines=fs.readFileSync(fp,'utf-8').split('\\\\n');
+    for(const l of lines){
+      if(!l.includes('usage'))continue;
+      try{const o=JSON.parse(l),u=o?.message?.usage;
+        if(u)ft+=(u.input||0)+(u.output||0)+(u.cacheRead||0)+(u.cacheWrite||0);
+      }catch{}
+    }
+    total+=ft;
+    const mt=fs.statSync(fp).mtime.toISOString().slice(0,10);
+    if(mt===today)daily+=ft;
+  }catch{}
+}
+console.log(JSON.stringify({total,daily}));
+"`;
+
+      const result = await this.exec(serverId, script);
+      if (result.code === 0 && result.stdout.trim()) {
+        const jsonMatch = result.stdout.match(/\{[^}]+\}/);
+        if (jsonMatch) {
+          const data = JSON.parse(jsonMatch[0]);
+          return { total: data.total || 0, daily: data.daily || 0 };
+        }
+      }
+      return { total: 0, daily: 0, error: 'Failed to parse token data' };
+    } catch (err: any) {
+      return { total: 0, daily: 0, error: err.message };
+    }
+  }
   
   async getProcessList(serverId: string): Promise<ProcessInfo[]> {
     try {

@@ -333,7 +333,9 @@
       "hostname": "Hostname",
       "load": "Load",
       "memory": "Memory",
-      "disk": "Disk"
+      "disk": "Disk",
+      "dailyTokens": "Daily Tokens",
+      "totalTokensScanned": "Total Tokens (scanned)"
     },
     "form": {
       "name": "Name",

@@ -97,6 +97,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   sshDisconnect: (id: string) => ipcRenderer.invoke('ssh-disconnect', id),
   sshTestConnection: (data: { host: string; port: number; username: string; authType: string; credential: string }) => ipcRenderer.invoke('ssh-test-connection', data),
   sshOpenClawStatus: (serverId: string) => ipcRenderer.invoke('ssh-openclaw-status', serverId),
+  sshRemoteTokens: (serverId: string) => ipcRenderer.invoke('ssh-remote-tokens', serverId),
   sshProcessList: (serverId: string) => ipcRenderer.invoke('ssh-process-list', serverId),
   sshSystemInfo: (serverId: string) => ipcRenderer.invoke('ssh-system-info', serverId),
   sshProcessLogs: (serverId: string, processName: string, lines?: number) => ipcRenderer.invoke('ssh-process-logs', serverId, processName, lines),
