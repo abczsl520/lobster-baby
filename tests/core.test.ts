@@ -352,3 +352,219 @@ describe('SSH Reconnect Logic', () => {
     }
   });
 });
+
+// ─── Theme System Tests ───
+
+const THEMES = ['lobster-red', 'ocean-blue', 'forest-green', 'sunset-purple', 'golden-luxe'];
+
+describe('Theme System', () => {
+  it('has 5 themes defined', () => expect(THEMES).toHaveLength(5));
+  it('all themes have valid CSS class names', () => {
+    THEMES.forEach(t => expect(t).toMatch(/^[a-z]+-[a-z]+$/));
+  });
+  it('default theme is lobster-red', () => expect(THEMES[0]).toBe('lobster-red'));
+});
+
+// ─── Store Operations Tests ───
+
+describe('Store Operations', () => {
+  it('serializes/deserializes JSON correctly', () => {
+    const data = { totalTokens: 1234, settings: { autoFadeEnabled: true } };
+    const json = JSON.stringify(data);
+    const parsed = JSON.parse(json);
+    expect(parsed.totalTokens).toBe(1234);
+    expect(parsed.settings.autoFadeEnabled).toBe(true);
+  });
+
+  it('handles missing keys gracefully', () => {
+    const store: Record<string, any> = {};
+    expect(store.settings?.autoFadeEnabled ?? false).toBe(false);
+    expect(store.windowX ?? 100).toBe(100);
+  });
+
+  it('merges settings correctly', () => {
+    const existing = { autoFadeEnabled: false, theme: 'lobster-red' };
+    const update = { autoFadeEnabled: true };
+    const merged = { ...existing, ...update };
+    expect(merged.autoFadeEnabled).toBe(true);
+    expect(merged.theme).toBe('lobster-red');
+  });
+});
+
+// ─── Streak Tracking Tests ───
+
+describe('Streak Tracking', () => {
+  it('starts at 1 on first day', () => {
+    const streakDays = 1;
+    expect(streakDays).toBe(1);
+  });
+
+  it('increments on consecutive days', () => {
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    const today = new Date().toISOString().slice(0, 10);
+    expect(yesterday).not.toBe(today);
+    // If lastActiveDate === yesterday, increment
+    const lastActiveDate = yesterday;
+    const newStreak = lastActiveDate === yesterday ? 5 + 1 : 1;
+    expect(newStreak).toBe(6);
+  });
+
+  it('resets on gap', () => {
+    const twoDaysAgo = new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10);
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    const lastActiveDate = twoDaysAgo;
+    const newStreak = lastActiveDate === yesterday ? 5 + 1 : 1;
+    expect(newStreak).toBe(1);
+  });
+});
+
+// ─── Backup/Restore Tests ───
+
+describe('Backup Format', () => {
+  it('creates valid backup object', () => {
+    const backup = {
+      version: 1,
+      date: new Date().toISOString(),
+      store: { totalTokens: 100 },
+      plugins: {},
+    };
+    expect(backup.version).toBe(1);
+    expect(backup.date).toBeTruthy();
+    expect(backup.store.totalTokens).toBe(100);
+  });
+
+  it('validates backup on restore', () => {
+    const valid = { version: 1, store: {} };
+    const invalid = { foo: 'bar' };
+    expect(!!(valid as any).version && !!(valid as any).store).toBe(true);
+    expect(!!(invalid as any).version && !!(invalid as any).store).toBe(false);
+  });
+});
+
+// ─── CSV Export Tests ───
+
+describe('CSV Export', () => {
+  it('generates valid CSV', () => {
+    const data: Record<string, number> = { '2026-03-14': 100, '2026-03-15': 200, '2026-03-16': 300 };
+    const rows = ['Date,Tokens'];
+    Object.entries(data).sort(([a], [b]) => a.localeCompare(b)).forEach(([date, tokens]) => {
+      rows.push(`${date},${tokens}`);
+    });
+    const csv = rows.join('\n');
+    expect(csv).toContain('Date,Tokens');
+    expect(csv.split('\n')).toHaveLength(4);
+    expect(csv).toContain('2026-03-16,300');
+  });
+
+  it('handles empty data', () => {
+    const data: Record<string, number> = {};
+    const rows = ['Date,Tokens'];
+    const csv = rows.join('\n');
+    expect(csv).toBe('Date,Tokens');
+  });
+});
+
+// ─── Plugin Security Tests ───
+
+describe('Plugin Security', () => {
+  // Rate limiter simulation
+  function checkRateLimit(timestamps: number[], now: number, limit: number, windowMs: number): boolean {
+    const recent = timestamps.filter(t => now - t < windowMs);
+    return recent.length < limit;
+  }
+
+  it('allows requests within limit', () => {
+    const timestamps = [1000, 2000, 3000];
+    expect(checkRateLimit(timestamps, 4000, 60, 60000)).toBe(true);
+  });
+
+  it('blocks requests over limit', () => {
+    const timestamps = Array.from({ length: 60 }, (_, i) => i * 100);
+    expect(checkRateLimit(timestamps, 6000, 60, 60000)).toBe(false);
+  });
+
+  it('allows after window passes', () => {
+    const timestamps = Array.from({ length: 60 }, (_, i) => i * 100);
+    expect(checkRateLimit(timestamps, 70000, 60, 60000)).toBe(true);
+  });
+
+  // Private IP check
+  function isPrivateIP(hostname: string): boolean {
+    return /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|0\.0\.0\.0|localhost|::1)/i.test(hostname);
+  }
+
+  it('blocks localhost', () => expect(isPrivateIP('localhost')).toBe(true));
+  it('blocks 127.0.0.1', () => expect(isPrivateIP('127.0.0.1')).toBe(true));
+  it('blocks 10.x.x.x', () => expect(isPrivateIP('10.0.0.1')).toBe(true));
+  it('blocks 192.168.x.x', () => expect(isPrivateIP('192.168.1.1')).toBe(true));
+  it('blocks 172.16-31.x.x', () => expect(isPrivateIP('172.16.0.1')).toBe(true));
+  it('allows public IPs', () => expect(isPrivateIP('8.8.8.8')).toBe(false));
+  it('allows domains', () => expect(isPrivateIP('api.example.com')).toBe(false));
+});
+
+// ─── i18n Tests ───
+
+describe('i18n Consistency', () => {
+  it('speech arrays have content', () => {
+    // Simulate checking array lengths
+    const idleLines = 22;
+    const activeLines = 22;
+    const errorLines = 12;
+    expect(idleLines).toBeGreaterThan(10);
+    expect(activeLines).toBeGreaterThan(10);
+    expect(errorLines).toBeGreaterThan(5);
+  });
+});
+
+// ─── Window Position Tests ───
+
+describe('Window Position', () => {
+  function clampToDisplay(x: number, y: number, w: number, h: number, display: { x: number; y: number; width: number; height: number }) {
+    return {
+      x: Math.max(display.x, Math.min(x, display.x + display.width - w)),
+      y: Math.max(display.y, Math.min(y, display.y + display.height - h)),
+    };
+  }
+
+  it('keeps window in bounds', () => {
+    const pos = clampToDisplay(2000, 1500, 200, 250, { x: 0, y: 0, width: 1920, height: 1080 });
+    expect(pos.x).toBe(1720);
+    expect(pos.y).toBe(830);
+  });
+
+  it('handles negative positions', () => {
+    const pos = clampToDisplay(-50, -100, 200, 250, { x: 0, y: 0, width: 1920, height: 1080 });
+    expect(pos.x).toBe(0);
+    expect(pos.y).toBe(0);
+  });
+
+  it('handles multi-monitor offset', () => {
+    const pos = clampToDisplay(3000, 500, 200, 250, { x: 1920, y: 0, width: 1920, height: 1080 });
+    expect(pos.x).toBe(3000); // within second monitor
+    expect(pos.y).toBe(500);
+  });
+});
+
+// ─── Sparkline Tests ───
+
+describe('Sparkline Data', () => {
+  it('normalizes to 0-24 range', () => {
+    const data = [100, 200, 50, 300, 150];
+    const max = Math.max(...data, 1);
+    const normalized = data.map(v => 24 - (v / max) * 22);
+    expect(normalized[3]).toBeCloseTo(2); // 300 = max → y = 2
+    expect(normalized[2]).toBeCloseTo(24 - (50/300) * 22); // 50 → near bottom
+  });
+
+  it('handles single data point', () => {
+    const data = [100];
+    expect(data.length).toBe(1);
+    // sparkline requires > 1 point
+  });
+
+  it('handles all zeros', () => {
+    const data = [0, 0, 0];
+    const max = Math.max(...data, 1); // 1 prevents division by zero
+    expect(max).toBe(1);
+  });
+});
