@@ -1,2 +1,0 @@
-// ─── Plugin System Types ───
-export {};

@@ -663,6 +663,14 @@ function createPanelWindow(route?: string) {
   });
 
   panelWindow.on('closed', () => { panelWindow = null; });
+
+  // ESC closes panel window
+  panelWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.key === 'Escape' && !input.alt && !input.control && !input.meta) {
+      closePanelWindow();
+      event.preventDefault();
+    }
+  });
   
   logDebug(`Panel window created (route: ${panelRoute})`);
 }
