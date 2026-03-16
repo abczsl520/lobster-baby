@@ -83,7 +83,7 @@ export const StatusPanel: React.FC<StatusPanelProps> = ({
 
   React.useEffect(() => {
     window.electronAPI.getAutoStart?.().then((v: boolean) => setAutoStartEnabled(v)).catch(() => {});
-    window.electronAPI.getSettings?.().then((s: any) => {
+    window.electronAPI.getSettings?.().then((s: { idleOpacity?: number }) => {
       if (s?.idleOpacity) {
         setIdleOpacity(s.idleOpacity);
         document.documentElement.style.setProperty('--idle-opacity', String(s.idleOpacity / 100));
