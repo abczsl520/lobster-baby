@@ -715,3 +715,45 @@
   opacity: 1;
   transform: rotate(180deg);
 }
+
+/* Tailscale hint */
+.ssh-tailscale-hint {
+  background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
+  border-radius: 10px;
+  padding: 12px;
+  margin: 0 8px 8px;
+  color: white;
+  font-size: 11px;
+  animation: slide-down 0.3s ease;
+}
+.ssh-tailscale-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+.ssh-tailscale-header button {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  font-size: 14px;
+}
+.ssh-tailscale-hint p {
+  margin: 0 0 8px;
+  line-height: 1.4;
+  color: rgba(255,255,255,0.9);
+}
+.ssh-tailscale-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.ssh-tailscale-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

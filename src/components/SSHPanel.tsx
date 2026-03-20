@@ -60,6 +60,7 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
   const [logs, setLogs] = useState<string>('');
   const [selectedProcess, setSelectedProcess] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [showTailscaleHint, setShowTailscaleHint] = useState(false);
 
   const refreshRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -134,7 +135,12 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
       if (r.success) {
         setActiveServer(serverId); setTab('status');
         await loadServers(); await loadOpenClawStatus();
-      } else { setError(r.error || t('ssh.connectFailed')); }
+      } else {
+        const errMsg = r.error || t('ssh.connectFailed');
+        const isNetworkIssue = /timeout|timed out|handshake|connection lost|ECONNREFUSED|EHOSTUNREACH|ENETUNREACH/i.test(errMsg);
+        setError(errMsg);
+        if (isNetworkIssue) setShowTailscaleHint(true);
+      }
     } catch (e: unknown) { setError((e as Error).message); }
     setConnecting(null);
   };
@@ -220,6 +226,33 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
         <div className="ssh-error">
           {error}
           <button onClick={() => setError(null)}>✕</button>
+        </div>
+      )}
+
+      {showTailscaleHint && (
+        <div className="ssh-tailscale-hint">
+          <div className="ssh-tailscale-header">
+            <span>🌐 {t('ssh.tailscale.title', 'Connection issue? Try Tailscale')}</span>
+            <button onClick={() => setShowTailscaleHint(false)}>✕</button>
+          </div>
+          <p>{t('ssh.tailscale.desc', 'If your devices are on different networks (different WiFi/router), they can\'t connect directly. Tailscale creates a secure encrypted tunnel between them — free, zero config.')}</p>
+          <div className="ssh-tailscale-steps">
+            <div className="ssh-tailscale-step">
+              <span className="ssh-step-num">1</span>
+              <span>{t('ssh.tailscale.step1', 'Install Tailscale on both machines')}</span>
+            </div>
+            <div className="ssh-tailscale-step">
+              <span className="ssh-step-num">2</span>
+              <span>{t('ssh.tailscale.step2', 'Sign in with the same account')}</span>
+            </div>
+            <div className="ssh-tailscale-step">
+              <span className="ssh-step-num">3</span>
+              <span>{t('ssh.tailscale.step3', 'Use the Tailscale IP (100.x.x.x) as the host address')}</span>
+            </div>
+          </div>
+          <button className="ssh-btn primary-sm" onClick={() => window.electronAPI.openExternal('https://tailscale.com/download')}>
+            {t('ssh.tailscale.download', 'Download Tailscale')}
+          </button>
         </div>
       )}
 
