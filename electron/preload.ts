@@ -12,6 +12,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('update-available', handler);
     return () => ipcRenderer.removeListener('update-available', handler);
   },
+  onUpdaterStatus: (callback: (data: any) => void) => {
+    const handler = (_event: unknown, data: any) => callback(data);
+    ipcRenderer.on('updater-status', handler);
+    return () => ipcRenderer.removeListener('updater-status', handler);
+  },
+  updaterCheck: () => ipcRenderer.invoke('updater-check'),
+  updaterDownload: () => ipcRenderer.invoke('updater-download'),
+  updaterInstall: () => ipcRenderer.invoke('updater-install'),
   onTogglePanel: (callback: () => void) => {
     const handler = () => callback();
     ipcRenderer.on('toggle-panel', handler);

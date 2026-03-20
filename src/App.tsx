@@ -73,7 +73,6 @@ function PanelApp() {
 function LobsterApp() {
   const { status, tokenInfo } = useOpenClawStatus();
   const levelInfo = useLevelSystem();
-  const { updateInfo } = useUpdateChecker();
   const { t } = useTranslation();
   const [emoji, setEmoji] = useState<string | null>(null);
   const [isDraggingState, setIsDraggingState] = useState(false);
@@ -131,8 +130,13 @@ function LobsterApp() {
   }, []);
 
   useEffect(() => {
-    if (updateInfo?.hasUpdate) setShowUpdateNotification(true);
-  }, [updateInfo]);
+    const cleanup = window.electronAPI.onUpdaterStatus?.((data: any) => {
+      if (data.status === 'available' || data.status === 'downloaded') {
+        setShowUpdateNotification(true);
+      }
+    });
+    return cleanup;
+  }, []);
 
   // Check milestones
   useEffect(() => {
@@ -224,8 +228,8 @@ function LobsterApp() {
         if (!isDragging.current) window.electronAPI.undock();
       }}
     >
-      {showUpdateNotification && updateInfo && (
-        <UpdateNotification updateInfo={updateInfo} onDismiss={() => setShowUpdateNotification(false)} />
+      {showUpdateNotification && (
+        <UpdateNotification onDismiss={() => setShowUpdateNotification(false)} />
       )}
 
       {currentAchievement && (

@@ -20,6 +20,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "electron-updater": "^6.8.3",
     "i18next": "^25.8.18",
     "i18next-browser-languagedetector": "^8.2.1",
     "react": "^18.2.0",
@@ -128,6 +129,13 @@
     "portable": {
       "artifactName": "LobsterBaby-${version}-win-x64-portable.${ext}"
     },
-    "afterSign": "scripts/notarize.js"
+    "afterSign": "scripts/notarize.js",
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "abczsl520",
+        "repo": "lobster-baby"
+      }
+    ]
   }
 }
