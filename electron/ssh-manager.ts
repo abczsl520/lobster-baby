@@ -261,6 +261,40 @@ export class SSHManager {
         readyTimeout: 15000,
         keepaliveInterval: 30000,
         keepaliveCountMax: 3,
+        // Force compatible algorithms — chacha20-poly1305 WASM can fail
+        // inside Electron ASAR on Windows when native binding is missing
+        algorithms: {
+          kex: [
+            'curve25519-sha256',
+            'curve25519-sha256@libssh.org',
+            'ecdh-sha2-nistp256',
+            'ecdh-sha2-nistp384',
+            'ecdh-sha2-nistp521',
+            'diffie-hellman-group-exchange-sha256',
+            'diffie-hellman-group14-sha256',
+          ],
+          cipher: [
+            'aes128-gcm@openssh.com',
+            'aes256-gcm@openssh.com',
+            'aes128-ctr',
+            'aes192-ctr',
+            'aes256-ctr',
+          ],
+          serverHostKey: [
+            'ssh-ed25519',
+            'ecdsa-sha2-nistp256',
+            'ecdsa-sha2-nistp384',
+            'ecdsa-sha2-nistp521',
+            'rsa-sha2-512',
+            'rsa-sha2-256',
+          ],
+          hmac: [
+            'hmac-sha2-256-etm@openssh.com',
+            'hmac-sha2-512-etm@openssh.com',
+            'hmac-sha2-256',
+            'hmac-sha2-512',
+          ],
+        },
       };
       
       if (server.authType === 'password') {
