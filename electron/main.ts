@@ -1,6 +1,5 @@
 import { app, BrowserWindow, ipcMain, screen, Menu, shell, globalShortcut } from 'electron';
 import path from 'path';
-import https from 'https';
 import { log, logError, logWarn, logDebug, logSessionSummary } from './logger';
 import { readStore, writeStore } from './store';
 import { findOpenClaw, scanRealTokenUsage } from './scanner';
@@ -306,42 +305,11 @@ ipcMain.handle('show-panel', (_event, route?: string) => createPanelWindow(route
 ipcMain.handle('hide-panel', () => closePanelWindow());
 ipcMain.handle('close-panel', () => closePanelWindow());
 
-// ─── Auto Update ───
+// ─── Auto Update (electron-updater) ───
 
+import { initAutoUpdater, checkForUpdatesQuiet } from './updater';
 const APP_VERSION = app.getVersion();
 let updateCheckInterval: NodeJS.Timeout | null = null;
-
-function fetchJSON(url: string): Promise<any> {
-  return new Promise((resolve, reject) => {
-    https.get(url, { headers: { 'User-Agent': 'LobsterBaby' } }, (res) => {
-      if (res.statusCode === 301 || res.statusCode === 302) return fetchJSON(res.headers.location!).then(resolve).catch(reject);
-      let data = '';
-      res.on('data', (chunk) => data += chunk);
-      res.on('end', () => { try { resolve(JSON.parse(data)); } catch { reject(new Error('Invalid JSON')); } });
-    }).on('error', reject);
-  });
-}
-
-function compareVersions(v1: string, v2: string): number {
-  const p1 = v1.split('.').map(Number), p2 = v2.split('.').map(Number);
-  for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
-    const a = p1[i] || 0, b = p2[i] || 0;
-    if (a > b) return 1; if (a < b) return -1;
-  }
-  return 0;
-}
-
-async function checkForUpdates() {
-  try {
-    const data = await fetchJSON('https://api.github.com/repos/abczsl520/lobster-baby/releases/latest');
-    const latest = (data.tag_name || '').replace(/^v/, '');
-    if (!latest || compareVersions(latest, APP_VERSION) <= 0) return;
-    log(`New version: ${latest}`);
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('update-available', { version: latest, url: data.html_url });
-    }
-  } catch (err) { logError(`Update check failed: ${err}`); }
-}
 
 // ─── App Lifecycle ───
 
@@ -366,8 +334,10 @@ app.whenReady().then(async () => {
   });
   await plugins.initPlugins();
 
-  setTimeout(checkForUpdates, 10000);
-  updateCheckInterval = setInterval(checkForUpdates, 6 * 60 * 60 * 1000);
+  // Auto-update: init + periodic check
+  initAutoUpdater(getMainWindow);
+  setTimeout(checkForUpdatesQuiet, 10000);
+  updateCheckInterval = setInterval(checkForUpdatesQuiet, 6 * 60 * 60 * 1000);
   startSocialSync();
 
   globalShortcut.register('CommandOrControl+Shift+L', () => {

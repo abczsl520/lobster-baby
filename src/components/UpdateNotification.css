@@ -74,6 +74,41 @@
   background: rgba(255, 255, 255, 0.3);
 }
 
+.update-progress {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.update-progress-bar {
+  height: 100%;
+  background: white;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+.update-percent {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+}
+
+.update-detail {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 2px;
+}
+
+.update-error {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+}
+
+.update-ready {
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+}
+
 @keyframes slide-down {
   0% {
     opacity: 0;

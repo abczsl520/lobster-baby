@@ -28,6 +28,10 @@ declare global {
     electronAPI: {
       onOpenClawStatus: (callback: (data: StatusData) => void) => () => void;
       onUpdateAvailable: (callback: (data: any) => void) => () => void;
+      onUpdaterStatus: (callback: (data: any) => void) => () => void;
+      updaterCheck: () => Promise<{ ok: boolean; version?: string; error?: string }>;
+      updaterDownload: () => Promise<{ ok: boolean; error?: string }>;
+      updaterInstall: () => void;
       onTogglePanel: (callback: () => void) => () => void;
       onToggleChart: (callback: () => void) => () => void;
       onShowAchievements: (callback: () => void) => () => void;
