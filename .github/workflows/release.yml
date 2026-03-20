@@ -36,23 +36,48 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: npm run dist
-      - name: Upload DMG
+        run: npm run build && npx electron-builder --mac
+      - name: Upload Mac artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: mac-dmg
-          path: release/*.dmg
+          name: mac-release
+          path: |
+            release/*.dmg
+            release/*.zip
+
+  build-win:
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install
+      - name: Build & Package
+        run: npm run build && npx electron-builder --win
+      - name: Upload Win artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: win-release
+          path: |
+            release/*.exe
 
   release:
-    needs: build-mac
+    needs: [build-mac, build-win]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: mac-dmg
+          name: mac-release
+          path: release
+      - uses: actions/download-artifact@v4
+        with:
+          name: win-release
           path: release
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: release/*.dmg
+          files: release/*
           generate_release_notes: true
