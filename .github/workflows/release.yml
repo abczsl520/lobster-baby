@@ -36,7 +36,7 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: npm run build && npx electron-builder --mac
+        run: npm run build && npx electron-builder --mac --publish never
       - name: Upload Mac artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -56,26 +56,26 @@ jobs:
           cache: npm
       - run: npm install
       - name: Build & Package
-        run: npm run build && npx electron-builder --win
+        run: npm run build && npx electron-builder --win --publish never
       - name: Upload Win artifacts
         uses: actions/upload-artifact@v4
         with:
           name: win-release
           path: |
-            release/*.exe
+            release/*setup*.exe
+            release/*portable*.exe
 
   release:
     needs: [build-mac, build-win]
+    if: always() && (needs.build-mac.result == 'success' || needs.build-win.result == 'success')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: mac-release
           path: release
-      - uses: actions/download-artifact@v4
-        with:
-          name: win-release
-          path: release
+          merge-multiple: true
+      - name: List artifacts
+        run: ls -la release/
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
