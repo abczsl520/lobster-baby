@@ -36,23 +36,45 @@ interface SystemInfo {
   diskPercent: number;
 }
 
-type Tab = 'home' | 'status' | 'processes' | 'system' | 'logs' | 'servers' | 'guide';
+type Tab = 'home' | 'status' | 'processes' | 'system' | 'logs';
 
 interface SSHPanelProps {
   visible: boolean;
   onClose: () => void;
 }
 
+// ─── Circular Progress ───
+const CircleProgress: React.FC<{ percent: number; size?: number; color?: string; label: string; detail: string }> = ({
+  percent, size = 64, color = '#3498db', label, detail
+}) => {
+  const r = (size - 8) / 2;
+  const circ = 2 * Math.PI * r;
+  const offset = circ - (percent / 100) * circ;
+  return (
+    <div className="ssh-circle-wrap">
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={color} strokeWidth="6"
+          strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
+          transform={`rotate(-90 ${size/2} ${size/2})`} style={{ transition: 'stroke-dashoffset 0.8s ease' }} />
+        <text x={size/2} y={size/2 - 2} textAnchor="middle" fill="white" fontSize="13" fontWeight="600">{percent}%</text>
+        <text x={size/2} y={size/2 + 12} textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="8">{label}</text>
+      </svg>
+      <div className="ssh-circle-detail">{detail}</div>
+    </div>
+  );
+};
+
 export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
   const { t } = useTranslation();
   const [servers, setServers] = useState<SSHServer[]>([]);
   const [activeServer, setActiveServer] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('home');
-  const [showAddForm, setShowAddForm] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [connecting, setConnecting] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showTailscaleHint, setShowTailscaleHint] = useState(false);
 
-  // SSH data
   const [openclawStatus, setOpenclawStatus] = useState<any>(null);
   const [remoteTokens, setRemoteTokens] = useState<{ total: number; daily: number } | null>(null);
   const [processes, setProcesses] = useState<ProcessInfo[]>([]);
@@ -60,8 +82,6 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
   const [logs, setLogs] = useState<string>('');
   const [selectedProcess, setSelectedProcess] = useState<string>('');
   const [loading, setLoading] = useState(false);
-  const [showTailscaleHint, setShowTailscaleHint] = useState(false);
-
   const refreshRef = useRef<NodeJS.Timeout | null>(null);
 
   // ── Data loaders ──
@@ -107,13 +127,11 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
     setLoading(false);
   };
 
-  // ── Init ──
   useEffect(() => {
-    if (visible) { loadServers(); }
+    if (visible) loadServers();
     return () => { if (refreshRef.current) clearInterval(refreshRef.current); };
   }, [visible, loadServers]);
 
-  // Auto-refresh when connected
   useEffect(() => {
     if (refreshRef.current) clearInterval(refreshRef.current);
     if (activeServer && visible) {
@@ -127,9 +145,9 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
     return () => { if (refreshRef.current) clearInterval(refreshRef.current); };
   }, [activeServer, tab, visible]);
 
-  // ── SSH handlers ──
+  // ── Handlers ──
   const handleConnect = async (serverId: string) => {
-    setConnecting(serverId); setError(null);
+    setConnecting(serverId); setError(null); setShowTailscaleHint(false);
     try {
       const r = await window.electronAPI.sshConnect(serverId);
       if (r.success) {
@@ -182,394 +200,297 @@ export const SSHPanel: React.FC<SSHPanelProps> = ({ visible, onClose }) => {
 
   const activeServerObj = servers.find(s => s.id === activeServer);
   const connectedCount = servers.filter(s => s.isConnected).length;
+  const errorCount = servers.filter(s => s.lastStatus === 'error').length;
+
+  const tabs: { key: Tab; icon: string; label: string; needsServer?: boolean }[] = [
+    { key: 'home', icon: '🏠', label: t('ssh.tab.home', 'Servers') },
+    { key: 'status', icon: '📊', label: t('ssh.tab.status'), needsServer: true },
+    { key: 'processes', icon: '⚙️', label: t('ssh.tab.processes'), needsServer: true },
+    { key: 'system', icon: '💻', label: t('ssh.tab.system'), needsServer: true },
+    { key: 'logs', icon: '📜', label: t('ssh.tab.logs'), needsServer: true },
+  ];
 
   return (
     <div className="ssh-panel">
       {/* ── Header ── */}
       <div className="ssh-header">
         <button className="ssh-back-btn" onClick={onClose} aria-label="Back">←</button>
-        <span className="ssh-title">🖥️ {t('ssh.title')}</span>
-        {activeServerObj && (
-          <span className="ssh-connected-badge">🟢 {activeServerObj.name}</span>
-        )}
-        <button
-          className={`ssh-guide-btn ${tab === 'guide' ? 'active' : ''}`}
-          onClick={() => setTab(tab === 'guide' ? 'home' : 'guide')}
-          title={t('ssh.guide.title')}
-        >❓</button>
+        <div className="ssh-header-info">
+          <span className="ssh-title">🖥️ {t('ssh.title')}</span>
+          {activeServerObj && (
+            <span className="ssh-connected-badge">🟢 {activeServerObj.name}</span>
+          )}
+        </div>
       </div>
 
-      {/* ── Tab Navigation ── */}
+      {/* ── Tab Bar ── */}
       <div className="ssh-tabs">
-        <button className={`ssh-tab ${tab === 'home' ? 'active' : ''}`} onClick={() => setTab('home')}>
-          🏠
-        </button>
-        {activeServer && (
-          <>
-            <button className={`ssh-tab ${tab === 'status' ? 'active' : ''}`} onClick={() => handleTabChange('status')}>
-              📊 {t('ssh.tab.status')}
+        {tabs.map(tb => (
+          (!tb.needsServer || activeServer) && (
+            <button
+              key={tb.key}
+              className={`ssh-tab ${tab === tb.key ? 'active' : ''}`}
+              onClick={() => tb.needsServer ? handleTabChange(tb.key) : setTab(tb.key)}
+              title={tb.label}
+            >
+              <span className="ssh-tab-icon">{tb.icon}</span>
+              <span className="ssh-tab-label">{tb.label}</span>
             </button>
-            <button className={`ssh-tab ${tab === 'processes' ? 'active' : ''}`} onClick={() => handleTabChange('processes')}>
-              ⚙️ {t('ssh.tab.processes')}
-            </button>
-            <button className={`ssh-tab ${tab === 'system' ? 'active' : ''}`} onClick={() => handleTabChange('system')}>
-              💻 {t('ssh.tab.system')}
-            </button>
-            <button className={`ssh-tab ${tab === 'logs' ? 'active' : ''}`} onClick={() => handleTabChange('logs')}>
-              📜 {t('ssh.tab.logs')}
-            </button>
-          </>
-        )}
+          )
+        ))}
       </div>
 
+      {/* ── Error + Tailscale ── */}
       {error && (
         <div className="ssh-error">
-          {error}
-          <button onClick={() => setError(null)}>✕</button>
+          <span>{error}</span>
+          <button onClick={() => { setError(null); setShowTailscaleHint(false); }}>✕</button>
         </div>
       )}
 
       {showTailscaleHint && (
         <div className="ssh-tailscale-hint">
           <div className="ssh-tailscale-header">
-            <span>🌐 {t('ssh.tailscale.title', 'Connection issue? Try Tailscale')}</span>
+            <span>🌐 {t('ssh.tailscale.title', 'Different network? Try Tailscale')}</span>
             <button onClick={() => setShowTailscaleHint(false)}>✕</button>
           </div>
-          <p>{t('ssh.tailscale.desc', 'If your devices are on different networks (different WiFi/router), they can\'t connect directly. Tailscale creates a secure encrypted tunnel between them — free, zero config.')}</p>
+          <p>{t('ssh.tailscale.desc', 'Tailscale creates a free encrypted tunnel between devices on different networks.')}</p>
           <div className="ssh-tailscale-steps">
-            <div className="ssh-tailscale-step">
-              <span className="ssh-step-num">1</span>
-              <span>{t('ssh.tailscale.step1', 'Install Tailscale on both machines')}</span>
-            </div>
-            <div className="ssh-tailscale-step">
-              <span className="ssh-step-num">2</span>
-              <span>{t('ssh.tailscale.step2', 'Sign in with the same account')}</span>
-            </div>
-            <div className="ssh-tailscale-step">
-              <span className="ssh-step-num">3</span>
-              <span>{t('ssh.tailscale.step3', 'Use the Tailscale IP (100.x.x.x) as the host address')}</span>
-            </div>
+            <div className="ssh-tailscale-step"><span className="ssh-step-num">1</span><span>{t('ssh.tailscale.step1', 'Install on both machines')}</span></div>
+            <div className="ssh-tailscale-step"><span className="ssh-step-num">2</span><span>{t('ssh.tailscale.step2', 'Sign in same account')}</span></div>
+            <div className="ssh-tailscale-step"><span className="ssh-step-num">3</span><span>{t('ssh.tailscale.step3', 'Use 100.x.x.x IP')}</span></div>
           </div>
-          <button className="ssh-btn primary-sm" onClick={() => window.electronAPI.openExternal('https://tailscale.com/download')}>
-            {t('ssh.tailscale.download', 'Download Tailscale')}
+          <button className="ssh-btn accent-sm" onClick={() => window.electronAPI.openExternal('https://tailscale.com/download')}>
+            {t('ssh.tailscale.download', 'Get Tailscale →')}
           </button>
         </div>
       )}
 
-      {/* ━━━━━━━━ HOME TAB ━━━━━━━━ */}
-      {tab === 'home' && (
-        <div className="ssh-home">
-
-          {/* ── SSH 服务器 ── */}
-          <div className="ssh-card">
-            <div className="ssh-card-header">
-              <span className="ssh-card-title">{t('ssh.home.sshServers')}</span>
-              <div className="ssh-card-header-right">
-                <button className="ssh-refresh-btn" onClick={loadServers} title={t('ssh.refresh')}>🔄</button>
-                <span className="ssh-card-badge">{servers.length > 0 ? `${connectedCount}/${servers.length}` : '0'}</span>
-              </div>
-            </div>
-            <div className="ssh-card-desc">{t('ssh.home.sshDesc')}</div>
-
-            {servers.length > 0 ? (
-              <div className="ssh-server-quick-list">
-                {servers.map(s => (
-                  <div key={s.id} className={`ssh-server-row ${s.isConnected ? 'connected' : ''}`}>
-                    <div className="ssh-server-row-info">
-                      <span className="ssh-server-dot">{s.isConnected ? '🟢' : (s.lastStatus === 'error' ? '🔴' : '⚫')}</span>
-                      <div>
-                        <div className="ssh-server-row-name">{s.name}</div>
-                        <div className="ssh-server-row-host">{s.username}@{s.host}:{s.port || 22}</div>
-                        {s.lastConnected && !s.isConnected && (
-                          <div className="ssh-server-row-last">{t('ssh.lastSeen')}: {new Date(s.lastConnected).toLocaleString()}</div>
-                        )}
-                      </div>
+      <div className="ssh-content">
+        {/* ━━━ HOME ━━━ */}
+        {tab === 'home' && (
+          <div className="ssh-home">
+            {/* Overview bar */}
+            {servers.length > 0 && (
+              <div className="ssh-overview">
+                <div className="ssh-overview-item">
+                  <span className="ssh-overview-num">{servers.length}</span>
+                  <span className="ssh-overview-label">{t('ssh.overview.total', 'Servers')}</span>
+                </div>
+                <div className="ssh-overview-divider" />
+                <div className="ssh-overview-item">
+                  <span className="ssh-overview-num ssh-num-green">{connectedCount}</span>
+                  <span className="ssh-overview-label">{t('ssh.overview.connected', 'Connected')}</span>
+                </div>
+                {errorCount > 0 && (
+                  <>
+                    <div className="ssh-overview-divider" />
+                    <div className="ssh-overview-item">
+                      <span className="ssh-overview-num ssh-num-red">{errorCount}</span>
+                      <span className="ssh-overview-label">{t('ssh.overview.issues', 'Issues')}</span>
                     </div>
-                    <div className="ssh-server-row-actions">
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Server cards */}
+            {servers.length > 0 ? (
+              <div className="ssh-server-list">
+                {servers.map(s => (
+                  <div key={s.id} className={`ssh-server-card ${s.isConnected ? 'connected' : ''} ${s.lastStatus === 'error' ? 'has-error' : ''}`}>
+                    <div className="ssh-server-card-top">
+                      <div className="ssh-server-status-dot">
+                        {s.isConnected ? '🟢' : (s.lastStatus === 'error' ? '🔴' : '⚫')}
+                      </div>
+                      <div className="ssh-server-info">
+                        <div className="ssh-server-name">{s.name}</div>
+                        <div className="ssh-server-host">{s.username}@{s.host}:{s.port || 22}</div>
+                      </div>
+                      <button className="ssh-server-delete" onClick={() => handleRemove(s.id)} title={t('ssh.remove')}>🗑️</button>
+                    </div>
+                    {s.lastConnected && !s.isConnected && (
+                      <div className="ssh-server-last">{t('ssh.lastSeen')}: {new Date(s.lastConnected).toLocaleString()}</div>
+                    )}
+                    <div className="ssh-server-card-actions">
                       {s.isConnected ? (
                         <>
-                          <button className="ssh-link-btn" onClick={() => { setActiveServer(s.id); handleTabChange('status'); }}>
-                            {t('ssh.home.viewStatus')} →
+                          <button className="ssh-btn accent-sm" onClick={() => { setActiveServer(s.id); handleTabChange('status'); }}>
+                            {t('ssh.home.viewStatus', 'Dashboard')} →
                           </button>
-                          <button className="ssh-link-btn danger" onClick={() => handleDisconnect(s.id)}>
+                          <button className="ssh-btn danger-sm" onClick={() => handleDisconnect(s.id)}>
                             {t('ssh.disconnect')}
                           </button>
                         </>
                       ) : (
                         <button
-                          className="ssh-btn primary-sm"
+                          className="ssh-btn accent-sm full"
                           onClick={() => handleConnect(s.id)}
                           disabled={connecting === s.id}
                         >
-                          {connecting === s.id ? '⏳' : t('ssh.connect')}
+                          {connecting === s.id ? '⏳ ...' : `🔗 ${t('ssh.connect')}`}
                         </button>
                       )}
-                      <button className="ssh-icon-btn" onClick={() => handleRemove(s.id)} title={t('ssh.remove')}>🗑️</button>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="ssh-empty-hint">{t('ssh.home.noServers')}</div>
+              <div className="ssh-empty-state">
+                <div className="ssh-empty-icon">🖥️</div>
+                <div className="ssh-empty-text">{t('ssh.home.noServers', 'No servers yet')}</div>
+                <div className="ssh-empty-hint">{t('ssh.home.addHint', 'Add a server to monitor your OpenClaw instances remotely')}</div>
+              </div>
             )}
 
-            {!showAddForm ? (
-              <button className="ssh-btn outline" onClick={() => setShowAddForm(true)}>
-                + {t('ssh.addServer')}
-              </button>
-            ) : (
-              <AddServerForm
-                onAdd={async (data) => {
-                  const r = await window.electronAPI.sshAddServer(data);
-                  if (r.error) setError(r.error);
-                  else { setShowAddForm(false); await loadServers(); }
-                }}
-                onCancel={() => setShowAddForm(false)}
-              />
-            )}
+            <button className="ssh-btn outline full" onClick={() => setShowAddModal(true)}>
+              + {t('ssh.addServer')}
+            </button>
+
+            <div className="ssh-security-note">🔒 {t('ssh.home.securityNote')}</div>
           </div>
+        )}
 
-          {/* ── Security note ── */}
-          <div className="ssh-security-note">
-            🔒 {t('ssh.home.securityNote')}
-          </div>
-        </div>
-      )}
-
-      {/* ━━━━━━━━ GUIDE TAB ━━━━━━━━ */}
-      {tab === 'guide' && (
-        <div className="ssh-guide">
-          <div className="ssh-guide-title">{t('ssh.guide.title')}</div>
-
-          {/* Guide 1: Data source */}
-          <div className="ssh-guide-section">
-            <div className="ssh-guide-num">1</div>
-            <div className="ssh-guide-content">
-              <div className="ssh-guide-heading">{t('ssh.guide.s1Title')}</div>
-              <p>{t('ssh.guide.s1Desc')}</p>
-              <div className="ssh-guide-comparison">
-                <div className="ssh-guide-col">
-                  <strong>🏠 {t('ssh.home.localMode')}</strong>
-                  <ul>
-                    <li>{t('ssh.guide.localP1')}</li>
-                    <li>{t('ssh.guide.localP2')}</li>
-                    <li>{t('ssh.guide.localP3')}</li>
-                  </ul>
-                </div>
-                <div className="ssh-guide-col">
-                  <strong>☁️ {t('ssh.home.cloudMode')}</strong>
-                  <ul>
-                    <li>{t('ssh.guide.cloudP1')}</li>
-                    <li>{t('ssh.guide.cloudP2')}</li>
-                    <li>{t('ssh.guide.cloudP3')}</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Guide 2: Cloud Reporter */}
-          <div className="ssh-guide-section">
-            <div className="ssh-guide-num">2</div>
-            <div className="ssh-guide-content">
-              <div className="ssh-guide-heading">{t('ssh.guide.s2Title')}</div>
-              <p>{t('ssh.guide.s2Desc')}</p>
-              <div className="ssh-guide-steps">
-                <div className="ssh-guide-step">
-                  <span className="ssh-step-num">①</span>
-                  <span>{t('ssh.guide.s2Step1')}</span>
-                </div>
-                <div className="ssh-guide-step">
-                  <span className="ssh-step-num">②</span>
-                  <span>{t('ssh.guide.s2Step2')}</span>
-                </div>
-                <div className="ssh-guide-step">
-                  <span className="ssh-step-num">③</span>
-                  <span>{t('ssh.guide.s2Step3')}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Guide 3: SSH Direct */}
-          <div className="ssh-guide-section">
-            <div className="ssh-guide-num">3</div>
-            <div className="ssh-guide-content">
-              <div className="ssh-guide-heading">{t('ssh.guide.s3Title')}</div>
-              <p>{t('ssh.guide.s3Desc')}</p>
-              <div className="ssh-guide-features">
-                <span>📊 {t('ssh.guide.feat1')}</span>
-                <span>⚙️ {t('ssh.guide.feat2')}</span>
-                <span>💻 {t('ssh.guide.feat3')}</span>
-                <span>📜 {t('ssh.guide.feat4')}</span>
-                <span>🔄 {t('ssh.guide.feat5')}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Guide 4: Security */}
-          <div className="ssh-guide-section">
-            <div className="ssh-guide-num">🔒</div>
-            <div className="ssh-guide-content">
-              <div className="ssh-guide-heading">{t('ssh.guide.s4Title')}</div>
-              <ul className="ssh-guide-security-list">
-                <li>{t('ssh.guide.sec1')}</li>
-                <li>{t('ssh.guide.sec2')}</li>
-                <li>{t('ssh.guide.sec3')}</li>
-                <li>{t('ssh.guide.sec4')}</li>
-                <li>{t('ssh.guide.sec5')}</li>
-              </ul>
-            </div>
-          </div>
-
-          <button className="ssh-btn primary" onClick={() => setTab('home')}>
-            {t('ssh.guide.gotIt')}
-          </button>
-        </div>
-      )}
-
-      {/* ━━━━━━━━ STATUS TAB ━━━━━━━━ */}
-      {tab === 'status' && activeServer && (
-        <div className="ssh-status-view">
-          <div className="ssh-section-hint">{t('ssh.statusHint')}</div>
-          {loading && <div className="ssh-loading">{t('ssh.loading')}</div>}
-          {openclawStatus && (
-            <>
-              <div className="ssh-status-card">
-                <div className="ssh-status-row">
-                  <span>{t('ssh.field.status')}</span>
-                  <span className={`ssh-status-badge ${openclawStatus.status === 'active' ? 'active' : (openclawStatus.status === 'openclaw-not-found' ? 'notfound' : 'inactive')}`}>
-                    {openclawStatus.status === 'openclaw-not-found' ? t('ssh.notInstalled') : (openclawStatus.status || 'unknown')}
-                  </span>
+        {/* ━━━ STATUS ━━━ */}
+        {tab === 'status' && activeServer && (
+          <div className="ssh-status-view">
+            {loading && <div className="ssh-loading">⏳</div>}
+            {openclawStatus && (
+              <div className="ssh-dashboard">
+                <div className="ssh-dash-card">
+                  <div className="ssh-dash-label">{t('ssh.field.status')}</div>
+                  <div className={`ssh-dash-badge ${openclawStatus.status === 'active' ? 'active' : (openclawStatus.status === 'openclaw-not-found' ? 'warn' : 'inactive')}`}>
+                    {openclawStatus.status === 'openclaw-not-found' ? t('ssh.notInstalled') : (openclawStatus.status || '?')}
+                  </div>
                 </div>
                 {openclawStatus.activeSessions !== undefined && (
-                  <div className="ssh-status-row">
-                    <span>{t('ssh.field.sessions')}</span>
-                    <span>{openclawStatus.activeSessions}</span>
-                  </div>
-                )}
-                {openclawStatus.totalTokens !== undefined && (
-                  <div className="ssh-status-row">
-                    <span>{t('ssh.field.tokens')}</span>
-                    <span>{(openclawStatus.totalTokens / 1e6).toFixed(1)}M</span>
+                  <div className="ssh-dash-card">
+                    <div className="ssh-dash-label">{t('ssh.field.sessions')}</div>
+                    <div className="ssh-dash-value">{openclawStatus.activeSessions}</div>
                   </div>
                 )}
                 {remoteTokens && (
                   <>
-                    <div className="ssh-status-row">
-                      <span>{t('ssh.field.dailyTokens')}</span>
-                      <span>{(remoteTokens.daily / 1e6).toFixed(1)}M</span>
+                    <div className="ssh-dash-card">
+                      <div className="ssh-dash-label">{t('ssh.field.dailyTokens')}</div>
+                      <div className="ssh-dash-value">{(remoteTokens.daily / 1e6).toFixed(1)}M</div>
                     </div>
-                    <div className="ssh-status-row">
-                      <span>{t('ssh.field.totalTokensScanned')}</span>
-                      <span>{(remoteTokens.total / 1e6).toFixed(1)}M</span>
+                    <div className="ssh-dash-card">
+                      <div className="ssh-dash-label">{t('ssh.field.totalTokensScanned')}</div>
+                      <div className="ssh-dash-value">{(remoteTokens.total / 1e6).toFixed(1)}M</div>
                     </div>
                   </>
                 )}
                 {openclawStatus.uptime && (
-                  <div className="ssh-status-row">
-                    <span>{t('ssh.field.uptime')}</span>
-                    <span>{openclawStatus.uptime}</span>
+                  <div className="ssh-dash-card">
+                    <div className="ssh-dash-label">{t('ssh.field.uptime')}</div>
+                    <div className="ssh-dash-value">{openclawStatus.uptime}</div>
                   </div>
                 )}
               </div>
-              {openclawStatus.error && <div className="ssh-error-inline">⚠️ {openclawStatus.error}</div>}
-            </>
-          )}
-          <button className="ssh-btn refresh" onClick={loadOpenClawStatus} disabled={loading}>
-            🔄 {t('ssh.refresh')}
-          </button>
-        </div>
-      )}
+            )}
+            {openclawStatus?.error && <div className="ssh-error-inline">⚠️ {openclawStatus.error}</div>}
+            <button className="ssh-btn refresh full" onClick={loadOpenClawStatus} disabled={loading}>🔄 {t('ssh.refresh')}</button>
+          </div>
+        )}
 
-      {/* ━━━━━━━━ PROCESSES TAB ━━━━━━━━ */}
-      {tab === 'processes' && activeServer && (
-        <div className="ssh-process-view">
-          <div className="ssh-section-hint">{t('ssh.processHint')}</div>
-          {loading && <div className="ssh-loading">{t('ssh.loading')}</div>}
-          {processes.length > 0 && (
-            <div className="ssh-process-summary">
-              {t('ssh.processCount', { total: processes.length, online: processes.filter(p => p.status === 'online').length })}
-            </div>
-          )}
-          {processes.map(p => (
-            <div key={p.name} className={`ssh-process-card ${p.status}`}>
-              <div className="ssh-process-info">
-                <div className="ssh-process-name">
-                  {p.status === 'online' ? '🟢' : '🔴'} {p.name}
+        {/* ━━━ PROCESSES ━━━ */}
+        {tab === 'processes' && activeServer && (
+          <div className="ssh-process-view">
+            {loading && <div className="ssh-loading">⏳</div>}
+            {processes.length > 0 && (
+              <div className="ssh-process-summary">
+                <span className="ssh-pill green">{processes.filter(p => p.status === 'online').length} online</span>
+                <span className="ssh-pill red">{processes.filter(p => p.status !== 'online').length} stopped</span>
+              </div>
+            )}
+            {processes.map(p => (
+              <div key={p.name} className={`ssh-process-card ${p.status}`}>
+                <div className="ssh-process-top">
+                  <span className={`ssh-pill ${p.status === 'online' ? 'green' : 'red'}`}>{p.status}</span>
+                  <span className="ssh-process-name">{p.name}</span>
+                  <div className="ssh-process-btns">
+                    <button className="ssh-icon-btn" onClick={() => { setSelectedProcess(p.name); handleTabChange('logs'); loadLogs(p.name); }} title={t('ssh.viewLogs')}>📜</button>
+                    <button className="ssh-icon-btn" onClick={() => handleRestart(p.name)} title={t('ssh.restart')}>🔄</button>
+                  </div>
                 </div>
                 <div className="ssh-process-meta">
-                  PID:{p.pid} | CPU:{p.cpu} | MEM:{p.memory} | ⏱️{p.uptime}
+                  <span>PID {p.pid}</span>
+                  <span>CPU {p.cpu}</span>
+                  <span>MEM {p.memory}</span>
+                  <span>⏱️ {p.uptime}</span>
                 </div>
               </div>
-              <div className="ssh-process-actions">
-                <button className="ssh-icon-btn" onClick={() => { setSelectedProcess(p.name); handleTabChange('logs'); loadLogs(p.name); }} title={t('ssh.viewLogs')}>📜</button>
-                <button className="ssh-icon-btn" onClick={() => handleRestart(p.name)} title={t('ssh.restart')}>🔄</button>
-              </div>
-            </div>
-          ))}
-          {processes.length === 0 && !loading && <div className="ssh-empty">{t('ssh.noProcesses')}</div>}
-          <button className="ssh-btn refresh" onClick={loadProcesses} disabled={loading}>🔄 {t('ssh.refresh')}</button>
-        </div>
-      )}
-
-      {/* ━━━━━━━━ SYSTEM TAB ━━━━━━━━ */}
-      {tab === 'system' && activeServer && (
-        <div className="ssh-system-view">
-          <div className="ssh-section-hint">{t('ssh.systemHint')}</div>
-          {loading && <div className="ssh-loading">{t('ssh.loading')}</div>}
-          {systemInfo && (
-            <div className="ssh-system-card">
-              <div className="ssh-status-row">
-                <span>🏠 {t('ssh.field.hostname')}</span>
-                <span>{systemInfo.hostname}</span>
-              </div>
-              <div className="ssh-status-row">
-                <span>⏱️ {t('ssh.field.uptime')}</span>
-                <span>{systemInfo.uptime}</span>
-              </div>
-              <div className="ssh-status-row">
-                <span>📊 {t('ssh.field.load')}</span>
-                <span>{systemInfo.loadAvg}</span>
-              </div>
-              <div className="ssh-meter-row">
-                <span>🧠 {t('ssh.field.memory')}</span>
-                <div className="ssh-meter">
-                  <div className="ssh-meter-fill" style={{ width: `${systemInfo.memPercent}%`, background: systemInfo.memPercent > 80 ? '#e74c3c' : '#3498db' }} />
-                </div>
-                <span>{systemInfo.memUsed}/{systemInfo.memTotal} ({systemInfo.memPercent}%)</span>
-              </div>
-              <div className="ssh-meter-row">
-                <span>💾 {t('ssh.field.disk')}</span>
-                <div className="ssh-meter">
-                  <div className="ssh-meter-fill" style={{ width: `${systemInfo.diskPercent}%`, background: systemInfo.diskPercent > 85 ? '#e74c3c' : '#2ecc71' }} />
-                </div>
-                <span>{systemInfo.diskUsed}/{systemInfo.diskTotal} ({systemInfo.diskPercent}%)</span>
-              </div>
-            </div>
-          )}
-          <button className="ssh-btn refresh" onClick={loadSystemInfo} disabled={loading}>🔄 {t('ssh.refresh')}</button>
-        </div>
-      )}
-
-      {/* ━━━━━━━━ LOGS TAB ━━━━━━━━ */}
-      {tab === 'logs' && activeServer && (
-        <div className="ssh-logs-view">
-          <div className="ssh-section-hint">{t('ssh.logsHint')}</div>
-          <div className="ssh-logs-header">
-            <select
-              value={selectedProcess}
-              onChange={(e) => { setSelectedProcess(e.target.value); if (e.target.value) loadLogs(e.target.value); }}
-              className="ssh-select"
-            >
-              <option value="">{t('ssh.selectProcess')}</option>
-              {processes.map(p => (
-                <option key={p.name} value={p.name}>{p.status === 'online' ? '🟢' : '🔴'} {p.name}</option>
-              ))}
-            </select>
-            <button className="ssh-btn refresh-sm" onClick={() => selectedProcess && loadLogs(selectedProcess)} disabled={loading || !selectedProcess}>🔄</button>
+            ))}
+            {processes.length === 0 && !loading && <div className="ssh-empty">{t('ssh.noProcesses')}</div>}
+            <button className="ssh-btn refresh full" onClick={loadProcesses} disabled={loading}>🔄 {t('ssh.refresh')}</button>
           </div>
-          <pre className="ssh-logs-content">{logs || t('ssh.selectProcessHint')}</pre>
+        )}
+
+        {/* ━━━ SYSTEM ━━━ */}
+        {tab === 'system' && activeServer && (
+          <div className="ssh-system-view">
+            {loading && <div className="ssh-loading">⏳</div>}
+            {systemInfo && (
+              <>
+                <div className="ssh-sys-header">
+                  <div className="ssh-sys-hostname">🏠 {systemInfo.hostname}</div>
+                  <div className="ssh-sys-meta">⏱️ {systemInfo.uptime} · 📊 Load {systemInfo.loadAvg}</div>
+                </div>
+                <div className="ssh-circles">
+                  <CircleProgress
+                    percent={systemInfo.memPercent}
+                    color={systemInfo.memPercent > 80 ? '#e74c3c' : '#3498db'}
+                    label="RAM"
+                    detail={`${systemInfo.memUsed} / ${systemInfo.memTotal}`}
+                  />
+                  <CircleProgress
+                    percent={systemInfo.diskPercent}
+                    color={systemInfo.diskPercent > 85 ? '#e74c3c' : '#2ecc71'}
+                    label="Disk"
+                    detail={`${systemInfo.diskUsed} / ${systemInfo.diskTotal}`}
+                  />
+                </div>
+              </>
+            )}
+            <button className="ssh-btn refresh full" onClick={loadSystemInfo} disabled={loading}>🔄 {t('ssh.refresh')}</button>
+          </div>
+        )}
+
+        {/* ━━━ LOGS ━━━ */}
+        {tab === 'logs' && activeServer && (
+          <div className="ssh-logs-view">
+            <div className="ssh-logs-header">
+              <select
+                value={selectedProcess}
+                onChange={(e) => { setSelectedProcess(e.target.value); if (e.target.value) loadLogs(e.target.value); }}
+                className="ssh-select"
+              >
+                <option value="">{t('ssh.selectProcess')}</option>
+                {processes.map(p => (
+                  <option key={p.name} value={p.name}>{p.status === 'online' ? '🟢' : '🔴'} {p.name}</option>
+                ))}
+              </select>
+              <button className="ssh-btn refresh-sm" onClick={() => selectedProcess && loadLogs(selectedProcess)} disabled={loading || !selectedProcess}>🔄</button>
+            </div>
+            <pre className="ssh-logs-content">{logs || t('ssh.selectProcessHint')}</pre>
+          </div>
+        )}
+      </div>
+
+      {/* ── Add Server Modal ── */}
+      {showAddModal && (
+        <div className="ssh-modal-overlay" onClick={() => setShowAddModal(false)}>
+          <div className="ssh-modal" onClick={e => e.stopPropagation()}>
+            <AddServerForm
+              onAdd={async (data) => {
+                const r = await window.electronAPI.sshAddServer(data);
+                if (r.error) setError(r.error);
+                else { setShowAddModal(false); await loadServers(); }
+              }}
+              onCancel={() => setShowAddModal(false)}
+            />
+          </div>
         </div>
       )}
     </div>
@@ -610,39 +531,31 @@ const AddServerForm: React.FC<{
 
   return (
     <div className="ssh-add-form">
-      <div className="ssh-form-title">{t('ssh.addServer')}</div>
+      <div className="ssh-form-header">
+        <span className="ssh-form-title">{t('ssh.addServer')}</span>
+        <button className="ssh-modal-close" onClick={onCancel}>✕</button>
+      </div>
       <label>{t('ssh.form.name')}</label>
       <input value={name} onChange={e => setName(e.target.value)} placeholder={t('ssh.form.namePlaceholder')} />
       <label>{t('ssh.form.host')}</label>
-      <input value={host} onChange={e => setHost(e.target.value)} placeholder="192.168.1.100" />
+      <input value={host} onChange={e => setHost(e.target.value)} placeholder="192.168.1.100 or 100.x.x.x" />
       <div className="ssh-form-row">
-        <div>
-          <label>{t('ssh.form.port')}</label>
-          <input type="number" value={port} onChange={e => setPort(parseInt(e.target.value) || 22)} />
-        </div>
-        <div>
-          <label>{t('ssh.form.username')}</label>
-          <input value={username} onChange={e => setUsername(e.target.value)} />
-        </div>
+        <div><label>{t('ssh.form.port')}</label><input type="number" value={port} onChange={e => setPort(parseInt(e.target.value) || 22)} /></div>
+        <div><label>{t('ssh.form.username')}</label><input value={username} onChange={e => setUsername(e.target.value)} /></div>
       </div>
       <label>{t('ssh.form.authType')}</label>
       <div className="ssh-auth-toggle">
-        <button className={authType === 'password' ? 'active' : ''} onClick={() => setAuthType('password')}>
-          🔑 {t('ssh.form.password')}
-        </button>
-        <button className={authType === 'key' ? 'active' : ''} onClick={() => setAuthType('key')}>
-          🔐 {t('ssh.form.sshKey')}
-        </button>
+        <button className={authType === 'password' ? 'active' : ''} onClick={() => setAuthType('password')}>🔑 {t('ssh.form.password')}</button>
+        <button className={authType === 'key' ? 'active' : ''} onClick={() => setAuthType('key')}>🔐 {t('ssh.form.sshKey')}</button>
       </div>
       <label>{authType === 'password' ? t('ssh.form.password') : t('ssh.form.privateKey')}</label>
       {authType === 'password' ? (
         <input type="password" value={credential} onChange={e => setCredential(e.target.value)} />
       ) : (
-        <textarea value={credential} onChange={e => setCredential(e.target.value)} placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;..." rows={4} />
+        <textarea value={credential} onChange={e => setCredential(e.target.value)} placeholder="-----BEGIN OPENSSH PRIVATE KEY-----&#10;..." rows={3} />
       )}
       {testResult && <div className="ssh-test-result">{testResult}</div>}
       <div className="ssh-form-actions">
-        <button className="ssh-btn secondary" onClick={onCancel}>{t('ssh.form.cancel')}</button>
         <button className="ssh-btn secondary" onClick={handleTest} disabled={testing || !host || !username || !credential}>
           {testing ? '⏳' : t('ssh.form.test')}
         </button>
