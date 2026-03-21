@@ -1,6 +1,6 @@
 {
   "name": "lobster-baby",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "description": "A cute desktop pet lobster that monitors OpenClaw status",
   "author": "Lobster Baby Team",
   "license": "MIT",
@@ -131,6 +131,11 @@
     },
     "afterSign": "scripts/notarize.js",
     "publish": [
+      {
+        "provider": "generic",
+        "url": "https://game.weixin-vip.cn/lobster/downloads",
+        "channel": "latest"
+      },
       {
         "provider": "github",
         "owner": "abczsl520",
