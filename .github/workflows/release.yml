@@ -99,24 +99,55 @@ jobs:
     if: always() && needs.build-win.result == 'success'
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install @aws-sdk/client-s3
       - uses: actions/download-artifact@v4
         with:
           name: win-release
           path: release
       - name: List artifacts
         run: ls -la release/
-      - name: Deploy to update server
+      - name: Deploy to Cloudflare R2
         env:
-          DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-          DEPLOY_HOST: 8.138.104.108
-          DEPLOY_PATH: /opt/apps/lobster-life/public/downloads
+          R2_ACCESS_KEY: ${{ secrets.R2_ACCESS_KEY }}
+          R2_SECRET_KEY: ${{ secrets.R2_SECRET_KEY }}
+          R2_ENDPOINT: https://7edcb15fb6531129f6fc07df1896d0f7.r2.cloudflarestorage.com
+          R2_BUCKET: lobster-downloads
         run: |
-          mkdir -p ~/.ssh
-          echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts 2>/dev/null
-          scp -i ~/.ssh/deploy_key release/*.exe release/latest.yml root@$DEPLOY_HOST:$DEPLOY_PATH/
-          ssh -i ~/.ssh/deploy_key root@$DEPLOY_HOST "chmod 644 $DEPLOY_PATH/*.exe $DEPLOY_PATH/latest.yml && echo 'Deploy OK' && cat $DEPLOY_PATH/latest.yml"
+          node -e "
+          const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+          const fs = require('fs');
+          const path = require('path');
+          const client = new S3Client({
+            region: 'auto',
+            endpoint: process.env.R2_ENDPOINT,
+            credentials: {
+              accessKeyId: process.env.R2_ACCESS_KEY,
+              secretAccessKey: process.env.R2_SECRET_KEY,
+            },
+          });
+          async function upload(filePath, key, contentType) {
+            const buf = fs.readFileSync(filePath);
+            await client.send(new PutObjectCommand({
+              Bucket: process.env.R2_BUCKET,
+              Key: key,
+              Body: buf,
+              ContentType: contentType,
+            }));
+            console.log('✅ Uploaded', key, '(' + (buf.length/1024/1024).toFixed(1) + 'MB)');
+          }
+          (async () => {
+            const files = fs.readdirSync('release');
+            for (const f of files) {
+              const ct = f.endsWith('.yml') ? 'text/yaml' : 'application/octet-stream';
+              await upload(path.join('release', f), f, ct);
+            }
+            console.log('🎉 All files deployed to R2');
+          })().catch(e => { console.error('❌', e.message); process.exit(1); });
+          "
 
   release:
     needs: [build-mac, build-win]
