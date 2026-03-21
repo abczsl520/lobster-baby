@@ -57,6 +57,34 @@ jobs:
       - run: npm install
       - name: Build & Package
         run: npm run build && npx electron-builder --win --publish never
+      - name: Generate latest.yml
+        shell: bash
+        run: |
+          node -e "
+          const fs = require('fs');
+          const crypto = require('crypto');
+          const path = require('path');
+          const pkg = JSON.parse(fs.readFileSync('package.json','utf8'));
+          const files = fs.readdirSync('release').filter(f => f.includes('setup') && f.endsWith('.exe'));
+          if (!files.length) { console.error('No setup exe found'); process.exit(1); }
+          const setupName = files[0];
+          const setupPath = path.join('release', setupName);
+          const buf = fs.readFileSync(setupPath);
+          const sha512 = crypto.createHash('sha512').update(buf).digest('base64');
+          const yml = [
+            'version: ' + pkg.version,
+            'files:',
+            '  - url: ' + setupName,
+            '    sha512: ' + sha512,
+            '    size: ' + buf.length,
+            'path: ' + setupName,
+            'sha512: ' + sha512,
+            'releaseDate: ' + JSON.stringify(new Date().toISOString()),
+          ].join('\n') + '\n';
+          fs.writeFileSync('release/latest.yml', yml);
+          console.log('Generated latest.yml:');
+          console.log(yml);
+          "
       - name: Upload Win artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -64,6 +92,31 @@ jobs:
           path: |
             release/*setup*.exe
             release/*portable*.exe
+            release/latest.yml
+
+  deploy:
+    needs: [build-win]
+    if: always() && needs.build-win.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: win-release
+          path: release
+      - name: List artifacts
+        run: ls -la release/
+      - name: Deploy to update server
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: 8.138.104.108
+          DEPLOY_PATH: /opt/apps/lobster-life/public/downloads
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts 2>/dev/null
+          scp -i ~/.ssh/deploy_key release/*.exe release/latest.yml root@$DEPLOY_HOST:$DEPLOY_PATH/
+          ssh -i ~/.ssh/deploy_key root@$DEPLOY_HOST "chmod 644 $DEPLOY_PATH/*.exe $DEPLOY_PATH/latest.yml && echo 'Deploy OK' && cat $DEPLOY_PATH/latest.yml"
 
   release:
     needs: [build-mac, build-win]
