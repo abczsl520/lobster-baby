@@ -1,6 +1,6 @@
 {
   "name": "lobster-baby",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "description": "A cute desktop pet lobster that monitors OpenClaw status",
   "author": "Lobster Baby Team",
   "license": "MIT",
@@ -129,7 +129,6 @@
     "portable": {
       "artifactName": "LobsterBaby-${version}-win-x64-portable.${ext}"
     },
-    "afterSign": "scripts/notarize.js",
     "publish": [
       {
         "provider": "generic",
@@ -141,6 +140,7 @@
         "owner": "abczsl520",
         "repo": "lobster-baby"
       }
-    ]
+    ],
+    "afterSign": "scripts/notarize.js"
   }
 }
