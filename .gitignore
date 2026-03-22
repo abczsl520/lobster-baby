@@ -18,3 +18,12 @@ src/**/*.d.ts
 !src/vite-env.d.ts
 vite.config.js
 vite.config.d.ts
+
+# Security - never commit these
+.env
+.env.*
+*.p12
+*.pem
+*.key
+*.cert
+*.pfx
