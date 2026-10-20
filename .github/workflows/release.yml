@@ -114,7 +114,7 @@ jobs:
         env:
           R2_ACCESS_KEY: ${{ secrets.R2_ACCESS_KEY }}
           R2_SECRET_KEY: ${{ secrets.R2_SECRET_KEY }}
-          R2_ENDPOINT: https://00000000000000000000000000000000.r2.cloudflarestorage.com
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
           R2_BUCKET: lobster-downloads
         run: |
           node -e "

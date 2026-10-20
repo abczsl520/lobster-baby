@@ -39,7 +39,7 @@ OpenClaw 跑在远端的用户：
 │  远端（云服务器等）   │            │  中继服务器        │            │  本地桌面         │
 │                     │   HTTPS    │                   │   SSE      │                  │
 │  OpenClaw 运行中     │──────────→ │  lobster-social   │←─────────→ │  龙虾宝宝        │
-│  + Reporter         │   POST     │  198.51.100.20    │   推送     │  Electron App    │
+│  + Reporter         │   POST     │  relay.example.com    │   推送     │  Electron App    │
 │    (采集+上报)       │  每10秒    │  (复用现有后端)    │  每5秒     │  (远程模式)       │
 └─────────────────────┘            └───────────────────┘            └──────────────────┘
 ```
@@ -66,7 +66,7 @@ OpenClaw 跑在远端的用户：
 | **中继 + SSE** | Reporter→Relay→Client | ✅ 零网络配置、复用现有基础设施、SSE 原生重连 |
 
 **反驳自己：中继是单点故障。**
-是的。如果 198.51.100.20 挂了，远程模式全挂。但本地模式不受影响，社交功能本来也依赖这台服务器。单点故障已经存在，不是新引入的。
+是的。如果 relay.example.com 挂了，远程模式全挂。但本地模式不受影响，社交功能本来也依赖这台服务器。单点故障已经存在，不是新引入的。
 
 **反驳自己：为什么不让 OpenClaw 自己暴露 HTTP API？**
 - 我们控制不了 OpenClaw 的 roadmap
@@ -331,7 +331,7 @@ lobster-reporter --setup
 
 ### 4.1 新增端点
 
-复用现有社交后端 `198.51.100.20:4050`（lobster-social），新增路由文件 `routes/remote.js`：
+复用现有社交后端 `relay.example.com:4050`（lobster-social），新增路由文件 `routes/remote.js`：
 
 ```
 POST /api/v1/remote/heartbeat   — Reporter 上报心跳+状态
